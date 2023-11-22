@@ -164,6 +164,9 @@ kj::Maybe<TraceItem::EventInfo> getTraceEvent(jsg::Lock& js, const Trace& trace)
       KJ_CASE_ONEOF(scheduled, tracing::ScheduledEventInfo) {
         return kj::Maybe(js.alloc<TraceItem::ScheduledEventInfo>(trace, scheduled));
       }
+      KJ_CASE_ONEOF(connect, tracing::ConnectEventInfo) {
+        return kj::Maybe(jsg::alloc<TraceItem::ConnectEventInfo>(js, trace, connect));
+      }
       KJ_CASE_ONEOF(alarm, tracing::AlarmEventInfo) {
         return kj::Maybe(js.alloc<TraceItem::AlarmEventInfo>(trace, alarm));
       }
@@ -248,6 +251,9 @@ kj::Maybe<TraceItem::EventInfo> TraceItem::getEvent(jsg::Lock& js) {
         return info.addRef();
       }
       KJ_CASE_ONEOF(info, jsg::Ref<CustomEventInfo>) {
+        return info.addRef();
+      }
+      KJ_CASE_ONEOF(info, jsg::Ref<ConnectEventInfo>) {
         return info.addRef();
       }
     }
@@ -749,6 +755,9 @@ void TraceItem::visitForMemoryInfo(jsg::MemoryTracker& tracker) const {
       KJ_CASE_ONEOF(info, jsg::Ref<HibernatableWebSocketEventInfo>) {
         tracker.trackField("eventInfo", info);
       }
+      KJ_CASE_ONEOF(info, jsg::Ref<ConnectEventInfo>) {
+        tracker.trackField("eventInfo", info);
+      }
     }
   }
   for (const auto& log: logs) {
@@ -806,5 +815,8 @@ void TraceItem::HibernatableWebSocketEventInfo::visitForMemoryInfo(
     }
   }
 }
+
+TraceItem::ConnectEventInfo::ConnectEventInfo(
+    jsg::Lock& js, const Trace& trace, const tracing::ConnectEventInfo& eventInfo) {}
 
 }  // namespace workerd::api
