@@ -2635,6 +2635,16 @@ kj::Own<WorkerInterface> Fetcher::getClient(
       return ioContext.getSubrequestChannel(
           channel, isInHouse, kj::mv(cfStr), kj::mv(operationName));
     }
+    KJ_CASE_ONEOF(channel, IoOwn<IoChannelFactory::SubrequestChannel>) {
+      return ioContext.getSubrequest(
+          [&](TraceContext& tracing, IoChannelFactory& ioChannelFactory) {
+        return channel->startRequest({.cfBlobJson = kj::mv(cfStr), .tracing = tracing});
+      }, {
+        .inHouse = isInHouse,
+        .wrapMetrics = !isInHouse,
+        .operationName = kj::mv(operationName),
+      });
+    }
     KJ_CASE_ONEOF(outgoingFactory, IoOwn<OutgoingFactory>) {
       return outgoingFactory->newSingleUseClient(kj::mv(cfStr));
     }
@@ -2649,6 +2659,9 @@ kj::Own<IoChannelFactory::SubrequestChannel> Fetcher::getSubrequestChannel(IoCon
   KJ_SWITCH_ONEOF(channelOrClientFactory) {
     KJ_CASE_ONEOF(channel, uint) {
       return ioContext.getIoChannelFactory().getSubrequestChannel(channel);
+    }
+    KJ_CASE_ONEOF(channel, IoOwn<IoChannelFactory::SubrequestChannel>) {
+      return kj::addRef(*channel);
     }
     KJ_CASE_ONEOF(outgoingFactory, IoOwn<OutgoingFactory>) {
       return outgoingFactory->getSubrequestChannel();
