@@ -1,3 +1,4 @@
+load("@bazel_skylib//rules:copy_file.bzl", "copy_file")
 load("@bazel_skylib//rules:expand_template.bzl", "expand_template")
 load("//:build/python_metadata.bzl", "BUNDLE_VERSION_INFO")
 load("//:build/wd_test.bzl", "wd_test")
@@ -36,6 +37,16 @@ def _py_wd_test_helper(
         python_snapshot_test = make_snapshot,
         **kwargs
     )
+
+
+def python_test_setup():
+    copy_file(
+        name = "pyodide_dev.capnp.bin@rule",
+        src = "//src/pyodide:pyodide.capnp.bin_cross",
+        out = "pyodide-bundle-cache/pyodide_dev.capnp.bin",
+        visibility = ["//visibility:public"],
+    )
+
 
 def py_wd_test(
         directory = None,
