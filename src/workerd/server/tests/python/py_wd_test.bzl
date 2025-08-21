@@ -39,6 +39,29 @@ def _py_wd_test_helper(
     )
 
 
+def _snapshot_file(snapshot):
+    if not snapshot:
+        return []
+    copy_file(
+        name = "pyodide-snapshot-%s@copy" % snapshot,
+        src = "@pyodide-snapshot-%s//file" % snapshot,
+        out = snapshot,
+        visibility = ["//visibility:public"],
+    )
+    return [":" + snapshot]
+
+def _snapshot_files(
+        baseline_snapshot = None,
+        numpy_snapshot = None,
+        fastapi_snapshot = None,
+        **_kwds):
+    result = []
+    result += _snapshot_file(baseline_snapshot)
+    result += _snapshot_file(numpy_snapshot)
+    result += _snapshot_file(fastapi_snapshot)
+    return result
+
+
 def python_test_setup():
     copy_file(
         name = "pyodide_dev.capnp.bin@rule",
@@ -46,6 +69,18 @@ def python_test_setup():
         out = "pyodide-bundle-cache/pyodide_dev.capnp.bin",
         visibility = ["//visibility:public"],
     )
+    data = []
+    for x in BUNDLE_VERSION_INFO.values():
+        if x["name"] == "development":
+            continue
+        data += _snapshot_files(**x)
+
+    native.filegroup(
+        name = "python_snapshots",
+        data = data,
+        visibility = ["//visibility:public"],
+    )
+
 
 
 def py_wd_test(
