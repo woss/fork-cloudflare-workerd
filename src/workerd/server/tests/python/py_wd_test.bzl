@@ -13,15 +13,25 @@ def _py_wd_test_helper(
         name,
         src,
         python_flag,
-        make_snapshot,
         *,
-        args = [],
+        make_snapshot,
+        use_snapshot,
+        args,
         **kwargs):
     name_flag = name + "_" + python_flag
     templated_src = name_flag.replace("/", "-") + "@template"
     templated_src = "/".join(src.split("/")[:-1] + [templated_src])
     flags = _get_enable_flags(python_flag)
     feature_flags_txt = ",".join(['"{}"'.format(flag) for flag in flags])
+
+    if use_snapshot:
+        version_info = BUNDLE_VERSION_INFO[python_flag]
+
+        make_snapshot = False
+        snapshot = version_info[use_snapshot + "_snapshot"]
+        data = data + [":python_snapshots"]
+        args = args + ["--python-load-snapshot=" + snapshot]
+
 
     expand_template(
         name = name_flag + "@rule",
@@ -95,6 +105,7 @@ def py_wd_test(
         size = "enormous",
         tags = [],
         make_snapshot = True,
+        use_snapshot = None,
         **kwargs):
     if python_flags == "all":
         python_flags = BUNDLE_VERSION_INFO.keys()
@@ -128,6 +139,7 @@ def py_wd_test(
             src,
             python_flag,
             make_snapshot = make_snapshot,
+            use_snapshot = use_snapshot,
             data = data,
             args = args,
             size = size,
