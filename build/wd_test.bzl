@@ -126,7 +126,7 @@ echo Creating Python Snapshot
 "$@" -dTEST_TMPDIR=$TEST_TMPDIR --python-save-snapshot
 echo ""
 echo Using Python Snapshot
-"$@" -dTEST_TMPDIR=$TEST_TMPDIR --python-load-snapshot
+"$@" -dTEST_TMPDIR=$TEST_TMPDIR --python-load-snapshot snapshot.bin
 """
 
 def _wd_test_impl(ctx):

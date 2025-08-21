@@ -222,14 +222,14 @@ kj::Own<api::pyodide::PyodideMetadataReader::State> makePyodideMetadataReader(
     }
   }
   bool snapshotToDisk = pythonConfig.createSnapshot || pythonConfig.createBaselineSnapshot;
-  if (pythonConfig.loadSnapshotFromDisk && snapshotToDisk) {
+  if (pythonConfig.loadSnapshotFromDisk != kj::none && snapshotToDisk) {
     KJ_FAIL_ASSERT(
         "Doesn't make sense to pass both --python-save-snapshot and --python-load-snapshot");
   }
   kj::Maybe<kj::Array<kj::byte>> memorySnapshot = kj::none;
-  if (pythonConfig.loadSnapshotFromDisk) {
+  KJ_IF_SOME(snapshot, pythonConfig.loadSnapshotFromDisk) {
     auto& root = KJ_REQUIRE_NONNULL(pythonConfig.packageDiskCacheRoot);
-    kj::Path path("snapshot.bin");
+    kj::Path path(snapshot);
     auto maybeFile = root->tryOpenFile(path);
     if (maybeFile == kj::none) {
       KJ_FAIL_REQUIRE("Expected to find snapshot.bin in the package cache directory");
