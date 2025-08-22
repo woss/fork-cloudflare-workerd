@@ -648,7 +648,7 @@ struct CompatibilityFlags @0x8f8c1b68151b6cef {
 
   pythonWorkers20250116 @71 :Bool
       $compatEnableFlag("python_workers_20250116")
-      $experimental
+      $impliedByAfterDate(name = "pythonWorkers", date = "2025-09-12")
       $pythonSnapshotRelease;
 
   requestCfOverridesCacheRules @72 :Bool
