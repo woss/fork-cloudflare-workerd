@@ -156,6 +156,7 @@ class DurableObjectNamespace: public jsg::Object {
         kj::Maybe<kj::String> locationHint,
         ActorGetMode mode,
         bool enableReplicaRouting,
+        bool getPrimaryOnly,
         SpanParent parentSpan) = 0;
   };
 
@@ -195,13 +196,15 @@ class DurableObjectNamespace: public jsg::Object {
 
   struct GetDurableObjectOptions {
     jsg::Optional<kj::String> locationHint;
+    jsg::Optional<bool> getPrimaryOnly;
 
-    JSG_STRUCT(locationHint);
+    JSG_STRUCT(locationHint, getPrimaryOnly);
 
     JSG_STRUCT_TS_DEFINE(type DurableObjectLocationHint = "wnam" | "enam" | "sam" | "weur" | "eeur" | "apac" | "oc" | "afr" | "me");
     // Possible values from https://developers.cloudflare.com/workers/runtime-apis/durable-objects/#providing-a-location-hint
     JSG_STRUCT_TS_OVERRIDE({
       locationHint?: DurableObjectLocationHint;
+      getPrimaryOnly?: boolean;
     });
   };
 
@@ -270,12 +273,14 @@ class GlobalActorOutgoingFactory final: public Fetcher::OutgoingFactory {
       jsg::Ref<DurableObjectId> id,
       kj::Maybe<kj::String> locationHint,
       ActorGetMode mode,
-      bool enableReplicaRouting)
+      bool enableReplicaRouting,
+      bool getPrimaryOnly)
       : channelIdOrFactory(kj::mv(channelIdOrFactory)),
         id(kj::mv(id)),
         locationHint(kj::mv(locationHint)),
         mode(mode),
-        enableReplicaRouting(enableReplicaRouting) {}
+        enableReplicaRouting(enableReplicaRouting),
+        getPrimaryOnly(getPrimaryOnly) {}
 
   kj::Own<WorkerInterface> newSingleUseClient(kj::Maybe<kj::String> cfStr) override;
 
@@ -285,6 +290,7 @@ class GlobalActorOutgoingFactory final: public Fetcher::OutgoingFactory {
   kj::Maybe<kj::String> locationHint;
   ActorGetMode mode;
   bool enableReplicaRouting;
+  bool getPrimaryOnly;
   kj::Maybe<kj::Own<IoChannelFactory::ActorChannel>> actorChannel;
 };
 

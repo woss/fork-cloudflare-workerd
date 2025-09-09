@@ -53,11 +53,11 @@ kj::Own<WorkerInterface> GlobalActorOutgoingFactory::newSingleUseClient(
       KJ_SWITCH_ONEOF(channelIdOrFactory) {
         KJ_CASE_ONEOF(channelId, uint) {
           actorChannel = context.getGlobalActorChannel(channelId, id->getInner(),
-              kj::mv(locationHint), mode, enableReplicaRouting, tracing.span);
+              kj::mv(locationHint), mode, enableReplicaRouting, getPrimaryOnly, tracing.span);
         }
         KJ_CASE_ONEOF(factory, kj::Own<DurableObjectNamespace::ActorChannelFactory>) {
-          actorChannel = factory->getGlobalActor(
-              id->getInner(), kj::mv(locationHint), mode, enableReplicaRouting, tracing.span);
+          actorChannel = factory->getGlobalActor(id->getInner(), kj::mv(locationHint), mode,
+              enableReplicaRouting, getPrimaryOnly, tracing.span);
         }
       }
     }
@@ -149,8 +149,12 @@ jsg::Ref<DurableObject> DurableObjectNamespace::getImpl(jsg::Lock& js,
 
   auto& context = IoContext::current();
   kj::Maybe<kj::String> locationHint = kj::none;
+  bool getPrimaryOnly = false;
   KJ_IF_SOME(o, options) {
     locationHint = kj::mv(o.locationHint);
+    KJ_IF_SOME(primaryOnly, o.getPrimaryOnly) {
+      getPrimaryOnly = primaryOnly;
+    }
   }
 
   bool enableReplicaRouting = FeatureFlags::get(js).getReplicaRouting();
@@ -159,11 +163,11 @@ jsg::Ref<DurableObject> DurableObjectNamespace::getImpl(jsg::Lock& js,
   KJ_SWITCH_ONEOF(channel) {
     KJ_CASE_ONEOF(channelId, uint) {
       outgoingFactory = kj::heap<GlobalActorOutgoingFactory>(
-          channelId, id.addRef(), kj::mv(locationHint), mode, enableReplicaRouting);
+          channelId, id.addRef(), kj::mv(locationHint), mode, enableReplicaRouting, getPrimaryOnly);
     }
     KJ_CASE_ONEOF(channelFactory, IoOwn<ActorChannelFactory>) {
       outgoingFactory = kj::heap<GlobalActorOutgoingFactory>(kj::addRef(*channelFactory),
-          id.addRef(), kj::mv(locationHint), mode, enableReplicaRouting);
+          id.addRef(), kj::mv(locationHint), mode, enableReplicaRouting, getPrimaryOnly);
     }
   }
 

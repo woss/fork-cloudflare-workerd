@@ -208,6 +208,7 @@ class IoChannelFactory {
       kj::Maybe<kj::String> locationHint,
       ActorGetMode mode,
       bool enableReplicaRouting,
+      bool getPrimaryOnly,
       SpanParent parentSpan) = 0;
 
   // Get an actor stub from the given namespace for the actor with the given name.
