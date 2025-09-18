@@ -90,10 +90,6 @@ esbuild_register_toolchains(
     esbuild_version = LATEST_ESBUILD_VERSION,
 )
 
-load("@//build/deps:v8.bzl", "deps_v8")
-
-deps_v8()
-
 PYTHON_TOOLCHAIN = "python3_13"
 
 PYTHON_INTERPRETER = "@" + PYTHON_TOOLCHAIN + "_host//:python"
