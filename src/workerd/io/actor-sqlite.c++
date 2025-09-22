@@ -5,6 +5,7 @@
 #include "actor-sqlite.h"
 
 #include "io-gate.h"
+#include "kj/exception.h"
 #include "kj/function.h"
 
 #include <workerd/jsg/exception.h>
@@ -223,9 +224,10 @@ void ActorSqlite::onWrite() {
 
     // Capture the output gate decision for this specific transaction batch
     // Rule: If ANY write needs confirmation, the ENTIRE batch uses output gate
-    bool shouldUseOutputGate = currentTxnNeedsOutputGate;
+    //bool shouldUseOutputGate = currentTxnNeedsOutputGate;
 
-    auto commitPromise = kj::evalLater([this, txn = kj::mv(txn)]() mutable -> kj::Promise<void> {
+    auto preCommit = [this, txn = kj::mv(txn)](kj::PromiseFulfiller<void>& outputGateFulfiller) mutable -> kj::Promise<void> {
+      KJ_DBG("JMP JMP preCommit", currentTxnNeedsOutputGate);
       // Don't commit if shutdown() has been called.
       requireNotBroken();
 
@@ -249,32 +251,67 @@ void ActorSqlite::onWrite() {
       // rather than after the callback.
       { auto drop = kj::mv(txn); }
 
+      if (!currentTxnNeedsOutputGate) {
+        outputGateFulfiller.fulfill();
+      }
+
       // Reset state for next transaction batch now that the transaction is completed
       currentTxnHasUnconfirmed = false;
       currentTxnNeedsOutputGate = false;
 
+      KJ_DBG("JMP JMP before commitImpl");
       return commitImpl(kj::mv(precommitAlarmState));
-    });
+    };
+
+    auto paf = kj::newPromiseAndFulfiller<void>();
+    auto commitPromise = kj::evalLater([preCommit = kj::mv(preCommit), fulfiller = kj::mv(paf.fulfiller)]()
+                                       mutable -> kj::Promise<void> {
+        KJ_DBG("JMP JMP commitPromise start", fulfiller->isWaiting());
+        KJ_DEFER(
+                 //if (fulfiller->isWaiting()) {
+          KJ_DBG("JMP JMP defer", fulfiller->isWaiting());
+          fulfiller->fulfill();
+          //}
+        );
+        try {
+          KJ_DBG("JMP JMP before preCommit");
+          co_await preCommit(*fulfiller);
+          KJ_DBG("JMP JMP after preCommit");
+        } catch (...) {
+          KJ_DBG("JMP JMP exception", fulfiller->isWaiting());
+          auto e = kj::getCaughtExceptionAsKj();
+          if (fulfiller->isWaiting()) {
+            fulfiller->reject(kj::cp(e));
+          }
+          kj::throwFatalException(kj::mv(e));
+        }
+        KJ_DBG("JMP JMP commitPromise exit");
+      });
+    KJ_DBG("JMP JMP adding tasks");
+    commitTasks.add(kj::mv(commitPromise));
+
+    commitTasks.add(outputGate.lockWhile(kj::mv(paf.promise)));
+    KJ_DBG("JMP JMP done adding tasks");
 
     // Chain this commit to the previous commits for sync() tracking
-    auto chainedCommit = lastCommit.addBranch().then([commitPromise = kj::mv(commitPromise)]() mutable {
-      return kj::mv(commitPromise);
-    }).fork();
+    // auto chainedCommit = lastCommit.addBranch().then([commitPromise = kj::mv(commitPromise)]() mutable {
+    //   return kj::mv(commitPromise);
+    // }).fork();
 
-    if (shouldUseOutputGate) {
-      // Confirmed write: block output gate until commit completes
-      commitTasks.add(outputGate.lockWhile(chainedCommit.addBranch()));
-    } else {
-      // Unconfirmed write: don't block output gate, but still handle errors
-      commitTasks.add(chainedCommit.addBranch().catch_([this](kj::Exception&& e) {
-        // If commit fails, we still need to break the output gate
-        return outputGate.lockWhile(kj::Promise<void>(kj::mv(e)));
-      }));
-    }
+    // if (shouldUseOutputGate) {
+    //   // Confirmed write: block output gate until commit completes
+    //   commitTasks.add(outputGate.lockWhile(chainedCommit.addBranch()));
+    // } else {
+    //   // Unconfirmed write: don't block output gate, but still handle errors
+    //   commitTasks.add(chainedCommit.addBranch().catch_([this](kj::Exception&& e) {
+    //     // If commit fails, we still need to break the output gate
+    //     return outputGate.lockWhile(kj::Promise<void>(kj::mv(e)));
+    //   }));
+    // }
 
-    // Update lastCommit to point to this new commit so future commits and sync() calls
-    // can wait for it.
-    lastCommit = kj::mv(chainedCommit);
+    // // Update lastCommit to point to this new commit so future commits and sync() calls
+    // // can wait for it.
+    // lastCommit = kj::mv(chainedCommit);
   }
 }
 
@@ -314,14 +351,17 @@ ActorSqlite::PrecommitAlarmState ActorSqlite::startPrecommitAlarmScheduling() {
 }
 
 kj::Promise<void> ActorSqlite::commitImpl(ActorSqlite::PrecommitAlarmState precommitAlarmState) {
+  KJ_DBG("JMP JMP commitImpl");
   // We assume that exceptions thrown during commit will propagate to the caller, such that they
   // will ensure cancelDeferredAlarmDeletion() is called, if necessary.
 
   KJ_IF_SOME(pending, pendingCommit) {
+    KJ_DBG("JMP JMP pendingCommit");
     // If an earlier commitImpl() invocation is already in the process of updating precommit
     // alarms but has not yet made the commitCallback() call, it should be OK to wait on it to
     // perform the precommit alarm update and db commit for this invocation, too.
     co_await pending.addBranch();
+    KJ_DBG("JMP JMP pendingCommit return");
     co_return;
   }
 
@@ -338,6 +378,7 @@ kj::Promise<void> ActorSqlite::commitImpl(ActorSqlite::PrecommitAlarmState preco
   // while() loop, but needed to be initiated synchronously before the local database commit to
   // ensure correctness in workerd.
   KJ_IF_SOME(p, precommitAlarmState.schedulingPromise) {
+    KJ_DBG("JMP JMP pendingCommit schedulingPromise");
     co_await p;
   }
 
@@ -346,6 +387,7 @@ kj::Promise<void> ActorSqlite::commitImpl(ActorSqlite::PrecommitAlarmState preco
   // that the successfully scheduled alarm time is always earlier or equal to the alarm state in
   // the successfully persisted db.
   while (willFireEarlier(metadata.getAlarm(), alarmScheduledNoLaterThan)) {
+    KJ_DBG("JMP JMP pendingCommit alarmScheduledNoLaterThan");
     co_await requestScheduledAlarm(metadata.getAlarm());
   }
 
@@ -357,10 +399,12 @@ kj::Promise<void> ActorSqlite::commitImpl(ActorSqlite::PrecommitAlarmState preco
   pendingCommit = kj::none;
 
   // Wait for the db to persist.
+  KJ_DBG("JMP JMP pendingCommit commitCallbackPromise");
   co_await commitCallbackPromise;
   lastConfirmedAlarmDbState = alarmStateForCommit;
 
   // Notify any merged commitImpl() requests that the db persistence completed.
+  KJ_DBG("JMP JMP commitImpl fulfiller");
   fulfiller->fulfill();
 
   // If the db state is now later than the in-flight scheduled alarms, issue a request to update
