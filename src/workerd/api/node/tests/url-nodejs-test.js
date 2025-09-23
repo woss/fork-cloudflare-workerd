@@ -510,7 +510,7 @@ export const testUrlPattern = {
       hostname: { input: 'example.com', groups: { 0: 'example.com' } },
       port: { input: '', groups: { 0: '' } },
       pathname: { input: '/', groups: { 0: '/' } },
-      search: { input: '?', groups: { 0: '?' } },
+      search: { input: '', groups: { 0: '' } },
       hash: { input: '', groups: { 0: '' } },
     });
   },
