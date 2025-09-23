@@ -5,6 +5,5 @@ cc_library(
         "ada.h",
         "ada_c.h",
     ],
-    defines = ["ADA_DEVELOPMENT_CHECKS=0"],
     visibility = ["//visibility:public"],
 )
