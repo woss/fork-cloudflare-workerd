@@ -20,6 +20,8 @@ import {
   generateKeyPairSync,
   generatePrimeSync,
   diffieHellman,
+  sign,
+  verify,
 } from 'node:crypto';
 import { Buffer } from 'node:buffer';
 import { promisify } from 'node:util';
@@ -1556,6 +1558,18 @@ export const ed_public_key_jwk_import = {
     const key = createPublicKey({ key: jwk, format: 'jwk' });
     strictEqual(key.asymmetricKeyType, 'ed25519');
 
+    const { publicKey, privateKey } = generateKeyPairSync('ed25519');
+    const publicJwk = publicKey.export({ format: 'jwk' });
+    const reimported = createPublicKey({ key: publicJwk, format: 'jwk' });
+    const data = Buffer.from('workerd okp jwk');
+    const sig = sign(null, data, privateKey);
+    ok(verify(null, data, reimported, sig));
+    ok(
+      publicKey
+        .export({ format: 'der', type: 'spki' })
+        .equals(reimported.export({ format: 'der', type: 'spki' }))
+    );
+
     const jwk2 = {
       crv: 'X25519',
       x: 'K1wIouqnuiA04b3WrMa-xKIKIpfHetNZRv3h9fBf768',
@@ -1564,6 +1578,15 @@ export const ed_public_key_jwk_import = {
 
     const key2 = createPublicKey({ key: jwk2, format: 'jwk' });
     strictEqual(key2.asymmetricKeyType, 'x25519');
+
+    const { publicKey: x25519PublicKey } = generateKeyPairSync('x25519');
+    const x25519Jwk = x25519PublicKey.export({ format: 'jwk' });
+    const x25519Reimported = createPublicKey({ key: x25519Jwk, format: 'jwk' });
+    ok(
+      x25519PublicKey
+        .export({ format: 'der', type: 'spki' })
+        .equals(x25519Reimported.export({ format: 'der', type: 'spki' }))
+    );
 
     // The fail due to missing information in the JWK
     throws(
