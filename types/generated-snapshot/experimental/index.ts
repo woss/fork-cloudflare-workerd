@@ -3257,6 +3257,7 @@ export interface TraceItem {
   readonly scriptVersion?: ScriptVersion;
   readonly dispatchNamespace?: string;
   readonly scriptTags?: string[];
+  readonly tailAttributes?: Record<string, boolean | number | string>;
   readonly durableObjectId?: string;
   readonly outcome: string;
   readonly executionModel: string;
