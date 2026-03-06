@@ -51,11 +51,8 @@ const SEARCH_RESPONSE = {
 
 /** RPC target returned by autorag(autoragId) */
 class AutoRAGInstance extends RpcTarget {
-  #autoragId;
-
-  constructor(autoragId) {
+  constructor(_autoragId) {
     super();
-    this.#autoragId = autoragId;
   }
 
   async search(params) {
