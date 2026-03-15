@@ -651,4 +651,29 @@ BufferSource Lock::bytes(kj::Array<kj::byte> data) {
   return BufferSource(*this, BackingStore::from(*this, kj::mv(data)));
 }
 
+JsUint8Array JsUint8Array::create(Lock& js, size_t length) {
+  JSG_REQUIRE(length < v8::ArrayBuffer::kMaxByteLength, RangeError, "The length is too large");
+  auto backing = v8::ArrayBuffer::NewBackingStore(js.v8Isolate, length,
+      v8::BackingStoreInitializationMode::kZeroInitialized,
+      v8::BackingStoreOnFailureMode::kReturnNull);
+  JSG_REQUIRE(backing != nullptr, RangeError, "Failed to allocate memory for Uint8Array");
+  return create(js, kj::mv(backing), 0, length);
+}
+
+JsUint8Array JsUint8Array::create(
+    Lock& js, std::unique_ptr<v8::BackingStore> backingStore, size_t byteOffset, size_t length) {
+  return JsUint8Array(v8::Uint8Array::New(
+      v8::ArrayBuffer::New(js.v8Isolate, kj::mv(backingStore)), byteOffset, length));
+}
+
+JsUint8Array JsUint8Array::slice(Lock& js, size_t newLength) const {
+  JSG_REQUIRE(newLength <= size(), RangeError, "New length exceeds array length");
+  auto u8 = v8::Uint8Array::New(inner->Buffer(), inner->ByteOffset(), newLength);
+  return JsUint8Array(u8);
+}
+
+size_t JsUint8Array::size() const {
+  return inner->ByteLength();
+}
+
 }  // namespace workerd::jsg
