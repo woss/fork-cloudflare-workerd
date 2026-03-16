@@ -118,6 +118,7 @@ class EsModule final: public Module {
         resourceIsSharedCrossOrigin, scriptId, {}, resourceIsOpaque, isWasm, true);
 
     auto options = v8::ScriptCompiler::CompileOptions::kNoCompileOptions;
+    bool cacheWasRejected = false;
 
     v8::Local<v8::Module> module;
     {
@@ -161,6 +162,7 @@ class EsModule final: public Module {
           // investigation but is not critical.
           LOG_WARNING_ONCE("NOSENTRY Cached data for an ESM module was rejected");
           observer.onCompileCacheRejected(js.v8Isolate);
+          cacheWasRejected = true;
         }
       }
 
@@ -172,13 +174,22 @@ class EsModule final: public Module {
       }
     }
 
+    // If the cached data was rejected, clear it so subsequent isolates don't
+    // repeatedly check stale data. We then fall through to regenerate the cache
+    // below. In practice this is exceedingly unlikely since V8 version changes
+    // are the primary cause of cache rejection and we don't change V8 versions
+    // within a single binary, but we handle it for correctness.
+    if (cacheWasRejected) {
+      auto lock = cachedData.lockExclusive();
+      *lock = kj::none;
+    }
+
     // If options is still kNoCompileOptions at this point, it means that we did not
-    // find any cached data for this module, or the cached data was rejected. In the
-    // case it was rejected, we just move on. If there is no cached data, we try
-    // generating it and store it. Multiple threads can end up lining up here to
-    // acquire the lock and generate the cache. We'll test to see if the cached
-    // data is still empty once the lock is acquired, and if it is not, we'll skip
-    // generation.
+    // find any cached data for this module, or the cached data was rejected. In
+    // either case, we try generating it and store it. Multiple threads can end up
+    // lining up here to acquire the lock and generate the cache. We'll test to see
+    // if the cached data is still empty once the lock is acquired, and if it is
+    // not, we'll skip generation.
     if (options == v8::ScriptCompiler::CompileOptions::kNoCompileOptions) {
       auto lock = cachedData.lockExclusive();
       if (*lock == kj::none) {
