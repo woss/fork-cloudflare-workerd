@@ -402,13 +402,17 @@ class Module {
       const CompilationObserver& observer) KJ_WARN_UNUSED_RESULT;
 
   // Some modules may need to protect against being evaluated recursively. The
-  // EvaluatingScope class makes it possible to guard against that, throwing an
-  // error if there's already an active evaluation happening.
-  class EvaluatingScope final {
+  // EvaluateOnce class makes it possible to guard against that, returning false
+  // if evaluation has already been started. Once setEvaluating() returns true,
+  // subsequent calls will always return false — this is single-use by design
+  // (CJS modules should only be evaluated once).
+  class EvaluateOnce final {
    public:
-    EvaluatingScope() = default;
-    KJ_DISALLOW_COPY_AND_MOVE(EvaluatingScope);
-    bool enterEvaluationScope() {
+    EvaluateOnce() = default;
+    KJ_DISALLOW_COPY_AND_MOVE(EvaluateOnce);
+
+    // On the first call, this returns true. On subsequent calls, it returns false.
+    bool setEvaluating() {
       if (evaluating) return false;
       evaluating = true;
       return true;
@@ -426,13 +430,13 @@ class Module {
   template <typename T, typename TypeWrapper>
   static EvaluateCallback newCjsStyleModuleHandler(
       kj::StringPtr source, kj::StringPtr name) KJ_WARN_UNUSED_RESULT {
-    return [source, name, evaluatingScope = kj::heap<EvaluatingScope>()](Lock& js, const Url& id,
+    return [source, name, evaluateOnce = kj::heap<EvaluateOnce>()](Lock& js, const Url& id,
                const Module::ModuleNamespace& ns,
                const CompilationObserver& observer) mutable -> bool {
       return js.tryCatch([&] {
         // A CJS module can only be evaluated once. Return early if evaluation
         // has already been started.
-        if (!evaluatingScope->enterEvaluationScope()) {
+        if (!evaluateOnce->setEvaluating()) {
           return true;
         }
         auto& wrapper = TypeWrapper::from(js.v8Isolate);
