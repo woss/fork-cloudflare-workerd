@@ -225,6 +225,14 @@ kj::Own<jsg::modules::ModuleBundle> getInternalNodeJsCompatModuleBundle(auto fea
   }
 #undef V
   jsg::modules::ModuleBundle::getBuiltInBundleFromCapnp(builder, NODE_BUNDLE);
+
+  // Register Rust-implemented Node.js modules using the reusable adapter
+  // that bridges Rust ModuleCallback into BuiltinBuilder::addSynthetic.
+  {
+    ::workerd::rust::jsg::RustBuiltinModuleAdapter adapter(builder);
+    ::workerd::rust::api::register_nodejs_modules(adapter);
+  }
+
   return builder.finish();
 }
 

@@ -604,6 +604,14 @@ wd_test(
 )
 
 wd_test(
+    src = "new-module-registry-dns-test.wd-test",
+    args = ["--experimental"],
+    data = [
+        "new-module-registry-dns-test.js",
+    ],
+)
+
+wd_test(
     src = "cross-context-promise-test.wd-test",
     args = ["--experimental"],
     data = ["cross-context-promise-test.js"],
