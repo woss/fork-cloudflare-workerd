@@ -314,11 +314,11 @@ void reportStartupError(kj::StringPtr id,
               span.addLog(kj::systemPreciseCalendarClock().now(), "exception"_kjc,
                   kj::ConstString(
                       kj::str("script startup threw exception", id, description, trace)));
-              KJ_LOG(ERROR, "script startup threw exception", id, description, trace);
               if (isDynamicWorker) {
                 // Rethrow the tunneled JSG exception so it converts back to a JS Error.
                 kj::throwFatalException(kj::cp(KJ_ASSERT_NONNULL(permanentException)));
               } else {
+                KJ_LOG(ERROR, "script startup threw exception", id, description, trace);
                 KJ_FAIL_REQUIRE("script startup threw exception");
               }
             }
