@@ -1001,7 +1001,9 @@ v8::MaybeLocal<std::conditional_t<IsSourcePhase, v8::Object, v8::Module>> resolv
 }
 
 // The fallback module bundle calls a single resolve callback to resolve all modules
-// it is asked to resolve. Instances must be thread-safe.
+// it is asked to resolve. Thread safety is provided by the ModuleRegistry's
+// MutexGuarded<Impl> exclusive lock — all calls to lookup() are made while
+// holding that lock.
 class FallbackModuleBundle final: public ModuleBundle {
  public:
   FallbackModuleBundle(Builder::ResolveCallback&& callback)
@@ -1075,7 +1077,8 @@ class FallbackModuleBundle final: public ModuleBundle {
 };
 
 // The static module bundle maintains an internal table of specifiers to resolve callbacks
-// in memory. Instances must be thread-safe.
+// in memory. Thread safety is provided by the ModuleRegistry's MutexGuarded<Impl>
+// exclusive lock — all calls to lookup() are made while holding that lock.
 class StaticModuleBundle final: public ModuleBundle {
  public:
   StaticModuleBundle(Type type,
