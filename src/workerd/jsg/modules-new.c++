@@ -522,7 +522,7 @@ class IsolateModuleRegistry final {
         }
         case v8::Promise::kPending: {
           // The module evaluation could not complete in a single drain of the
-          // microtask queue. This means we've got a pending promise somwwhere
+          // microtask queue. This means we've got a pending promise somewhere
           // that is being awaited preventing the module from being ready to
           // go. We can't have that! Throw! Throw!
           JSG_FAIL_REQUIRE(Error, kTopLevelAwaitError, " Specifier: \"", id, "\".");
@@ -1545,7 +1545,7 @@ kj::Maybe<const Module&> ModuleRegistry::lookup(const ResolveContext& context) c
   auto metrics =
       observer.onResolveModule(context.normalizedSpecifier, context.type, context.source);
 
-  // While multiple threads may be holing references to the registry, only one thread
+  // While multiple threads may be holding references to the registry, only one thread
   // at a time may resolve a module. Resolving a module may involve mutating internal
   // state (e.g. caching) so we lock here. Fortunately, module resolution should be
   // fast, especially with caching, so this lock should be held only briefly.
