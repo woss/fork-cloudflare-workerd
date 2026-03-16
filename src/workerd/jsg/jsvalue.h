@@ -254,20 +254,22 @@ class JsArrayBufferView final: public JsBase<v8::ArrayBufferView, JsArrayBufferV
 
 class JsUint8Array final: public JsBase<v8::Uint8Array, JsUint8Array> {
  public:
+  static JsUint8Array create(Lock& js, size_t length);
+
   static JsUint8Array create(
-      Lock& js, std::unique_ptr<v8::BackingStore> backingStore, size_t byteOffset, size_t length) {
-    return JsUint8Array(v8::Uint8Array::New(
-        v8::ArrayBuffer::New(js.v8Isolate, kj::mv(backingStore)), byteOffset, length));
-  }
+      Lock& js, std::unique_ptr<v8::BackingStore> backingStore, size_t byteOffset, size_t length);
+
+  JsUint8Array slice(Lock& js, size_t newLength) const;
 
   template <typename T = kj::byte>
   kj::ArrayPtr<T> asArrayPtr() {
     v8::Local<v8::Uint8Array> inner = *this;
     auto buf = inner->Buffer();
     T* data = static_cast<T*>(buf->Data()) + inner->ByteOffset();
-    size_t length = inner->ByteLength();
-    return kj::ArrayPtr(data, length);
+    return kj::ArrayPtr(data, size());
   }
+
+  size_t size() const;
 
   using JsBase<v8::Uint8Array, JsUint8Array>::JsBase;
 };
