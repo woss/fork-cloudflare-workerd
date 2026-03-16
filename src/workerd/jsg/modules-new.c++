@@ -25,6 +25,17 @@ kj::Maybe<const Module&> checkModule(const ResolveContext& context, const Module
   return module;
 };
 
+// If the specifier is "node:process", returns the appropriate internal module
+// URL based on the enable_nodejs_process_v2 flag. Otherwise returns kj::none.
+kj::Maybe<const Url&> maybeRedirectNodeProcess(Lock& js, kj::ArrayPtr<const char> spec) {
+  if (spec == "node:process"_kjb.asChars()) {
+    static const auto publicProcess = "node-internal:public_process"_url;
+    static const auto legacyProcess = "node-internal:legacy_process"_url;
+    return isNodeJsProcessV2Enabled(js) ? publicProcess : legacyProcess;
+  }
+  return kj::none;
+}
+
 kj::String specifierToString(jsg::Lock& js, v8::Local<v8::String> spec) {
   // Source files in workers end up being converted to UTF-8 bytes, so if the specifier
   // string contains non-ASCII unicode characters, those will be directly encoded as UTF-8
@@ -519,13 +530,11 @@ class IsolateModuleRegistry final {
     };
 
     return js.tryCatch([&]() -> v8::MaybeLocal<v8::Object> {
-      if (context.normalizedSpecifier == "node:process"_url) {
-        static const auto publicProcess = "node-internal:public_process"_url;
-        static const auto legacyProcess = "node-internal:legacy_process"_url;
+      KJ_IF_SOME(processUrl, maybeRedirectNodeProcess(js, context.normalizedSpecifier.getHref())) {
         ResolveContext newContext{
           .type = ResolveContext::Type::BUILTIN_ONLY,
           .source = context.source,
-          .normalizedSpecifier = isNodeJsProcessV2Enabled(js) ? publicProcess : legacyProcess,
+          .normalizedSpecifier = processUrl,
           .referrerNormalizedSpecifier = context.referrerNormalizedSpecifier,
           .rawSpecifier = context.rawSpecifier,
         };
@@ -791,21 +800,10 @@ v8::MaybeLocal<v8::Promise> dynamicImportModuleCallback(v8::Local<v8::Context> c
       }
 
       // Handle process module redirection based on enable_nodejs_process_v2 flag
-      if (spec == "node:process") {
-        auto processSpec = isNodeJsProcessV2Enabled(js) ? "node-internal:public_process"_kj
-                                                        : "node-internal:legacy_process"_kj;
-        KJ_IF_SOME(url, referrer.tryResolve(processSpec)) {
-          auto normalized = url.clone(Url::EquivalenceOption::NORMALIZE_PATH);
-          ResolveContext context = {
-            .type = ResolveContext::Type::BUILTIN_ONLY,
-            .source = ResolveContext::Source::DYNAMIC_IMPORT,
-            .normalizedSpecifier = normalized,
-            .referrerNormalizedSpecifier = referrer,
-            .rawSpecifier = processSpec,
-          };
-          return registry.dynamicResolve(
-              js, kj::mv(normalized), kj::mv(referrer), processSpec, isSourcePhase);
-        }
+      KJ_IF_SOME(processUrl, maybeRedirectNodeProcess(js, spec.asPtr())) {
+        auto processSpec = kj::str(processUrl.getHref());
+        return registry.dynamicResolve(
+            js, processUrl.clone(), kj::mv(referrer), processSpec, isSourcePhase);
       }
 
       KJ_IF_SOME(url, referrer.tryResolve(spec.asPtr())) {
@@ -908,21 +906,17 @@ v8::MaybeLocal<std::conditional_t<IsSourcePhase, v8::Object, v8::Module>> resolv
 
     // Handle process module redirection based on enable_nodejs_process_v2 flag
     if constexpr (!IsSourcePhase) {
-      if (spec == "node:process") {
-        auto processSpec = isNodeJsProcessV2Enabled(js) ? "node-internal:public_process"_kj
-                                                        : "node-internal:legacy_process"_kj;
-        KJ_IF_SOME(url, referrerUrl.tryResolve(processSpec)) {
-          auto normalized = url.clone(Url::EquivalenceOption::NORMALIZE_PATH);
-          ResolveContext resolveContext = {
-            .type = ResolveContext::Type::BUILTIN_ONLY,
-            .source = ResolveContext::Source::STATIC_IMPORT,
-            .normalizedSpecifier = normalized,
-            .referrerNormalizedSpecifier = referrerUrl,
-            .rawSpecifier = processSpec,
-          };
+      KJ_IF_SOME(processUrl, maybeRedirectNodeProcess(js, spec.asPtr())) {
+        auto processSpec = kj::str(processUrl.getHref());
+        ResolveContext resolveContext = {
+          .type = ResolveContext::Type::BUILTIN_ONLY,
+          .source = ResolveContext::Source::STATIC_IMPORT,
+          .normalizedSpecifier = processUrl,
+          .referrerNormalizedSpecifier = referrerUrl,
+          .rawSpecifier = processSpec.asPtr(),
+        };
 
-          return registry.resolve(js, resolveContext);
-        }
+        return registry.resolve(js, resolveContext);
       }
     }
 
