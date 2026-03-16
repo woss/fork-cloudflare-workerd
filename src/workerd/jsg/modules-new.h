@@ -596,13 +596,7 @@ class ModuleBundle {
   static kj::Own<ModuleBundle> newFallbackBundle(
       Builder::ResolveCallback callback) KJ_WARN_UNUSED_RESULT;
 
-  enum class BuiltInBundleOptions {
-    NONE = 0,
-  };
-
-  static void getBuiltInBundleFromCapnp(BuiltinBuilder& builder,
-      Bundle::Reader bundle,
-      BuiltInBundleOptions options = BuiltInBundleOptions::NONE);
+  static void getBuiltInBundleFromCapnp(BuiltinBuilder& builder, Bundle::Reader bundle);
 
   KJ_DISALLOW_COPY_AND_MOVE(ModuleBundle);
 
@@ -632,17 +626,6 @@ class ModuleBundle {
  private:
   Type type_;
 };
-
-constexpr ModuleBundle::BuiltInBundleOptions operator|(
-    const ModuleBundle::BuiltInBundleOptions& a, const ModuleBundle::BuiltInBundleOptions& b) {
-  return static_cast<ModuleBundle::BuiltInBundleOptions>(
-      static_cast<uint8_t>(a) | static_cast<uint8_t>(b));
-}
-constexpr ModuleBundle::BuiltInBundleOptions operator&(
-    const ModuleBundle::BuiltInBundleOptions& a, const ModuleBundle::BuiltInBundleOptions& b) {
-  return static_cast<ModuleBundle::BuiltInBundleOptions>(
-      static_cast<uint8_t>(a) & static_cast<uint8_t>(b));
-}
 
 // A ModuleRegistry is a collection of zero or more ModuleBundles.
 // Importantly, the ModuleRegistry is immutable once created and

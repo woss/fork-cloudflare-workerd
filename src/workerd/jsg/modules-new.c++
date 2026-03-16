@@ -1131,8 +1131,7 @@ kj::Own<ModuleBundle> ModuleBundle::newFallbackBundle(Builder::ResolveCallback c
   return kj::heap<FallbackModuleBundle>(kj::mv(callback));
 }
 
-void ModuleBundle::getBuiltInBundleFromCapnp(
-    BuiltinBuilder& builder, Bundle::Reader bundle, BuiltInBundleOptions options) {
+void ModuleBundle::getBuiltInBundleFromCapnp(BuiltinBuilder& builder, Bundle::Reader bundle) {
   auto filter = ([&] {
     switch (builder.type()) {
       case Module::Type::BUILTIN:
