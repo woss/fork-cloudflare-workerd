@@ -1150,7 +1150,13 @@ kj::Own<ModuleBundle> ModuleBundle::newFallbackBundle(Builder::ResolveCallback c
 }
 
 void ModuleBundle::getBuiltInBundleFromCapnp(BuiltinBuilder& builder, Bundle::Reader bundle) {
-  auto filter = ([&] {
+  getBuiltInBundleFromCapnp(builder, bundle, [](workerd::jsg::Module::Reader) { return true; });
+}
+
+void ModuleBundle::getBuiltInBundleFromCapnp(BuiltinBuilder& builder,
+    Bundle::Reader bundle,
+    kj::Function<bool(workerd::jsg::Module::Reader)> filter) {
+  auto typeFilter = ([&] {
     switch (builder.type()) {
       case Module::Type::BUILTIN:
         return ModuleType::BUILTIN;
@@ -1165,7 +1171,7 @@ void ModuleBundle::getBuiltInBundleFromCapnp(BuiltinBuilder& builder, Bundle::Re
   })();
 
   for (auto module: bundle.getModules()) {
-    if (module.getType() == filter) {
+    if (module.getType() == typeFilter && filter(module)) {
       auto id = KJ_ASSERT_NONNULL(Url::tryParse(module.getName()));
       switch (module.which()) {
         case workerd::jsg::Module::SRC: {

@@ -609,6 +609,13 @@ class ModuleBundle {
 
   static void getBuiltInBundleFromCapnp(BuiltinBuilder& builder, Bundle::Reader bundle);
 
+  // Overload that accepts a per-module filter predicate. Only modules for which
+  // the filter returns true are added to the builder. This is used for per-module
+  // feature flag gating (e.g., individual node:* modules behind compat flags).
+  static void getBuiltInBundleFromCapnp(BuiltinBuilder& builder,
+      Bundle::Reader bundle,
+      kj::Function<bool(::workerd::jsg::Module::Reader)> filter);
+
   KJ_DISALLOW_COPY_AND_MOVE(ModuleBundle);
 
   inline Type type() const {
