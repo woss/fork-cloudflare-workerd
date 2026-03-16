@@ -183,6 +183,8 @@ class EsModule final: public Module {
       auto lock = cachedData.lockExclusive();
       if (*lock == kj::none) {
         if (auto ptr = v8::ScriptCompiler::CreateCodeCache(module->GetUnboundModuleScript())) {
+          // Using the technically private kj::_::HeapDisposer to wrap the V8-allocated
+          // CachedData in a kj::Own. This pattern has precedent in io-own.h.
           kj::Own<v8::ScriptCompiler::CachedData> cached(
               ptr, kj::_::HeapDisposer<v8::ScriptCompiler::CachedData>::instance);
           *lock = kj::mv(cached);
