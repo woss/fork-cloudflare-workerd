@@ -462,7 +462,8 @@ export default <ExportedHandler<Env>>{
       expectTypeOf(env.RPC_SERVICE.queue).toEqualTypeOf<
         (
           queueName: string,
-          messages: ServiceBindingQueueMessage[]
+          messages: ServiceBindingQueueMessage[],
+          metadata?: MessageBatchMetadata
         ) => Promise<FetcherQueueResult>
       >();
       expectTypeOf(env.RPC_SERVICE.scheduled).toEqualTypeOf<

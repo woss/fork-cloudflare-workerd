@@ -477,11 +477,23 @@ QueueEvent::QueueEvent(
     messagesBuilder.add(js.alloc<QueueMessage>(js, incoming[i], result));
   }
   messages = messagesBuilder.finish();
+
+  // Extract metadata. If the sender didn't set the field, capnp defaults all values to zero.
+  auto m = params.getMetadata().getMetrics();
+  metadata = MessageBatchMetadata{
+    .metrics =
+        MessageBatchMetrics{
+          .backlogCount = m.getBacklogCount(),
+          .backlogBytes = m.getBacklogBytes(),
+          .oldestMessageTimestamp = m.getOldestMessageTimestamp(),
+        },
+  };
 }
 
 QueueEvent::QueueEvent(jsg::Lock& js, Params params, IoPtr<QueueEventResult> result)
     : ExtendableEvent("queue"),
       queueName(kj::mv(params.queueName)),
+      metadata(kj::mv(params.metadata)),
       result(result) {
   auto messagesBuilder = kj::heapArrayBuilder<jsg::Ref<QueueMessage>>(params.messages.size());
   for (auto i: kj::indices(params.messages)) {
@@ -774,6 +786,7 @@ kj::Promise<WorkerInterface::CustomEvent::Result> QueueCustomEvent::sendRpc(
     KJ_CASE_ONEOF(p, rpc::EventDispatcher::QueueParams::Reader) {
       req.setQueueName(p.getQueueName());
       req.setMessages(p.getMessages());
+      req.setMetadata(p.getMetadata());
     }
     KJ_CASE_ONEOF(p, QueueEvent::Params) {
       req.setQueueName(p.queueName);
@@ -786,6 +799,13 @@ kj::Promise<WorkerInterface::CustomEvent::Result> QueueCustomEvent::sendRpc(
           messages[i].setContentType(contentType);
         }
         messages[i].setAttempts(p.messages[i].attempts);
+      }
+      {
+        auto metadataBuilder = req.initMetadata();
+        auto metricsBuilder = metadataBuilder.initMetrics();
+        metricsBuilder.setBacklogCount(p.metadata.metrics.backlogCount);
+        metricsBuilder.setBacklogBytes(p.metadata.metrics.backlogBytes);
+        metricsBuilder.setOldestMessageTimestamp(p.metadata.metrics.oldestMessageTimestamp);
       }
     }
   }
