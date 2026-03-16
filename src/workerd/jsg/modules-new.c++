@@ -274,7 +274,7 @@ class SyntheticModule final: public Module {
     }
 
     ModuleNamespace ns(module, namedExports);
-    if (!const_cast<SyntheticModule*>(this)->callback(js, id(), ns, observer)) {
+    if (!callback(js, id(), ns, observer)) {
       // An exception should already be scheduled with the isolate
       return v8::MaybeLocal<v8::Value>();
     }
@@ -305,7 +305,11 @@ class SyntheticModule final: public Module {
     return actuallyEvaluate(js, module, observer);
   }
 
-  ModuleBundle::BundleBuilder::EvaluateCallback callback;
+  // Marked mutable because kj::Function::operator() is non-const, but evaluation
+  // callbacks are conceptually const — they produce new JS objects each time without
+  // modifying the module's logical state. The callback is only ever invoked while
+  // holding the isolate lock, so concurrent mutation is not a concern.
+  mutable ModuleBundle::BundleBuilder::EvaluateCallback callback;
   kj::Array<kj::String> namedExports;
 };
 
@@ -1437,9 +1441,7 @@ kj::Maybe<jsg::Promise<Value>> ModuleRegistry::evaluateImpl(jsg::Lock& js,
     v8::Local<v8::Module> v8Module,
     const CompilationObserver& observer) const {
   KJ_IF_SOME(callback, maybeEvalCallback) {
-    // Evil const_cast ok here because the callback itself is not mutated.
-    auto& c = const_cast<EvalCallback&>(callback);
-    return c(js, module, v8Module, observer);
+    return callback(js, module, v8Module, observer);
   }
   return kj::none;
 }

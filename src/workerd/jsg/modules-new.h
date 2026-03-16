@@ -742,7 +742,10 @@ class ModuleRegistry final: public kj::AtomicRefcounted, public ModuleRegistryBa
   const ResolveObserver& observer;
   const jsg::Url& bundleBase;
   kj::MutexGuarded<Impl> impl;
-  kj::Maybe<EvalCallback> maybeEvalCallback = kj::none;
+  // Marked mutable because kj::Function::operator() is non-const, but the eval
+  // callback is conceptually const — it is only ever invoked while holding the
+  // isolate lock, so concurrent mutation is not a concern.
+  mutable kj::Maybe<EvalCallback> maybeEvalCallback = kj::none;
   kj::Own<capnp::SchemaLoader> schemaLoader;
 
   struct ModuleRef {
