@@ -1353,6 +1353,19 @@ ModuleBundle::BundleBuilder& ModuleBundle::BundleBuilder::addEsmModule(
   return *this;
 }
 
+ModuleBundle::BundleBuilder& ModuleBundle::BundleBuilder::addEsmModule(
+    kj::StringPtr name, kj::Array<const char> source, Module::Flags flags) {
+  const auto url = processModuleName(name, bundleBase);
+  add(url,
+      [url = url.clone(), source = kj::mv(source), flags, type = type()](
+          const ResolveContext& context) mutable
+      -> kj::Maybe<kj::OneOf<kj::String, kj::Own<Module>>> {
+    kj::Own<Module> mod = Module::newEsm(kj::mv(url), type, kj::mv(source), flags);
+    return kj::Maybe<kj::OneOf<kj::String, kj::Own<Module>>>(kj::mv(mod));
+  });
+  return *this;
+}
+
 ModuleBundle::BundleBuilder& ModuleBundle::BundleBuilder::addWasmModule(
     kj::StringPtr name, kj::ArrayPtr<const kj::byte> data) {
   const auto url = processModuleName(name, bundleBase);

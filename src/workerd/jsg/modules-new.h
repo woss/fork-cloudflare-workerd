@@ -551,6 +551,13 @@ class ModuleBundle {
         kj::ArrayPtr<const char> code,
         Module::Flags flags = Module::Flags::ESM) KJ_LIFETIMEBOUND;
 
+    // Overload that takes ownership of the source data. Use this when the
+    // source buffer may not outlive the module registry (e.g. transpiled
+    // TypeScript where the backing rust::String has shorter lifetime).
+    BundleBuilder& addEsmModule(kj::StringPtr name,
+        kj::Array<const char> code,
+        Module::Flags flags = Module::Flags::ESM) KJ_LIFETIMEBOUND;
+
     BundleBuilder& addWasmModule(
         kj::StringPtr name, kj::ArrayPtr<const kj::byte> data) KJ_LIFETIMEBOUND;
 
