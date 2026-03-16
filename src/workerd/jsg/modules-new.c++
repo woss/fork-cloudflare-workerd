@@ -1539,6 +1539,8 @@ kj::Maybe<const Module&> ModuleRegistry::lookupImpl(
     }
   }
 
+#undef MODULE_LOOKUP
+
   return kj::none;
 }
 
