@@ -97,18 +97,12 @@ bool CryptoImpl::verifySpkac(kj::Array<const kj::byte> input) {
 
 kj::Maybe<jsg::JsUint8Array> CryptoImpl::exportPublicKey(
     jsg::Lock& js, kj::Array<const kj::byte> input) {
-  KJ_IF_SOME(result, workerd::api::exportPublicKey(js, input)) {
-    return result;
-  }
-  return kj::none;
+  return workerd::api::exportPublicKey(js, input);
 }
 
 kj::Maybe<jsg::JsUint8Array> CryptoImpl::exportChallenge(
     jsg::Lock& js, kj::Array<const kj::byte> input) {
-  KJ_IF_SOME(result, workerd::api::exportChallenge(js, input)) {
-    return result;
-  }
-  return kj::none;
+  return workerd::api::exportChallenge(js, input);
 }
 #pragma endregion  // SPKAC
 

@@ -196,21 +196,21 @@ class CryptoKey: public jsg::Object {
     uint16_t modulusLength;
 
     // The RSA public exponent (in unsigned big-endian form)
-    jsg::JsBufferSource publicExponent;
+    jsg::JsRef<jsg::JsBufferSource> publicExponent;
 
     // The hash algorithm that is used with this key.
     jsg::Optional<KeyAlgorithm> hash;
 
     RsaKeyAlgorithm clone(jsg::Lock& js) const {
-      // Create a non-const copy of the handle so we can call asArrayPtr().
-      jsg::JsBufferSource pe(publicExponent);
+      auto pe = publicExponent.getHandle(js);
       auto data = pe.asArrayPtr();
+      // Should only happen if the flag is enabled and an algorithm field is cloned twice.
       if (FeatureFlags::get(js).getCryptoPreservePublicExponent()) {
         auto exp = jsg::JsUint8Array::create(js, data);
-        return {name, modulusLength, jsg::JsBufferSource(exp), hash};
+        return {name, modulusLength, jsg::JsBufferSource(exp).addRef(js), hash};
       } else {
         auto exp = jsg::JsArrayBuffer::create(js, data);
-        return {name, modulusLength, jsg::JsBufferSource(exp), hash};
+        return {name, modulusLength, jsg::JsBufferSource(exp).addRef(js), hash};
       }
     }
 
