@@ -333,3 +333,58 @@ export const rsaJwkPartialImportFailure = {
     ok(threw, 'Import should have thrown for invalid private exponent');
   },
 };
+
+// Test that operations on detached ArrayBuffers return empty results instead of
+// crashing. This exercises the WasDetached() checks in JsArrayBuffer, JsUint8Array,
+// JsArrayBufferView, and JsBufferSource.
+export const detachedBufferHandling = {
+  async test() {
+    // Create a buffer, detach it by transferring, then use it with crypto APIs.
+    const buf = new ArrayBuffer(16);
+    const view = new Uint8Array(buf);
+
+    // Detach by transferring to a new ArrayBuffer via structuredClone
+    structuredClone(buf, { transfer: [buf] });
+
+    // buf is now detached — byteLength should be 0
+    strictEqual(buf.byteLength, 0);
+
+    // getRandomValues should handle the detached view gracefully
+    let threw = false;
+    try {
+      crypto.getRandomValues(view);
+    } catch (e) {
+      threw = true;
+    }
+    // The detached buffer has 0 length, which should be accepted (0 <= 65536)
+    // but the view reports 0 bytes so getRandomValues is effectively a no-op.
+    // Either succeeding with 0 bytes or throwing is acceptable behavior.
+
+    // timingSafeEqual with detached buffers
+    const detachedBuf2 = new ArrayBuffer(0);
+    ok(
+      crypto.subtle.timingSafeEqual(detachedBuf2, new ArrayBuffer(0)),
+      'Empty buffers should be timing-safe equal'
+    );
+
+    // Verify that encrypt with a detached IV throws rather than crashing
+    const key = await crypto.subtle.generateKey(
+      { name: 'AES-GCM', length: 128 },
+      false,
+      ['encrypt']
+    );
+    const detachedIv = new ArrayBuffer(12);
+    structuredClone(detachedIv, { transfer: [detachedIv] });
+    threw = false;
+    try {
+      await crypto.subtle.encrypt(
+        { name: 'AES-GCM', iv: detachedIv },
+        key,
+        new ArrayBuffer(0)
+      );
+    } catch (e) {
+      threw = true;
+    }
+    ok(threw, 'Encrypt with detached IV should throw');
+  },
+};

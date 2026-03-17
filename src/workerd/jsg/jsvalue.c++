@@ -673,6 +673,16 @@ JsArrayBuffer JsArrayBuffer::create(Lock& js, std::unique_ptr<v8::BackingStore> 
   return JsArrayBuffer(v8::ArrayBuffer::New(js.v8Isolate, kj::mv(backingStore)));
 }
 
+kj::ArrayPtr<kj::byte> JsArrayBuffer::asArrayPtr() {
+  v8::Local<v8::ArrayBuffer> inner = *this;
+  if (inner->WasDetached()) [[unlikely]] {
+    return nullptr;
+  }
+  void* data = inner->GetBackingStore()->Data();
+  size_t length = inner->ByteLength();
+  return kj::ArrayPtr(static_cast<kj::byte*>(data), length);
+}
+
 JsArrayBuffer JsArrayBuffer::slice(Lock& js, size_t newLength) const {
   JSG_REQUIRE(newLength <= size(), RangeError, "New length exceeds buffer length");
   auto backing = v8::ArrayBuffer::NewBackingStore(js.v8Isolate, newLength,
@@ -718,11 +728,17 @@ kj::ArrayPtr<kj::byte> JsBufferSource::asArrayPtr() {
   v8::Local<v8::Value> inner = *this;
   if (inner->IsArrayBuffer()) {
     auto buf = inner.As<v8::ArrayBuffer>();
+    if (buf->WasDetached()) [[unlikely]] {
+      return nullptr;
+    }
     return kj::ArrayPtr(static_cast<kj::byte*>(buf->Data()), buf->ByteLength());
   } else {
     KJ_DASSERT(inner->IsArrayBufferView());
     auto view = inner.As<v8::ArrayBufferView>();
     auto buf = view->Buffer();
+    if (buf->WasDetached()) [[unlikely]] {
+      return nullptr;
+    }
     kj::byte* data = static_cast<kj::byte*>(buf->Data()) + view->ByteOffset();
     return kj::ArrayPtr(data, view->ByteLength());
   }
@@ -731,10 +747,18 @@ kj::ArrayPtr<kj::byte> JsBufferSource::asArrayPtr() {
 size_t JsBufferSource::size() const {
   v8::Local<v8::Value> inner = *this;
   if (inner->IsArrayBuffer()) {
-    return inner.As<v8::ArrayBuffer>()->ByteLength();
+    auto buf = inner.As<v8::ArrayBuffer>();
+    if (buf->WasDetached()) [[unlikely]] {
+      return 0;
+    }
+    return buf->ByteLength();
   } else {
     KJ_DASSERT(inner->IsArrayBufferView());
-    return inner.As<v8::ArrayBufferView>()->ByteLength();
+    auto view = inner.As<v8::ArrayBufferView>();
+    if (view->Buffer()->WasDetached()) [[unlikely]] {
+      return 0;
+    }
+    return view->ByteLength();
   }
 }
 

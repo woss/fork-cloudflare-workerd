@@ -241,12 +241,7 @@ class JsArrayBuffer final: public JsBase<v8::ArrayBuffer, JsArrayBuffer> {
 
   JsArrayBuffer slice(Lock& js, size_t newLength) const;
 
-  kj::ArrayPtr<kj::byte> asArrayPtr() {
-    v8::Local<v8::ArrayBuffer> inner = *this;
-    void* data = inner->GetBackingStore()->Data();
-    size_t length = inner->ByteLength();
-    return kj::ArrayPtr(static_cast<kj::byte*>(data), length);
-  }
+  kj::ArrayPtr<kj::byte> asArrayPtr();
 
   size_t size() const;
 
@@ -262,6 +257,8 @@ class JsArrayBufferView final: public JsBase<v8::ArrayBufferView, JsArrayBufferV
   kj::ArrayPtr<T> asArrayPtr() {
     v8::Local<v8::ArrayBufferView> inner = *this;
     auto buf = inner->Buffer();
+    if (buf->WasDetached()) [[unlikely]]
+      return nullptr;
     T* data = static_cast<T*>(buf->Data()) + inner->ByteOffset();
     size_t length = inner->ByteLength();
     return kj::ArrayPtr(data, length);
@@ -296,8 +293,12 @@ class JsUint8Array final: public JsBase<v8::Uint8Array, JsUint8Array> {
   kj::ArrayPtr<T> asArrayPtr() {
     v8::Local<v8::Uint8Array> inner = *this;
     auto buf = inner->Buffer();
+    if (buf->WasDetached()) [[unlikely]] {
+      return nullptr;
+    }
     T* data = static_cast<T*>(buf->Data()) + inner->ByteOffset();
-    return kj::ArrayPtr(data, size());
+    size_t length = inner->ByteLength();
+    return kj::ArrayPtr(data, length);
   }
 
   size_t size() const;
