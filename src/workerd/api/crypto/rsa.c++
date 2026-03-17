@@ -256,8 +256,10 @@ kj::Maybe<AsymmetricKeyData> Rsa::fromJwk(
   auto nDecoded = toBignumOwned(nBuf.asArrayPtr());
   auto eBuf = simdutfBase64UrlDecodeChecked(js, e, kInvalidBase64Error);
   auto eDecoded = toBignumOwned(eBuf.asArrayPtr());
-  JSG_REQUIRE(RSA_set0_key(rsa.get(), nDecoded.release(), eDecoded.release(), nullptr) == 1, Error,
+  JSG_REQUIRE(RSA_set0_key(rsa.get(), nDecoded.get(), eDecoded.get(), nullptr) == 1, Error,
       "Invalid RSA key in JSON Web Key; failed to set key parameters");
+  nDecoded.release();
+  eDecoded.release();
 
   if (keyType == KeyType::PRIVATE) {
     auto d = JSG_REQUIRE_NONNULL(jwk.d.map([](auto& str) { return str.asPtr(); }), Error,
@@ -293,13 +295,19 @@ kj::Maybe<AsymmetricKeyData> Rsa::fromJwk(
 
     // .release() transfers BIGNUM ownership to the RSA key. UniqueBignum ensures
     // cleanup if any earlier allocation or decode throws.
-    JSG_REQUIRE(RSA_set0_key(rsa.get(), nullptr, nullptr, dDecoded.release()) == 1, Error,
+    JSG_REQUIRE(RSA_set0_key(rsa.get(), nullptr, nullptr, dDecoded.get()) == 1, Error,
         "Invalid RSA key in JSON Web Key; failed to set private exponent");
-    JSG_REQUIRE(RSA_set0_factors(rsa.get(), pDecoded.release(), qDecoded.release()) == 1, Error,
+    dDecoded.release();
+    JSG_REQUIRE(RSA_set0_factors(rsa.get(), pDecoded.get(), qDecoded.get()) == 1, Error,
         "Invalid RSA key in JSON Web Key; failed to set prime factors");
-    JSG_REQUIRE(RSA_set0_crt_params(
-                    rsa.get(), dpDecoded.release(), dqDecoded.release(), qiDecoded.release()) == 1,
+    pDecoded.release();
+    qDecoded.release();
+    JSG_REQUIRE(
+        RSA_set0_crt_params(rsa.get(), dpDecoded.get(), dqDecoded.get(), qiDecoded.get()) == 1,
         Error, "Invalid RSA key in JSON Web Key; failed to set CRT parameters");
+    dpDecoded.release();
+    dqDecoded.release();
+    qiDecoded.release();
   }
 
   auto evpPkey = OSSL_NEW(EVP_PKEY);
@@ -752,7 +760,9 @@ kj::Own<EVP_PKEY> rsaJwkReader(SubtleCrypto::JsonWebKey&& keyDataJwk) {
 
   auto nBignum = toBignumOwned(modulus);
   auto eBignum = toBignumOwned(publicExponent);
-  OSSLCALL(RSA_set0_key(rsaKey.get(), nBignum.release(), eBignum.release(), nullptr));
+  OSSLCALL(RSA_set0_key(rsaKey.get(), nBignum.get(), eBignum.get(), nullptr));
+  nBignum.release();
+  eBignum.release();
 
   if (keyDataJwk.d != kj::none) {
     // This is a private key.
@@ -762,7 +772,8 @@ kj::Own<EVP_PKEY> rsaJwkReader(SubtleCrypto::JsonWebKey&& keyDataJwk) {
         "Private Exponent parameter (\"d\").");
 
     auto dBignum = toBignumOwned(privateExponent);
-    OSSLCALL(RSA_set0_key(rsaKey.get(), nullptr, nullptr, dBignum.release()));
+    OSSLCALL(RSA_set0_key(rsaKey.get(), nullptr, nullptr, dBignum.get()));
+    dBignum.release();
 
     auto presence = (keyDataJwk.p != kj::none) + (keyDataJwk.q != kj::none) +
         (keyDataJwk.dp != kj::none) + (keyDataJwk.dq != kj::none) + (keyDataJwk.qi != kj::none);
@@ -790,8 +801,13 @@ kj::Own<EVP_PKEY> rsaJwkReader(SubtleCrypto::JsonWebKey&& keyDataJwk) {
       auto dqBn = toBignumOwned(secondFactorCrtExponent);
       auto qiBn = toBignumOwned(firstCrtCoefficient);
 
-      OSSLCALL(RSA_set0_factors(rsaKey.get(), pBn.release(), qBn.release()));
-      OSSLCALL(RSA_set0_crt_params(rsaKey.get(), dpBn.release(), dqBn.release(), qiBn.release()));
+      OSSLCALL(RSA_set0_factors(rsaKey.get(), pBn.get(), qBn.get()));
+      pBn.release();
+      qBn.release();
+      OSSLCALL(RSA_set0_crt_params(rsaKey.get(), dpBn.get(), dqBn.get(), qiBn.get()));
+      dpBn.release();
+      dqBn.release();
+      qiBn.release();
     } else {
       JSG_REQUIRE(presence == 0, DOMDataError,
           "Invalid RSA private key in JSON Web Key; if one Prime "

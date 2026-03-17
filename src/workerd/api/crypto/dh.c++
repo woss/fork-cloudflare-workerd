@@ -216,7 +216,9 @@ void DiffieHellman::setPublicKey(kj::ArrayPtr<kj::byte> key) {
   auto bn = toBignumOwned(key);
 
   int checkResult;
-  if (DH_check_pub_key(dh, bn.get(), &checkResult) && checkResult) {
+  JSG_REQUIRE(DH_check_pub_key(dh, bn.get(), &checkResult), Error,
+      "DiffieHellman setPublicKey() failed: could not validate public key");
+  if (checkResult) {
     JSG_REQUIRE(!(checkResult & DH_CHECK_PUBKEY_TOO_SMALL), RangeError,
         "DiffieHellman setPublicKey() failed: key is too small");
     JSG_REQUIRE(!(checkResult & DH_CHECK_PUBKEY_TOO_LARGE), RangeError,
@@ -267,7 +269,9 @@ jsg::JsUint8Array DiffieHellman::computeSecret(jsg::Lock& js, kj::ArrayPtr<kj::b
 
   // Validate the peer's public key before computing the shared secret.
   int checkResult;
-  if (DH_check_pub_key(dh, k, &checkResult) && checkResult) {
+  JSG_REQUIRE(DH_check_pub_key(dh, k, &checkResult), Error,
+      "DiffieHellman computeSecret() failed: could not validate peer public key");
+  if (checkResult) {
     JSG_REQUIRE(!(checkResult & DH_CHECK_PUBKEY_TOO_SMALL), RangeError,
         "DiffieHellman computeSecret() failed: Supplied key is too small");
     JSG_REQUIRE(!(checkResult & DH_CHECK_PUBKEY_TOO_LARGE), RangeError,
