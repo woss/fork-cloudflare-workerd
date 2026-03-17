@@ -303,7 +303,7 @@ kj::Maybe<AsymmetricKeyData> Rsa::fromJwk(
   }
 
   auto evpPkey = OSSL_NEW(EVP_PKEY);
-  KJ_ASSERT(EVP_PKEY_set1_RSA(evpPkey.get(), rsa.get()) == 1);
+  OSSLCALL(EVP_PKEY_set1_RSA(evpPkey.get(), rsa.get()));
 
   auto usages = keyType == KeyType::PRIVATE ? CryptoKeyUsageSet::privateKeyMask()
                                             : CryptoKeyUsageSet::publicKeyMask();
@@ -351,7 +351,7 @@ kj::String Rsa::toPem(
         }
         case KeyEncoding::PKCS8: {
           auto evpPkey = OSSL_NEW(EVP_PKEY);
-          EVP_PKEY_set1_RSA(evpPkey.get(), rsa);
+          OSSLCALL(EVP_PKEY_set1_RSA(evpPkey.get(), rsa));
           JSG_REQUIRE(PEM_write_bio_PKCS8PrivateKey(bio.get(), evpPkey.get(), cipher,
                           reinterpret_cast<char*>(passphrase), passLen, nullptr, nullptr) == 1,
               Error, "Failed to write RSA private key to PKCS8 PEM", tryDescribeOpensslErrors());
@@ -383,7 +383,7 @@ jsg::JsArrayBuffer Rsa::toDer(
         }
         case workerd::api::KeyEncoding::SPKI: {
           auto evpPkey = OSSL_NEW(EVP_PKEY);
-          EVP_PKEY_set1_RSA(evpPkey.get(), rsa);
+          OSSLCALL(EVP_PKEY_set1_RSA(evpPkey.get(), rsa));
           JSG_REQUIRE(i2d_PUBKEY_bio(bio.get(), evpPkey.get()) == 1, Error,
               "Failed to write RSA public key to SPKI", tryDescribeOpensslErrors());
           break;
@@ -412,7 +412,7 @@ jsg::JsArrayBuffer Rsa::toDer(
         }
         case KeyEncoding::PKCS8: {
           auto evpPkey = OSSL_NEW(EVP_PKEY);
-          EVP_PKEY_set1_RSA(evpPkey.get(), rsa);
+          OSSLCALL(EVP_PKEY_set1_RSA(evpPkey.get(), rsa));
           JSG_REQUIRE(i2d_PKCS8PrivateKey_bio(bio.get(), evpPkey.get(), cipher,
                           reinterpret_cast<char*>(passphrase), passLen, nullptr, nullptr) == 1,
               Error, "Failed to write RSA private key to PKCS8 PEM", tryDescribeOpensslErrors());
