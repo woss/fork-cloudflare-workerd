@@ -719,6 +719,15 @@ kj::Array<kj::byte> JsArrayBuffer::copy() {
 // ======================================================================================
 // JsArrayBufferView
 
+kj::ArrayPtr<kj::byte> JsArrayBufferView::asArrayPtr() {
+  v8::Local<v8::ArrayBufferView> inner = *this;
+  auto buf = inner->Buffer();
+  if (buf->WasDetached()) [[unlikely]]
+    return nullptr;
+  kj::byte* data = static_cast<kj::byte*>(buf->Data()) + inner->ByteOffset();
+  return kj::ArrayPtr(data, inner->ByteLength());
+}
+
 size_t JsArrayBufferView::size() const {
   v8::Local<v8::ArrayBufferView> inner = *this;
   return inner->ByteLength();

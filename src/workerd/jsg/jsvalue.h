@@ -254,16 +254,7 @@ class JsArrayBuffer final: public JsBase<v8::ArrayBuffer, JsArrayBuffer> {
 
 class JsArrayBufferView final: public JsBase<v8::ArrayBufferView, JsArrayBufferView> {
  public:
-  template <typename T = kj::byte>
-  kj::ArrayPtr<T> asArrayPtr() {
-    v8::Local<v8::ArrayBufferView> inner = *this;
-    auto buf = inner->Buffer();
-    if (buf->WasDetached()) [[unlikely]]
-      return nullptr;
-    T* data = static_cast<T*>(buf->Data()) + inner->ByteOffset();
-    size_t length = inner->ByteLength();
-    return kj::ArrayPtr(data, length);
-  }
+  kj::ArrayPtr<kj::byte> asArrayPtr();
 
   size_t size() const;
 
@@ -297,9 +288,9 @@ class JsUint8Array final: public JsBase<v8::Uint8Array, JsUint8Array> {
     if (buf->WasDetached()) [[unlikely]] {
       return nullptr;
     }
-    T* data = static_cast<T*>(buf->Data()) + inner->ByteOffset();
-    size_t length = inner->ByteLength();
-    return kj::ArrayPtr(data, length);
+    auto byteLength = inner->ByteLength();
+    T* data = reinterpret_cast<T*>(static_cast<kj::byte*>(buf->Data()) + inner->ByteOffset());
+    return kj::ArrayPtr(data, byteLength / sizeof(T));
   }
 
   kj::ArrayPtr<const kj::byte> asArrayPtr() const;
