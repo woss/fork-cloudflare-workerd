@@ -651,6 +651,118 @@ BufferSource Lock::bytes(kj::Array<kj::byte> data) {
   return BufferSource(*this, BackingStore::from(*this, kj::mv(data)));
 }
 
+// ======================================================================================
+// JsArrayBuffer
+
+JsArrayBuffer JsArrayBuffer::create(Lock& js, size_t length) {
+  JSG_REQUIRE(length < v8::ArrayBuffer::kMaxByteLength, RangeError, "The length is too large");
+  auto backing = v8::ArrayBuffer::NewBackingStore(js.v8Isolate, length,
+      v8::BackingStoreInitializationMode::kZeroInitialized,
+      v8::BackingStoreOnFailureMode::kReturnNull);
+  JSG_REQUIRE(backing != nullptr, RangeError, "Failed to allocate memory for ArrayBuffer");
+  return create(js, kj::mv(backing));
+}
+
+JsArrayBuffer JsArrayBuffer::create(Lock& js, kj::ArrayPtr<const kj::byte> data) {
+  auto buf = create(js, data.size());
+  buf.asArrayPtr().copyFrom(data);
+  return buf;
+}
+
+JsArrayBuffer JsArrayBuffer::create(Lock& js, std::unique_ptr<v8::BackingStore> backingStore) {
+  return JsArrayBuffer(v8::ArrayBuffer::New(js.v8Isolate, kj::mv(backingStore)));
+}
+
+JsArrayBuffer JsArrayBuffer::slice(Lock& js, size_t newLength) const {
+  JSG_REQUIRE(newLength <= size(), RangeError, "New length exceeds buffer length");
+  auto backing = v8::ArrayBuffer::NewBackingStore(js.v8Isolate, newLength,
+      v8::BackingStoreInitializationMode::kUninitialized,
+      v8::BackingStoreOnFailureMode::kReturnNull);
+  JSG_REQUIRE(backing != nullptr, RangeError, "Failed to allocate memory for ArrayBuffer");
+  auto dest = kj::ArrayPtr(static_cast<kj::byte*>(backing->Data()), newLength);
+  v8::Local<v8::ArrayBuffer> inner = *this;
+  dest.copyFrom(
+      kj::ArrayPtr(static_cast<const kj::byte*>(inner->GetBackingStore()->Data()), newLength));
+  return JsArrayBuffer(v8::ArrayBuffer::New(js.v8Isolate, kj::mv(backing)));
+}
+
+size_t JsArrayBuffer::size() const {
+  v8::Local<v8::ArrayBuffer> inner = *this;
+  return inner->ByteLength();
+}
+
+kj::Array<kj::byte> JsArrayBuffer::copy() {
+  auto ptr = asArrayPtr();
+  return kj::heapArray(ptr);
+}
+
+// ======================================================================================
+// JsArrayBufferView
+
+size_t JsArrayBufferView::size() const {
+  v8::Local<v8::ArrayBufferView> inner = *this;
+  return inner->ByteLength();
+}
+
+bool JsArrayBufferView::isIntegerType() const {
+  v8::Local<v8::ArrayBufferView> inner = *this;
+  return inner->IsUint8Array() || inner->IsUint8ClampedArray() || inner->IsInt8Array() ||
+      inner->IsUint16Array() || inner->IsInt16Array() || inner->IsUint32Array() ||
+      inner->IsInt32Array() || inner->IsBigInt64Array() || inner->IsBigUint64Array();
+}
+
+// ======================================================================================
+// JsBufferSource
+
+kj::ArrayPtr<kj::byte> JsBufferSource::asArrayPtr() {
+  v8::Local<v8::Value> inner = *this;
+  if (inner->IsArrayBuffer()) {
+    auto buf = inner.As<v8::ArrayBuffer>();
+    return kj::ArrayPtr(static_cast<kj::byte*>(buf->Data()), buf->ByteLength());
+  } else {
+    KJ_DASSERT(inner->IsArrayBufferView());
+    auto view = inner.As<v8::ArrayBufferView>();
+    auto buf = view->Buffer();
+    kj::byte* data = static_cast<kj::byte*>(buf->Data()) + view->ByteOffset();
+    return kj::ArrayPtr(data, view->ByteLength());
+  }
+}
+
+size_t JsBufferSource::size() const {
+  v8::Local<v8::Value> inner = *this;
+  if (inner->IsArrayBuffer()) {
+    return inner.As<v8::ArrayBuffer>()->ByteLength();
+  } else {
+    KJ_DASSERT(inner->IsArrayBufferView());
+    return inner.As<v8::ArrayBufferView>()->ByteLength();
+  }
+}
+
+bool JsBufferSource::isIntegerType() const {
+  v8::Local<v8::Value> inner = *this;
+  return inner->IsUint8Array() || inner->IsUint8ClampedArray() || inner->IsInt8Array() ||
+      inner->IsUint16Array() || inner->IsInt16Array() || inner->IsUint32Array() ||
+      inner->IsInt32Array() || inner->IsBigInt64Array() || inner->IsBigUint64Array();
+}
+
+bool JsBufferSource::isArrayBuffer() const {
+  v8::Local<v8::Value> inner = *this;
+  return inner->IsArrayBuffer();
+}
+
+bool JsBufferSource::isArrayBufferView() const {
+  v8::Local<v8::Value> inner = *this;
+  return inner->IsArrayBufferView();
+}
+
+kj::Array<kj::byte> JsBufferSource::copy() {
+  auto ptr = asArrayPtr();
+  return kj::heapArray(ptr);
+}
+
+// ======================================================================================
+// JsUint8Array
+
 JsUint8Array JsUint8Array::create(Lock& js, size_t length) {
   JSG_REQUIRE(length < v8::ArrayBuffer::kMaxByteLength, RangeError, "The length is too large");
   auto backing = v8::ArrayBuffer::NewBackingStore(js.v8Isolate, length,
@@ -658,6 +770,17 @@ JsUint8Array JsUint8Array::create(Lock& js, size_t length) {
       v8::BackingStoreOnFailureMode::kReturnNull);
   JSG_REQUIRE(backing != nullptr, RangeError, "Failed to allocate memory for Uint8Array");
   return create(js, kj::mv(backing), 0, length);
+}
+
+JsUint8Array JsUint8Array::create(Lock& js, kj::ArrayPtr<const kj::byte> data) {
+  auto buf = create(js, data.size());
+  buf.asArrayPtr().copyFrom(data);
+  return buf;
+}
+
+JsUint8Array JsUint8Array::create(Lock& js, JsArrayBuffer& buffer) {
+  v8::Local<v8::ArrayBuffer> ab = buffer;
+  return JsUint8Array(v8::Uint8Array::New(ab, 0, ab->ByteLength()));
 }
 
 JsUint8Array JsUint8Array::create(
@@ -674,6 +797,11 @@ JsUint8Array JsUint8Array::slice(Lock& js, size_t newLength) const {
 
 size_t JsUint8Array::size() const {
   return inner->ByteLength();
+}
+
+kj::Array<kj::byte> JsUint8Array::copy() {
+  auto ptr = asArrayPtr();
+  return kj::heapArray(ptr);
 }
 
 }  // namespace workerd::jsg
