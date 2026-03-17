@@ -2399,12 +2399,34 @@ interface KVNamespaceGetWithMetadataResult<Value, Metadata> {
 }
 type QueueContentType = "text" | "bytes" | "json" | "v8";
 interface Queue<Body = unknown> {
-  send(message: Body, options?: QueueSendOptions): Promise<void>;
+  send(message: Body, options?: QueueSendOptions): Promise<QueueSendResponse>;
   sendBatch(
     messages: Iterable<MessageSendRequest<Body>>,
     options?: QueueSendBatchOptions,
-  ): Promise<void>;
+  ): Promise<QueueSendBatchResponse>;
   metrics(): Promise<QueueMetrics>;
+}
+interface QueueSendMetrics {
+  backlogCount: number;
+  backlogBytes: number;
+  oldestMessageTimestamp: number;
+}
+interface QueueSendMetadata {
+  metrics: QueueSendMetrics;
+}
+interface QueueSendResponse {
+  metadata: QueueSendMetadata;
+}
+interface QueueSendBatchMetrics {
+  backlogCount: number;
+  backlogBytes: number;
+  oldestMessageTimestamp: number;
+}
+interface QueueSendBatchMetadata {
+  metrics: QueueSendBatchMetrics;
+}
+interface QueueSendBatchResponse {
+  metadata: QueueSendBatchMetadata;
 }
 interface QueueSendOptions {
   contentType?: QueueContentType;
