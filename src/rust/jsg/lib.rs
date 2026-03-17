@@ -106,6 +106,7 @@ fn get_resource_descriptor<R: Resource>() -> v8::ffi::ResourceDescriptor {
 pub fn create_resource_constructor<R: Resource>(
     lock: &mut Lock,
 ) -> v8::Global<v8::FunctionTemplate> {
+    // SAFETY: Lock guarantees the isolate is locked and a HandleScope is active.
     unsafe {
         v8::ffi::create_resource_template(lock.isolate().as_ffi(), &get_resource_descriptor::<R>())
             .into()
@@ -137,6 +138,7 @@ pub unsafe fn wrap_resource<'a, R: Resource + 'a, RT: ResourceTemplate>(
             resource.get_state().this = Ref::into_raw(resource.clone()).cast();
             resource.get_state().drop_fn = Some(drop_fn);
 
+            // SAFETY: Lock guarantees the isolate is locked; the resource pointer and constructor are valid.
             let instance: v8::Local<'a, v8::Value> = unsafe {
                 v8::Local::from_ffi(
                     lock.isolate(),
@@ -148,6 +150,7 @@ pub unsafe fn wrap_resource<'a, R: Resource + 'a, RT: ResourceTemplate>(
                     ),
                 )
             };
+            // SAFETY: Lock guarantees the isolate is locked; the instance is a valid V8 object.
             unsafe {
                 resource
                     .get_state()
@@ -162,8 +165,10 @@ pub fn unwrap_resource<'a, R: Resource>(
     lock: &'a mut Lock,
     value: v8::Local<v8::Value>,
 ) -> &'a mut R {
+    // SAFETY: The isolate is locked and value wraps a valid resource pointer.
     let ptr =
         unsafe { v8::ffi::unwrap_resource(lock.isolate().as_ffi(), value.into_ffi()) as *mut R };
+    // SAFETY: The pointer was stored by wrap_resource and points to a valid R.
     unsafe { &mut *ptr }
 }
 
@@ -278,6 +283,7 @@ impl Error {
 
     /// Creates a V8 exception from this error.
     pub fn to_local<'a>(&self, isolate: v8::IsolatePtr) -> v8::Local<'a, v8::Value> {
+        // SAFETY: isolate is valid; exception_create returns a valid Local handle.
         unsafe {
             v8::Local::from_ffi(
                 isolate,
@@ -605,6 +611,7 @@ impl Lock {
     /// # Safety
     /// The caller must ensure that `args` is a valid pointer to `FunctionCallbackInfo`.
     pub unsafe fn from_args(args: *mut v8::ffi::FunctionCallbackInfo) -> Self {
+        // SAFETY: fci_get_isolate returns the isolate from a valid FunctionCallbackInfo.
         unsafe { Self::from_isolate_ptr(v8::ffi::fci_get_isolate(args)) }
     }
 
@@ -614,6 +621,7 @@ impl Lock {
     /// The caller must ensure that `isolate` is a valid pointer to an `Isolate`.
     pub unsafe fn from_isolate_ptr(isolate: *mut v8::ffi::Isolate) -> Self {
         Self {
+            // SAFETY: Caller guarantees the isolate pointer is valid.
             isolate: unsafe { v8::IsolatePtr::from_ffi(isolate) },
         }
     }
@@ -624,6 +632,7 @@ impl Lock {
     }
 
     pub fn new_object<'a>(&mut self) -> v8::Local<'a, v8::Object> {
+        // SAFETY: The isolate is locked and a HandleScope is active.
         unsafe {
             v8::Local::from_ffi(
                 self.isolate(),
@@ -641,6 +650,7 @@ impl Lock {
     }
 
     pub(crate) fn realm(&mut self) -> &mut Realm {
+        // SAFETY: The isolate is locked; realm_from_isolate returns a valid Realm pointer.
         unsafe { &mut *crate::ffi::realm_from_isolate(self.isolate().as_ffi()) }
     }
 
@@ -657,6 +667,7 @@ impl Lock {
 
     /// Throws an error as a V8 exception.
     pub fn throw_exception(&mut self, err: &Error) {
+        // SAFETY: The isolate is locked and the exception local handle is valid.
         unsafe {
             v8::ffi::isolate_throw_exception(
                 self.isolate().as_ffi(),
@@ -683,6 +694,7 @@ impl<T: Resource> Deref for Ref<T> {
 
     fn deref(&self) -> &Self::Target {
         let ptr = self.val.get();
+        // SAFETY: UnsafeCell::get returns a valid pointer; Ref ensures single-thread access.
         unsafe { &*ptr }
     }
 }
@@ -690,6 +702,7 @@ impl<T: Resource> Deref for Ref<T> {
 impl<T: Resource> DerefMut for Ref<T> {
     fn deref_mut(&mut self) -> &mut Self::Target {
         let ptr = self.val.get();
+        // SAFETY: UnsafeCell::get returns a valid pointer; Ref ensures single-thread access.
         unsafe { &mut *ptr }
     }
 }
@@ -714,6 +727,7 @@ impl<T: Resource> Ref<T> {
     /// - The pointer is properly aligned and points to a valid `T` instance
     pub unsafe fn from_raw(this: *mut T) -> Self {
         Self {
+            // SAFETY: Caller guarantees the pointer was created by Ref::into_raw.
             val: unsafe { Rc::from_raw(this.cast::<UnsafeCell<T>>()) },
         }
     }
@@ -859,6 +873,7 @@ impl ResourceState {
             unreachable!("This should not happen")
         };
         let isolate = self.isolate.expect("isolate should be set");
+        // SAFETY: The isolate is valid, self.this is a valid resource pointer stored during wrapping.
         unsafe {
             wrapper.make_weak(isolate, self.this, Self::weak_callback);
         }
@@ -919,6 +934,7 @@ pub trait Struct: Type {}
 /// - The resource has not already been dropped
 pub unsafe fn drop_resource<R: Resource>(_isolate: *mut ffi::Isolate, this: *mut c_void) {
     let this = this.cast::<R>();
+    // SAFETY: Caller guarantees this pointer was created by Ref::into_raw and hasn't been freed.
     let this = unsafe { Ref::from_raw(this) };
     drop(this);
 }
@@ -962,6 +978,7 @@ impl Realm {
 impl Drop for Realm {
     fn drop(&mut self) {
         debug_assert!(
+            // SAFETY: The isolate pointer is valid during Realm's lifetime.
             unsafe { self.isolate.is_locked() },
             "Realm must be dropped while holding the isolate lock"
         );
@@ -972,6 +989,7 @@ impl Drop for Realm {
         // in ResourceState.this. If strong_wrapper is still Some, the V8 object
         // wasn't GC'd, so we must manually drop the leaked Ref by calling drop_fn.
         for resource_ptr in &self.resources {
+            // SAFETY: resource_ptr is valid; we only access it before calling drop_fn which frees it.
             unsafe {
                 let resource_state = &**resource_ptr;
                 // Only drop if the wrapper hasn't been collected by V8's GC
@@ -993,5 +1011,6 @@ impl Drop for Realm {
 #[expect(clippy::unnecessary_box_returns)]
 unsafe fn realm_create(isolate: *mut v8::ffi::Isolate, feature_flags_data: &[u8]) -> Box<Realm> {
     let feature_flags = FeatureFlags::from_bytes(feature_flags_data);
+    // SAFETY: Caller guarantees the isolate pointer is valid.
     unsafe { Box::new(Realm::new(v8::IsolatePtr::from_ffi(isolate), feature_flags)) }
 }

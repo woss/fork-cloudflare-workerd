@@ -214,6 +214,7 @@ impl<'a> CustomHttpHeaderId<'a> {
     /// the same layout as `*const kj::HttpHeaderId`. The caller guarantees all pointers are valid.
     pub unsafe fn from_ptr_slice(ptrs: &'a [*const CustomHttpHeader]) -> &'a [Self] {
         let ptr = std::ptr::from_ref::<[*const CustomHttpHeader]>(ptrs) as *const [Self];
+        // SAFETY: CustomHttpHeaderId is #[repr(transparent)] over &CustomHttpHeader; caller guarantees all pointers are valid.
         unsafe { &*ptr }
     }
 }
@@ -223,12 +224,14 @@ pub struct HttpHeadersRef<'a>(&'a ffi::HttpHeaders);
 
 impl HttpHeadersRef<'_> {
     pub fn get(&self, id: HeaderId) -> Option<&[u8]> {
+        // SAFETY: self.0 is a valid HttpHeaders reference and id is a valid builtin header enum.
         unsafe { ffi::get_header(self.0, id).into() }
     }
 
     /// Look up a header by its `kj::HttpHeaderId`. This works for both builtin headers and custom
     /// headers registered via `HttpHeaderTable::Builder::add()`.
     pub fn get_by_id(&self, id: CustomHttpHeaderId<'_>) -> Option<&[u8]> {
+        // SAFETY: self.0 is a valid HttpHeaders reference and id.0 is a valid HttpHeaderId.
         unsafe { ffi::get_header_by_id(self.0, id.0).into() }
     }
 
@@ -321,15 +324,9 @@ impl HttpService for CxxHttpService<'_> {
         request_body: Pin<&'a mut AsyncInputStream>,
         response: Pin<&'a mut HttpServiceResponse>,
     ) -> Result<()> {
-        ffi::request(
-            unsafe { self.0.as_mut() },
-            method,
-            url,
-            headers.0,
-            request_body,
-            response,
-        )
-        .await?;
+        // SAFETY: self.0 is a valid owned-or-borrowed HttpService.
+        let service = unsafe { self.0.as_mut() };
+        ffi::request(service, method, url, headers.0, request_body, response).await?;
         Ok(())
     }
 
@@ -345,16 +342,11 @@ impl HttpService for CxxHttpService<'_> {
         'a: 'b,
         Self: 'b,
     {
+        // SAFETY: self.0 is a valid owned-or-borrowed HttpService.
+        let service = unsafe { self.0.as_mut() };
         Box::pin(
-            ffi::connect(
-                unsafe { self.0.as_mut() },
-                host,
-                headers.0,
-                connection,
-                response,
-                settings,
-            )
-            .map_err(Into::into),
+            ffi::connect(service, host, headers.0, connection, response, settings)
+                .map_err(Into::into),
         )
     }
 }

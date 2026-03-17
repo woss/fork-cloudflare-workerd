@@ -101,6 +101,7 @@ fn get_header_value_via_id<'a>(
     headers: &'a ffi::HttpHeaders,
     id: &ffi::HttpHeaderId,
 ) -> KjMaybe<&'a [u8]> {
+    // SAFETY: headers is a valid HttpHeaders ref and id is a valid HttpHeaderId from C++.
     unsafe { kj::http::ffi::get_header_by_id(headers, id) }
 }
 
@@ -109,6 +110,7 @@ fn get_header_value_via_id<'a>(
 /// Each pointer in `ids` must be non-null and point to a valid, live `HttpHeaderId`.
 unsafe fn assert_header_ids_present(headers: &ffi::HttpHeaders, ids: &[*const ffi::HttpHeaderId]) {
     let headers_ref = HttpHeadersRef::from(headers);
+    // SAFETY: All pointers in ids are valid, as guaranteed by the unsafe fn contract.
     let id_refs = unsafe { CustomHttpHeaderId::from_ptr_slice(ids) };
     for (i, &id_ref) in id_refs.iter().enumerate() {
         let value = headers_ref.get_by_id(id_ref);

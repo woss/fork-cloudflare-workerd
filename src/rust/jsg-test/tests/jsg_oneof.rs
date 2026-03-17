@@ -104,6 +104,7 @@ fn jsg_oneof_string_or_number_accepts_string() {
             _state: ResourceState::default(),
         });
         let mut template = EnumTestResourceTemplate::new(lock);
+        // SAFETY: Lock is valid, resource is a valid Ref, and template holds a valid FunctionTemplate.
         let wrapped = unsafe { jsg::wrap_resource(lock, resource, &mut template) };
         ctx.set_global("resource", wrapped);
 
@@ -121,6 +122,7 @@ fn jsg_oneof_string_or_number_accepts_number() {
             _state: ResourceState::default(),
         });
         let mut template = EnumTestResourceTemplate::new(lock);
+        // SAFETY: Lock is valid, resource is a valid Ref, and template holds a valid FunctionTemplate.
         let wrapped = unsafe { jsg::wrap_resource(lock, resource, &mut template) };
         ctx.set_global("resource", wrapped);
 
@@ -138,6 +140,7 @@ fn jsg_oneof_string_or_number_rejects_boolean() {
             _state: ResourceState::default(),
         });
         let mut template = EnumTestResourceTemplate::new(lock);
+        // SAFETY: Lock is valid, resource is a valid Ref, and template holds a valid FunctionTemplate.
         let wrapped = unsafe { jsg::wrap_resource(lock, resource, &mut template) };
         ctx.set_global("resource", wrapped);
 
@@ -160,6 +163,7 @@ fn jsg_oneof_string_or_bool_accepts_both() {
             _state: ResourceState::default(),
         });
         let mut template = EnumTestResourceTemplate::new(lock);
+        // SAFETY: Lock is valid, resource is a valid Ref, and template holds a valid FunctionTemplate.
         let wrapped = unsafe { jsg::wrap_resource(lock, resource, &mut template) };
         ctx.set_global("resource", wrapped);
 
@@ -180,6 +184,7 @@ fn jsg_oneof_three_types_accepts_all() {
             _state: ResourceState::default(),
         });
         let mut template = EnumTestResourceTemplate::new(lock);
+        // SAFETY: Lock is valid, resource is a valid Ref, and template holds a valid FunctionTemplate.
         let wrapped = unsafe { jsg::wrap_resource(lock, resource, &mut template) };
         ctx.set_global("resource", wrapped);
 
@@ -203,6 +208,7 @@ fn jsg_oneof_three_types_rejects_null_and_undefined() {
             _state: ResourceState::default(),
         });
         let mut template = EnumTestResourceTemplate::new(lock);
+        // SAFETY: Lock is valid, resource is a valid Ref, and template holds a valid FunctionTemplate.
         let wrapped = unsafe { jsg::wrap_resource(lock, resource, &mut template) };
         ctx.set_global("resource", wrapped);
 
@@ -229,6 +235,7 @@ fn jsg_oneof_variant_order_matches_declaration() {
             _state: ResourceState::default(),
         });
         let mut template = EnumTestResourceTemplate::new(lock);
+        // SAFETY: Lock is valid, resource is a valid Ref, and template holds a valid FunctionTemplate.
         let wrapped = unsafe { jsg::wrap_resource(lock, resource, &mut template) };
         ctx.set_global("resource", wrapped);
 
@@ -257,6 +264,7 @@ fn jsg_oneof_reference_parameter() {
             _state: ResourceState::default(),
         });
         let mut template = EnumTestResourceTemplate::new(lock);
+        // SAFETY: Lock is valid, resource is a valid Ref, and template holds a valid FunctionTemplate.
         let wrapped = unsafe { jsg::wrap_resource(lock, resource, &mut template) };
         ctx.set_global("resource", wrapped);
 

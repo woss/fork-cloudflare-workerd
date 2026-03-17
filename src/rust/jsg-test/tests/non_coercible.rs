@@ -130,6 +130,7 @@ fn non_coercible_methods_accept_correct_types_and_reject_incorrect_types() {
             _state: ResourceState::default(),
         });
         let mut template = MyResourceTemplate::new(lock);
+        // SAFETY: Lock is valid, resource is a valid Ref, and template holds a valid FunctionTemplate.
         let wrapped = unsafe { jsg::wrap_resource(lock, resource, &mut template) };
         ctx.set_global("resource", wrapped);
 

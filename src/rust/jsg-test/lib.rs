@@ -78,12 +78,14 @@ impl EvalContext<'_> {
     where
         T: jsg::FromJS<ResultType = T>,
     {
+        // SAFETY: self.inner is a valid EvalContext from C++; code is a valid str.
         let result = unsafe { self.inner.eval(code) };
         let opt_local: Option<v8::ffi::Local> = result.value.into();
 
         if result.success {
             match opt_local {
                 Some(local) => {
+                    // SAFETY: self.isolate is valid and local is from a successful eval result.
                     let local = unsafe { v8::Local::from_ffi(self.isolate, local) };
                     match T::from_js(lock, local.clone()) {
                         Err(e) => Err(EvalError::UncoercibleResult {
@@ -98,6 +100,7 @@ impl EvalContext<'_> {
         } else {
             match opt_local {
                 Some(local) => {
+                    // SAFETY: self.isolate is valid and local is from an eval exception.
                     let value = unsafe { v8::Local::from_ffi(self.isolate, local) };
                     Err(EvalError::Exception(value))
                 }
@@ -110,17 +113,20 @@ impl EvalContext<'_> {
     ///
     /// Useful for obtaining handles (e.g. functions) that aren't `FromJS` types.
     pub fn eval_raw(&self, code: &str) -> Result<v8::Local<'_, v8::Value>, EvalError<'_>> {
+        // SAFETY: self.inner is a valid EvalContext from C++; code is a valid str.
         let result = unsafe { self.inner.eval(code) };
         let opt_local: Option<v8::ffi::Local> = result.value.into();
 
         if result.success {
             match opt_local {
+                // SAFETY: self.isolate is valid and local is from a successful eval result.
                 Some(local) => Ok(unsafe { v8::Local::from_ffi(self.isolate, local) }),
                 None => unreachable!(),
             }
         } else {
             match opt_local {
                 Some(local) => {
+                    // SAFETY: self.isolate is valid and local is from an eval exception.
                     let value = unsafe { v8::Local::from_ffi(self.isolate, local) };
                     Err(EvalError::Exception(value))
                 }
@@ -130,12 +136,14 @@ impl EvalContext<'_> {
     }
 
     pub fn set_global(&self, name: &str, value: v8::Local<v8::Value>) {
+        // SAFETY: self.inner is a valid EvalContext and value is a valid Local handle.
         unsafe { self.inner.set_global(name, value.into_ffi()) }
     }
 }
 
 impl Harness {
     pub fn new() -> Self {
+        // SAFETY: create_test_harness initializes the V8 platform and returns a valid harness.
         Self(unsafe { ffi::create_test_harness() })
     }
 
@@ -159,13 +167,16 @@ impl Harness {
         ) where
             F: FnOnce(&mut jsg::Lock, &mut EvalContext) -> Result<(), jsg::Error>,
         {
+            // SAFETY: data was cast from &raw mut Option<F> in run_in_context below.
             let cb = unsafe { &mut *(data as *mut Option<F>) };
             if let Some(callback) = cb.take() {
+                // SAFETY: isolate is a valid pointer provided by the C++ test harness.
                 let isolate_ptr = unsafe { v8::IsolatePtr::from_ffi(isolate) };
                 let mut eval_context = EvalContext {
                     inner: &context,
                     isolate: isolate_ptr,
                 };
+                // SAFETY: isolate is a valid pointer provided by the C++ test harness.
                 let mut lock = unsafe { jsg::Lock::from_isolate_ptr(isolate) };
                 if let Err(e) = callback(&mut lock, &mut eval_context) {
                     panic!("Test failed: {}: {}", e.name, e.message);
@@ -174,6 +185,7 @@ impl Harness {
         }
 
         let mut callback = Some(callback);
+        // SAFETY: callback pointer is valid for the duration of run_in_context.
         unsafe {
             self.0
                 .run_in_context(&raw mut callback as usize, trampoline::<F>);
