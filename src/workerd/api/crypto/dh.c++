@@ -214,6 +214,16 @@ void DiffieHellman::setPrivateKey(kj::ArrayPtr<kj::byte> key) {
 
 void DiffieHellman::setPublicKey(kj::ArrayPtr<kj::byte> key) {
   auto bn = toBignumOwned(key);
+
+  int checkResult;
+  if (DH_check_pub_key(dh, bn.get(), &checkResult) && checkResult) {
+    JSG_REQUIRE(!(checkResult & DH_CHECK_PUBKEY_TOO_SMALL), RangeError,
+        "DiffieHellman setPublicKey() failed: key is too small");
+    JSG_REQUIRE(!(checkResult & DH_CHECK_PUBKEY_TOO_LARGE), RangeError,
+        "DiffieHellman setPublicKey() failed: key is too large");
+    JSG_FAIL_REQUIRE(Error, "DiffieHellman setPublicKey() failed: invalid public key");
+  }
+
   OSSLCALL(DH_set0_key(dh, bn.get(), nullptr));
   bn.release();
 }
@@ -255,23 +265,22 @@ jsg::JsUint8Array DiffieHellman::computeSecret(jsg::Lock& js, kj::ArrayPtr<kj::b
   auto k = JSG_REQUIRE_NONNULL(
       toBignum(key), Error, "Error getting key while computing DiffieHellman secret");
 
+  // Validate the peer's public key before computing the shared secret.
+  int checkResult;
+  if (DH_check_pub_key(dh, k, &checkResult) && checkResult) {
+    JSG_REQUIRE(!(checkResult & DH_CHECK_PUBKEY_TOO_SMALL), RangeError,
+        "DiffieHellman computeSecret() failed: Supplied key is too small");
+    JSG_REQUIRE(!(checkResult & DH_CHECK_PUBKEY_TOO_LARGE), RangeError,
+        "DiffieHellman computeSecret() failed: Supplied key is too large");
+    JSG_FAIL_REQUIRE(Error, "DiffieHellman computeSecret() failed: invalid peer public key");
+  }
+
   size_t prime_size = DH_size(dh);
   auto buf = jsg::JsUint8Array::create(js, prime_size);
 
   int size = DH_compute_key(buf.asArrayPtr().begin(), k.get(), dh);
-  if (size == -1) {
-    // various error checking
-    int checkResult;
-    int checked = DH_check_pub_key(dh, k, &checkResult);
-
-    if (checked && checkResult) {
-      JSG_REQUIRE(!(checkResult & DH_CHECK_PUBKEY_TOO_SMALL), RangeError,
-          "DiffieHellman computeSecret() failed: Supplied key is too small");
-      JSG_REQUIRE(!(checkResult & DH_CHECK_PUBKEY_TOO_LARGE), RangeError,
-          "DiffieHellman computeSecret() failed: Supplied key is too large");
-    }
-    JSG_FAIL_REQUIRE(Error, "Invalid Key");
-  }
+  JSG_REQUIRE(
+      size != -1, Error, "DiffieHellman computeSecret() failed: error computing shared secret");
 
   KJ_ASSERT(size >= 0);
   zeroPadDiffieHellmanSecret(size, buf.asArrayPtr().begin(), prime_size);

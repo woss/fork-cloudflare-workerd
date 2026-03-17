@@ -499,3 +499,47 @@ export const DhLargeGeneratorParam = {
     });
   },
 };
+
+// Test that invalid public keys are rejected by setPublicKey and computeSecret.
+export const dhPubKeyValidation = {
+  test() {
+    const dh = crypto.createDiffieHellman(1024);
+    dh.generateKeys();
+    const prime = dh.getPrime();
+
+    // Public key of 0 should be rejected (too small)
+    const dh2 = crypto.createDiffieHellman(prime);
+    dh2.generateKeys();
+    assert.throws(() => dh2.setPublicKey(Buffer.from([0x00])), {
+      message: /too small|invalid public key/,
+    });
+
+    // Public key of 1 should be rejected (too small)
+    assert.throws(() => dh2.setPublicKey(Buffer.from([0x01])), {
+      message: /too small|invalid public key/,
+    });
+
+    // Public key equal to the prime should be rejected (too large)
+    assert.throws(() => dh2.setPublicKey(prime), {
+      message: /too large|invalid public key/,
+    });
+
+    // computeSecret should also reject invalid peer keys proactively
+    assert.throws(() => dh2.computeSecret(Buffer.from([0x00])), {
+      message: /too small|invalid peer public key/,
+    });
+    assert.throws(() => dh2.computeSecret(Buffer.from([0x01])), {
+      message: /too small|invalid peer public key/,
+    });
+    assert.throws(() => dh2.computeSecret(prime), {
+      message: /too large|invalid peer public key/,
+    });
+
+    // Valid exchange should still work
+    const dh3 = crypto.createDiffieHellman(prime);
+    dh3.generateKeys();
+    const secret1 = dh.computeSecret(dh3.getPublicKey());
+    const secret2 = dh3.computeSecret(dh.getPublicKey());
+    assert.deepStrictEqual(secret1, secret2);
+  },
+};
