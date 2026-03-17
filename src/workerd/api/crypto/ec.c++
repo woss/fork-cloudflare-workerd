@@ -666,6 +666,9 @@ kj::Own<EVP_PKEY> ellipticJwkReader(
         tryDescribeOpensslErrors());
   }
 
+  JSG_REQUIRE(1 == EC_KEY_check_key(ecKey.get()), DOMDataError, "Invalid EC key in JSON Web Key",
+      tryDescribeOpensslErrors());
+
   auto evpPkey = OSSL_NEW(EVP_PKEY);
   JSG_REQUIRE(1 == EVP_PKEY_set1_EC_KEY(evpPkey.get(), ecKey.get()), DOMOperationError,
       "Error importing EC key", tryDescribeOpensslErrors());

@@ -388,3 +388,39 @@ export const detachedBufferHandling = {
     ok(threw, 'Encrypt with detached IV should throw');
   },
 };
+
+// Test that EC JWK import with mismatched public/private key components is rejected.
+// EC_KEY_check_key validates that the private key d corresponds to the public key (x, y).
+export const ecJwkKeyConsistencyCheck = {
+  async test() {
+    // Generate a valid P-256 key pair to get real x, y values
+    const keyPair = await crypto.subtle.generateKey(
+      { name: 'ECDSA', namedCurve: 'P-256' },
+      true,
+      ['sign', 'verify']
+    );
+    const validJwk = await crypto.subtle.exportKey('jwk', keyPair.privateKey);
+
+    // Corrupt the private key d while keeping x, y valid.
+    // This creates an inconsistency: d does not correspond to (x, y).
+    const corruptedJwk = {
+      ...validJwk,
+      d: validJwk.d.split('').reverse().join(''),
+    };
+
+    let threw = false;
+    try {
+      await crypto.subtle.importKey(
+        'jwk',
+        corruptedJwk,
+        { name: 'ECDSA', namedCurve: 'P-256' },
+        true,
+        ['sign']
+      );
+    } catch (e) {
+      threw = true;
+      ok(e instanceof Error, 'Expected an Error');
+    }
+    ok(threw, 'Import should have thrown for inconsistent EC JWK private key');
+  },
+};
