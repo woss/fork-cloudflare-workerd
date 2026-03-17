@@ -683,6 +683,16 @@ kj::ArrayPtr<kj::byte> JsArrayBuffer::asArrayPtr() {
   return kj::ArrayPtr(static_cast<kj::byte*>(data), length);
 }
 
+kj::ArrayPtr<const kj::byte> JsArrayBuffer::asArrayPtr() const {
+  v8::Local<v8::ArrayBuffer> inner = *this;
+  if (inner->WasDetached()) [[unlikely]] {
+    return nullptr;
+  }
+  const void* data = inner->GetBackingStore()->Data();
+  size_t length = inner->ByteLength();
+  return kj::ArrayPtr(static_cast<const kj::byte*>(data), length);
+}
+
 JsArrayBuffer JsArrayBuffer::slice(Lock& js, size_t newLength) const {
   JSG_REQUIRE(newLength <= size(), RangeError, "New length exceeds buffer length");
   auto backing = v8::ArrayBuffer::NewBackingStore(js.v8Isolate, newLength,
@@ -817,6 +827,16 @@ JsUint8Array JsUint8Array::slice(Lock& js, size_t newLength) const {
   JSG_REQUIRE(newLength <= size(), RangeError, "New length exceeds array length");
   auto u8 = v8::Uint8Array::New(inner->Buffer(), inner->ByteOffset(), newLength);
   return JsUint8Array(u8);
+}
+
+kj::ArrayPtr<const kj::byte> JsUint8Array::asArrayPtr() const {
+  auto buf = inner->Buffer();
+  if (buf->WasDetached()) [[unlikely]] {
+    return nullptr;
+  }
+  const kj::byte* data = static_cast<const kj::byte*>(buf->Data()) + inner->ByteOffset();
+  size_t length = inner->ByteLength();
+  return kj::ArrayPtr(data, length);
 }
 
 size_t JsUint8Array::size() const {

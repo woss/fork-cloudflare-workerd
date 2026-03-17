@@ -202,9 +202,8 @@ class CryptoKey: public jsg::Object {
     jsg::Optional<KeyAlgorithm> hash;
 
     RsaKeyAlgorithm clone(jsg::Lock& js) const {
-      return {name, modulusLength,
-        jsg::JsUint8Array::create(js, const_cast<jsg::JsUint8Array&>(publicExponent).asArrayPtr()),
-        hash};
+      return {
+        name, modulusLength, jsg::JsUint8Array::create(js, publicExponent.asArrayPtr()), hash};
     }
 
     JSG_STRUCT(name, modulusLength, publicExponent, hash);

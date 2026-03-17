@@ -242,6 +242,7 @@ class JsArrayBuffer final: public JsBase<v8::ArrayBuffer, JsArrayBuffer> {
   JsArrayBuffer slice(Lock& js, size_t newLength) const;
 
   kj::ArrayPtr<kj::byte> asArrayPtr();
+  kj::ArrayPtr<const kj::byte> asArrayPtr() const;
 
   size_t size() const;
 
@@ -300,6 +301,8 @@ class JsUint8Array final: public JsBase<v8::Uint8Array, JsUint8Array> {
     size_t length = inner->ByteLength();
     return kj::ArrayPtr(data, length);
   }
+
+  kj::ArrayPtr<const kj::byte> asArrayPtr() const;
 
   size_t size() const;
 
