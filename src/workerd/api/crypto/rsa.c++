@@ -862,7 +862,7 @@ kj::OneOf<jsg::Ref<CryptoKey>, CryptoKeyPair> CryptoKey::Impl::generateRsa(jsg::
   auto expCopy = jsg::JsUint8Array::create(js, publicExponent.asArrayPtr());
   auto keyAlgorithm = CryptoKey::RsaKeyAlgorithm{.name = normalizedName,
     .modulusLength = static_cast<uint16_t>(modulusLength),
-    .publicExponent = kj::mv(expCopy),
+    .publicExponent = jsg::JsBufferSource(expCopy),
     .hash = KeyAlgorithm{normalizedHashName}};
 
   return generateRsaPair(js, normalizedName, kj::mv(privateEvpPKey), kj::mv(publicEvpPKey),
@@ -958,7 +958,7 @@ kj::Own<CryptoKey::Impl> CryptoKey::Impl::importRsa(jsg::Lock& js,
 
   auto keyAlgorithm = CryptoKey::RsaKeyAlgorithm{.name = normalizedName,
     .modulusLength = static_cast<uint16_t>(modulusLength),
-    .publicExponent = kj::mv(publicExponent),
+    .publicExponent = jsg::JsBufferSource(publicExponent),
     .hash = KeyAlgorithm{normalizedHashName}};
   if (normalizedName == "RSASSA-PKCS1-v1_5") {
     return kj::heap<RsassaPkcs1V15Key>(kj::mv(importedKey), kj::mv(keyAlgorithm), extractable);
@@ -1023,7 +1023,7 @@ kj::Own<CryptoKey::Impl> CryptoKey::Impl::importRsaRaw(jsg::Lock& js,
 
   auto keyAlgorithm = CryptoKey::RsaKeyAlgorithm{.name = "RSA-RAW"_kj,
     .modulusLength = static_cast<uint16_t>(modulusLength),
-    .publicExponent = kj::mv(publicExponent)};
+    .publicExponent = jsg::JsBufferSource(publicExponent)};
 
   return kj::heap<RsaRawKey>(kj::mv(importedKey), kj::mv(keyAlgorithm), extractable);
 }
@@ -1039,7 +1039,7 @@ kj::Own<CryptoKey::Impl> fromRsaKey(jsg::Lock& js, kj::Own<EVP_PKEY> key) {
                                            CryptoKeyUsageSet::sign() | CryptoKeyUsageSet::verify()},
       CryptoKey::RsaKeyAlgorithm{
         .name = "RSA"_kj,
-        .publicExponent = kj::mv(publicExponent),
+        .publicExponent = jsg::JsBufferSource(publicExponent),
       },
       true);
 }
