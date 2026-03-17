@@ -207,11 +207,15 @@ kj::Maybe<int> DiffieHellman::check() {
 }
 
 void DiffieHellman::setPrivateKey(kj::ArrayPtr<kj::byte> key) {
-  OSSLCALL(DH_set0_key(dh, nullptr, toBignumUnowned(key)));
+  auto bn = toBignumOwned(key);
+  OSSLCALL(DH_set0_key(dh, nullptr, bn.get()));
+  bn.release();
 }
 
 void DiffieHellman::setPublicKey(kj::ArrayPtr<kj::byte> key) {
-  OSSLCALL(DH_set0_key(dh, toBignumUnowned(key), nullptr));
+  auto bn = toBignumOwned(key);
+  OSSLCALL(DH_set0_key(dh, bn.get(), nullptr));
+  bn.release();
 }
 
 jsg::JsUint8Array DiffieHellman::getPublicKey(jsg::Lock& js) {

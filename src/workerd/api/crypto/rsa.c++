@@ -253,10 +253,10 @@ kj::Maybe<AsymmetricKeyData> Rsa::fromJwk(
   static constexpr auto kInvalidBase64Error = "Invalid RSA key in JSON Web Key; invalid base64."_kj;
 
   auto nDecoded =
-      toBignumUnowned(simdutfBase64UrlDecodeChecked(js, n, kInvalidBase64Error).asArrayPtr());
+      toBignumOwned(simdutfBase64UrlDecodeChecked(js, n, kInvalidBase64Error).asArrayPtr());
   auto eDecoded =
-      toBignumUnowned(simdutfBase64UrlDecodeChecked(js, e, kInvalidBase64Error).asArrayPtr());
-  JSG_REQUIRE(RSA_set0_key(rsa.get(), nDecoded, eDecoded, nullptr) == 1, Error,
+      toBignumOwned(simdutfBase64UrlDecodeChecked(js, e, kInvalidBase64Error).asArrayPtr());
+  JSG_REQUIRE(RSA_set0_key(rsa.get(), nDecoded.release(), eDecoded.release(), nullptr) == 1, Error,
       "Invalid RSA key in JSON Web Key; failed to set key parameters");
 
   if (keyType == KeyType::PRIVATE) {
@@ -278,25 +278,28 @@ kj::Maybe<AsymmetricKeyData> Rsa::fromJwk(
     auto qi = JSG_REQUIRE_NONNULL(jwk.qi.map([](auto& str) { return str.asPtr(); }), Error,
         "Invalid RSA key in JSON Web Key; missing or invalid "
         "First CRT Coefficient parameter (\"qi\").");
-    auto dDecoded = toBignumUnowned(
+    auto dDecoded = toBignumOwned(
         simdutfBase64UrlDecodeChecked(js, d, "Invalid RSA key in JSON Web Key"_kj).asArrayPtr());
     auto pDecoded =
-        toBignumUnowned(simdutfBase64UrlDecodeChecked(js, p, kInvalidBase64Error).asArrayPtr());
+        toBignumOwned(simdutfBase64UrlDecodeChecked(js, p, kInvalidBase64Error).asArrayPtr());
     auto qDecoded =
-        toBignumUnowned(simdutfBase64UrlDecodeChecked(js, q, kInvalidBase64Error).asArrayPtr());
+        toBignumOwned(simdutfBase64UrlDecodeChecked(js, q, kInvalidBase64Error).asArrayPtr());
     auto dpDecoded =
-        toBignumUnowned(simdutfBase64UrlDecodeChecked(js, dp, kInvalidBase64Error).asArrayPtr());
+        toBignumOwned(simdutfBase64UrlDecodeChecked(js, dp, kInvalidBase64Error).asArrayPtr());
     auto dqDecoded =
-        toBignumUnowned(simdutfBase64UrlDecodeChecked(js, dq, kInvalidBase64Error).asArrayPtr());
+        toBignumOwned(simdutfBase64UrlDecodeChecked(js, dq, kInvalidBase64Error).asArrayPtr());
     auto qiDecoded =
-        toBignumUnowned(simdutfBase64UrlDecodeChecked(js, qi, kInvalidBase64Error).asArrayPtr());
+        toBignumOwned(simdutfBase64UrlDecodeChecked(js, qi, kInvalidBase64Error).asArrayPtr());
 
-    JSG_REQUIRE(RSA_set0_key(rsa.get(), nullptr, nullptr, dDecoded) == 1, Error,
+    // .release() transfers BIGNUM ownership to the RSA key. UniqueBignum ensures
+    // cleanup if any earlier allocation or decode throws.
+    JSG_REQUIRE(RSA_set0_key(rsa.get(), nullptr, nullptr, dDecoded.release()) == 1, Error,
         "Invalid RSA key in JSON Web Key; failed to set private exponent");
-    JSG_REQUIRE(RSA_set0_factors(rsa.get(), pDecoded, qDecoded) == 1, Error,
+    JSG_REQUIRE(RSA_set0_factors(rsa.get(), pDecoded.release(), qDecoded.release()) == 1, Error,
         "Invalid RSA key in JSON Web Key; failed to set prime factors");
-    JSG_REQUIRE(RSA_set0_crt_params(rsa.get(), dpDecoded, dqDecoded, qiDecoded) == 1, Error,
-        "Invalid RSA key in JSON Web Key; failed to set CRT parameters");
+    JSG_REQUIRE(RSA_set0_crt_params(
+                    rsa.get(), dpDecoded.release(), dqDecoded.release(), qiDecoded.release()) == 1,
+        Error, "Invalid RSA key in JSON Web Key; failed to set CRT parameters");
   }
 
   auto evpPkey = OSSL_NEW(EVP_PKEY);
@@ -747,10 +750,9 @@ kj::Own<EVP_PKEY> rsaJwkReader(SubtleCrypto::JsonWebKey&& keyDataJwk) {
       "Invalid RSA key in JSON Web Key; missing or invalid "
       "Exponent parameter (\"e\").");
 
-  // RSA_set0_*() transfers BIGNUM ownership to the RSA key, so we don't need to worry about
-  // calling BN_free().
-  OSSLCALL(RSA_set0_key(
-      rsaKey.get(), toBignumUnowned(modulus), toBignumUnowned(publicExponent), nullptr));
+  auto nBignum = toBignumOwned(modulus);
+  auto eBignum = toBignumOwned(publicExponent);
+  OSSLCALL(RSA_set0_key(rsaKey.get(), nBignum.release(), eBignum.release(), nullptr));
 
   if (keyDataJwk.d != kj::none) {
     // This is a private key.
@@ -759,7 +761,8 @@ kj::Own<EVP_PKEY> rsaJwkReader(SubtleCrypto::JsonWebKey&& keyDataJwk) {
         "Invalid RSA key in JSON Web Key; missing or invalid "
         "Private Exponent parameter (\"d\").");
 
-    OSSLCALL(RSA_set0_key(rsaKey.get(), nullptr, nullptr, toBignumUnowned(privateExponent)));
+    auto dBignum = toBignumOwned(privateExponent);
+    OSSLCALL(RSA_set0_key(rsaKey.get(), nullptr, nullptr, dBignum.release()));
 
     auto presence = (keyDataJwk.p != kj::none) + (keyDataJwk.q != kj::none) +
         (keyDataJwk.dp != kj::none) + (keyDataJwk.dq != kj::none) + (keyDataJwk.qi != kj::none);
@@ -781,10 +784,14 @@ kj::Own<EVP_PKEY> rsaJwkReader(SubtleCrypto::JsonWebKey&& keyDataJwk) {
           "Invalid RSA key in JSON Web Key; invalid First CRT "
           "Coefficient parameter (\"qi\").");
 
-      OSSLCALL(RSA_set0_factors(
-          rsaKey.get(), toBignumUnowned(firstPrimeFactor), toBignumUnowned(secondPrimeFactor)));
-      OSSLCALL(RSA_set0_crt_params(rsaKey.get(), toBignumUnowned(firstFactorCrtExponent),
-          toBignumUnowned(secondFactorCrtExponent), toBignumUnowned(firstCrtCoefficient)));
+      auto pBn = toBignumOwned(firstPrimeFactor);
+      auto qBn = toBignumOwned(secondPrimeFactor);
+      auto dpBn = toBignumOwned(firstFactorCrtExponent);
+      auto dqBn = toBignumOwned(secondFactorCrtExponent);
+      auto qiBn = toBignumOwned(firstCrtCoefficient);
+
+      OSSLCALL(RSA_set0_factors(rsaKey.get(), pBn.release(), qBn.release()));
+      OSSLCALL(RSA_set0_crt_params(rsaKey.get(), dpBn.release(), dqBn.release(), qiBn.release()));
     } else {
       JSG_REQUIRE(presence == 0, DOMDataError,
           "Invalid RSA private key in JSON Web Key; if one Prime "

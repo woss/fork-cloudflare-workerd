@@ -335,6 +335,9 @@ const SslDisposer<T, sslFree> SslDisposer<T, sslFree>::INSTANCE;
 using UniqueBignum = std::unique_ptr<BIGNUM, void (*)(BIGNUM*)>;
 kj::Maybe<kj::Own<BIGNUM>> toBignum(kj::ArrayPtr<const kj::byte> data);
 BIGNUM* toBignumUnowned(kj::ArrayPtr<const kj::byte> data);
+// Like toBignumUnowned but returns a UniqueBignum for RAII. Use .release() to transfer
+// ownership to RSA_set0_key etc.
+UniqueBignum toBignumOwned(kj::ArrayPtr<const kj::byte> data);
 kj::Maybe<kj::Array<kj::byte>> bignumToArray(const BIGNUM& bignum);
 kj::Maybe<kj::Array<kj::byte>> bignumToArrayPadded(const BIGNUM& bignum);
 kj::Maybe<kj::Array<kj::byte>> bignumToArrayPadded(const BIGNUM& bignum, size_t paddedLength);

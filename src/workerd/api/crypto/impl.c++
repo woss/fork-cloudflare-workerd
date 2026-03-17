@@ -261,7 +261,13 @@ kj::Maybe<kj::Own<BIGNUM>> toBignum(kj::ArrayPtr<const kj::byte> data) {
 }
 
 BIGNUM* toBignumUnowned(kj::ArrayPtr<const kj::byte> data) {
-  return BN_bin2bn(data.begin(), data.size(), nullptr);
+  auto result = BN_bin2bn(data.begin(), data.size(), nullptr);
+  JSG_REQUIRE(result != nullptr, DOMOperationError, "Error importing BIGNUM");
+  return result;
+}
+
+UniqueBignum toBignumOwned(kj::ArrayPtr<const kj::byte> data) {
+  return UniqueBignum(toBignumUnowned(data), &BN_clear_free);
 }
 
 kj::Maybe<kj::Array<kj::byte>> bignumToArray(const BIGNUM& n) {
