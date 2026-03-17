@@ -766,7 +766,7 @@ class OpenSSLDigestContext final: public DigestContext {
     uint size = 0;
     auto buf = jsg::JsArrayBuffer::create(js, EVP_MD_CTX_size(context.get()));
     OSSLCALL(EVP_DigestFinal_ex(context.get(), buf.asArrayPtr().begin(), &size));
-    KJ_ASSERT(size, buf.size());
+    KJ_ASSERT(size == buf.size());
     return buf;
   }
 

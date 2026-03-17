@@ -624,7 +624,7 @@ class AesCtrKey final: public AesKeyBase {
         InternalDOMOperationError, "Error doing ", getAlgorithmName(), " encrypt/decrypt",
         internalDescribeOpensslErrors());
 
-    KJ_DASSERT(outputLength >= 0 && outputLength <= output.size(), outputLength, output.size());
+    KJ_ASSERT(outputLength >= 0 && outputLength <= output.size(), outputLength, output.size());
 
     int finalOutputChunkLength = 0;
     auto finalizationBuffer = output.slice(outputLength, output.size()).asBytes().begin();
@@ -633,7 +633,7 @@ class AesCtrKey final: public AesKeyBase {
         InternalDOMOperationError, "Error doing ", getAlgorithmName(), " encrypt/decrypt",
         internalDescribeOpensslErrors());
 
-    KJ_DASSERT(finalOutputChunkLength >= 0 && finalOutputChunkLength <= output.size(),
+    KJ_ASSERT(finalOutputChunkLength >= 0 && finalOutputChunkLength <= output.size(),
         finalOutputChunkLength, output.size());
 
     JSG_REQUIRE(static_cast<size_t>(outputLength) + static_cast<size_t>(finalOutputChunkLength) ==
