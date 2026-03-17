@@ -15,6 +15,7 @@ fn float32_array_into_value() {
     harness.run_in_context(|lock, _ctx| {
         let data: Vec<f32> = vec![1.0, 2.0, 3.0];
         let js_val = data.to_js(lock);
+        // SAFETY: The isolate is locked and the FFI handle is from a valid eval result.
         let typed: v8::Local<'_, v8::Float32Array> =
             unsafe { v8::Local::from_ffi(lock.isolate(), js_val.into_ffi()) };
         assert_eq!(typed.len(), 3);
@@ -33,6 +34,7 @@ fn float64_array_into_value() {
     harness.run_in_context(|lock, _ctx| {
         let data: Vec<f64> = vec![1.0, 2.0, 3.0];
         let js_val = data.to_js(lock);
+        // SAFETY: The isolate is locked and the FFI handle is from a valid eval result.
         let typed: v8::Local<'_, v8::Float64Array> =
             unsafe { v8::Local::from_ffi(lock.isolate(), js_val.into_ffi()) };
         assert_eq!(typed.len(), 3);
@@ -51,6 +53,7 @@ fn bigint64_array_into_value() {
     harness.run_in_context(|lock, _ctx| {
         let data: Vec<i64> = vec![1, 2, 3];
         let js_val = data.to_js(lock);
+        // SAFETY: The isolate is locked and the FFI handle is from a valid eval result.
         let typed: v8::Local<'_, v8::BigInt64Array> =
             unsafe { v8::Local::from_ffi(lock.isolate(), js_val.into_ffi()) };
         assert_eq!(typed.len(), 3);
@@ -69,6 +72,7 @@ fn biguint64_array_into_value() {
     harness.run_in_context(|lock, _ctx| {
         let data: Vec<u64> = vec![1, 2, 3];
         let js_val = data.to_js(lock);
+        // SAFETY: The isolate is locked and the FFI handle is from a valid eval result.
         let typed: v8::Local<'_, v8::BigUint64Array> =
             unsafe { v8::Local::from_ffi(lock.isolate(), js_val.into_ffi()) };
         assert_eq!(typed.len(), 3);
@@ -91,6 +95,7 @@ fn float32_array_into_typed_array() {
     harness.run_in_context(|lock, _ctx| {
         let data: Vec<f32> = vec![1.5, 2.5];
         let js_val = data.to_js(lock);
+        // SAFETY: The isolate is locked and the FFI handle is from a valid eval result.
         let typed: v8::Local<'_, v8::Float32Array> =
             unsafe { v8::Local::from_ffi(lock.isolate(), js_val.into_ffi()) };
         assert_eq!(typed.len(), 2);
@@ -112,6 +117,7 @@ fn float64_array_into_typed_array() {
     harness.run_in_context(|lock, _ctx| {
         let data: Vec<f64> = vec![1.5, 2.5];
         let js_val = data.to_js(lock);
+        // SAFETY: The isolate is locked and the FFI handle is from a valid eval result.
         let typed: v8::Local<'_, v8::Float64Array> =
             unsafe { v8::Local::from_ffi(lock.isolate(), js_val.into_ffi()) };
         assert_eq!(typed.len(), 2);
@@ -133,6 +139,7 @@ fn bigint64_array_into_typed_array() {
     harness.run_in_context(|lock, _ctx| {
         let data: Vec<i64> = vec![10, -20];
         let js_val = data.to_js(lock);
+        // SAFETY: The isolate is locked and the FFI handle is from a valid eval result.
         let typed: v8::Local<'_, v8::BigInt64Array> =
             unsafe { v8::Local::from_ffi(lock.isolate(), js_val.into_ffi()) };
         assert_eq!(typed.len(), 2);
@@ -154,6 +161,7 @@ fn biguint64_array_into_typed_array() {
     harness.run_in_context(|lock, _ctx| {
         let data: Vec<u64> = vec![10, 20];
         let js_val = data.to_js(lock);
+        // SAFETY: The isolate is locked and the FFI handle is from a valid eval result.
         let typed: v8::Local<'_, v8::BigUint64Array> =
             unsafe { v8::Local::from_ffi(lock.isolate(), js_val.into_ffi()) };
         assert_eq!(typed.len(), 2);
@@ -215,6 +223,7 @@ fn typed_array_into_object() {
     harness.run_in_context(|lock, _ctx| {
         let data: Vec<u8> = vec![1, 2, 3];
         let js_val = data.to_js(lock);
+        // SAFETY: The isolate is locked and the FFI handle is from a valid eval result.
         let typed: v8::Local<'_, v8::Uint8Array> =
             unsafe { v8::Local::from_ffi(lock.isolate(), js_val.into_ffi()) };
         assert_eq!(typed.len(), 3);
@@ -278,6 +287,7 @@ fn typed_array_as_object_property_access() {
     harness.run_in_context(|lock, _ctx| {
         let data: Vec<u8> = vec![1, 2, 3, 4, 5];
         let js_val = data.to_js(lock);
+        // SAFETY: The isolate is locked and the FFI handle is from a valid eval result.
         let typed: v8::Local<'_, v8::Uint8Array> =
             unsafe { v8::Local::from_ffi(lock.isolate(), js_val.into_ffi()) };
         let ta: v8::Local<v8::TypedArray> = typed.into();
@@ -306,6 +316,7 @@ fn float32_array_value_roundtrip() {
     harness.run_in_context(|lock, _ctx| {
         let data: Vec<f32> = vec![1.5, 2.5, 3.5];
         let js_val = data.to_js(lock);
+        // SAFETY: The isolate is locked and the FFI handle is from a valid eval result.
         let typed: v8::Local<'_, v8::Float32Array> =
             unsafe { v8::Local::from_ffi(lock.isolate(), js_val.into_ffi()) };
         assert_eq!(typed.len(), 3);
@@ -327,6 +338,7 @@ fn float64_array_value_roundtrip() {
     harness.run_in_context(|lock, _ctx| {
         let data: Vec<f64> = vec![1.1, 2.2, 3.3];
         let js_val = data.to_js(lock);
+        // SAFETY: The isolate is locked and the FFI handle is from a valid eval result.
         let typed: v8::Local<'_, v8::Float64Array> =
             unsafe { v8::Local::from_ffi(lock.isolate(), js_val.into_ffi()) };
         assert_eq!(typed.len(), 3);
@@ -348,6 +360,7 @@ fn bigint64_array_value_roundtrip() {
     harness.run_in_context(|lock, _ctx| {
         let data: Vec<i64> = vec![-100, 0, 100];
         let js_val = data.to_js(lock);
+        // SAFETY: The isolate is locked and the FFI handle is from a valid eval result.
         let typed: v8::Local<'_, v8::BigInt64Array> =
             unsafe { v8::Local::from_ffi(lock.isolate(), js_val.into_ffi()) };
         assert_eq!(typed.len(), 3);
@@ -369,6 +382,7 @@ fn biguint64_array_value_roundtrip() {
     harness.run_in_context(|lock, _ctx| {
         let data: Vec<u64> = vec![0, 42, 999];
         let js_val = data.to_js(lock);
+        // SAFETY: The isolate is locked and the FFI handle is from a valid eval result.
         let typed: v8::Local<'_, v8::BigUint64Array> =
             unsafe { v8::Local::from_ffi(lock.isolate(), js_val.into_ffi()) };
         assert_eq!(typed.len(), 3);

@@ -377,6 +377,7 @@ pub struct Value;
 
 impl Display for Local<'_, Value> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        // SAFETY: self.isolate is valid; this is used only for debug display.
         let mut lock = unsafe { Lock::from_isolate_ptr(self.isolate.as_ffi()) };
         match String::from_js(&mut lock, self.clone()) {
             Ok(value) => write!(f, "{value}"),
@@ -415,6 +416,7 @@ impl<T> Drop for Local<'_, T> {
             return;
         }
         let handle = std::mem::replace(&mut self.handle, ffi::Local { ptr: 0 });
+        // SAFETY: Releasing the V8 handle; the replaced zero-ptr handle is inert.
         unsafe { ffi::local_drop(handle) };
     }
 }
@@ -463,10 +465,12 @@ impl<'a, T> Local<'a, T> {
     }
 
     pub fn null(lock: &mut crate::Lock) -> Local<'a, Value> {
+        // SAFETY: Lock guarantees the isolate is locked and a HandleScope is active.
         unsafe { Local::from_ffi(lock.isolate(), ffi::local_new_null(lock.isolate().as_ffi())) }
     }
 
     pub fn undefined(lock: &mut crate::Lock) -> Local<'a, Value> {
+        // SAFETY: Lock guarantees the isolate is locked and a HandleScope is active.
         unsafe {
             Local::from_ffi(
                 lock.isolate(),
@@ -476,30 +480,37 @@ impl<'a, T> Local<'a, T> {
     }
 
     pub fn has_value(&self) -> bool {
+        // SAFETY: self.handle is a valid V8 local handle.
         unsafe { ffi::local_has_value(&self.handle) }
     }
 
     pub fn is_string(&self) -> bool {
+        // SAFETY: self.handle is a valid V8 local handle.
         unsafe { ffi::local_is_string(&self.handle) }
     }
 
     pub fn is_boolean(&self) -> bool {
+        // SAFETY: self.handle is a valid V8 local handle.
         unsafe { ffi::local_is_boolean(&self.handle) }
     }
 
     pub fn is_number(&self) -> bool {
+        // SAFETY: self.handle is a valid V8 local handle.
         unsafe { ffi::local_is_number(&self.handle) }
     }
 
     pub fn is_null(&self) -> bool {
+        // SAFETY: self.handle is a valid V8 local handle.
         unsafe { ffi::local_is_null(&self.handle) }
     }
 
     pub fn is_undefined(&self) -> bool {
+        // SAFETY: self.handle is a valid V8 local handle.
         unsafe { ffi::local_is_undefined(&self.handle) }
     }
 
     pub fn is_null_or_undefined(&self) -> bool {
+        // SAFETY: self.handle is a valid V8 local handle.
         unsafe { ffi::local_is_null_or_undefined(&self.handle) }
     }
 
@@ -509,81 +520,97 @@ impl<'a, T> Local<'a, T> {
     /// this method returns `false` for `null` values. Use `is_null_or_undefined()`
     /// to check for nullish values separately.
     pub fn is_object(&self) -> bool {
+        // SAFETY: self.handle is a valid V8 local handle.
         unsafe { ffi::local_is_object(&self.handle) }
     }
 
     /// Returns true if the value is a native JavaScript error.
     pub fn is_native_error(&self) -> bool {
+        // SAFETY: self.handle is a valid V8 local handle.
         unsafe { ffi::local_is_native_error(&self.handle) }
     }
 
     /// Returns true if the value is a JavaScript array.
     pub fn is_array(&self) -> bool {
+        // SAFETY: self.handle is a valid V8 local handle.
         unsafe { ffi::local_is_array(&self.handle) }
     }
 
     /// Returns true if the value is a `Uint8Array`.
     pub fn is_uint8_array(&self) -> bool {
+        // SAFETY: self.handle is a valid V8 local handle.
         unsafe { ffi::local_is_uint8_array(&self.handle) }
     }
 
     /// Returns true if the value is a `Uint16Array`.
     pub fn is_uint16_array(&self) -> bool {
+        // SAFETY: self.handle is a valid V8 local handle.
         unsafe { ffi::local_is_uint16_array(&self.handle) }
     }
 
     /// Returns true if the value is a `Uint32Array`.
     pub fn is_uint32_array(&self) -> bool {
+        // SAFETY: self.handle is a valid V8 local handle.
         unsafe { ffi::local_is_uint32_array(&self.handle) }
     }
 
     /// Returns true if the value is an `Int8Array`.
     pub fn is_int8_array(&self) -> bool {
+        // SAFETY: self.handle is a valid V8 local handle.
         unsafe { ffi::local_is_int8_array(&self.handle) }
     }
 
     /// Returns true if the value is an `Int16Array`.
     pub fn is_int16_array(&self) -> bool {
+        // SAFETY: self.handle is a valid V8 local handle.
         unsafe { ffi::local_is_int16_array(&self.handle) }
     }
 
     /// Returns true if the value is an `Int32Array`.
     pub fn is_int32_array(&self) -> bool {
+        // SAFETY: self.handle is a valid V8 local handle.
         unsafe { ffi::local_is_int32_array(&self.handle) }
     }
 
     /// Returns true if the value is a `Float32Array`.
     pub fn is_float32_array(&self) -> bool {
+        // SAFETY: self.handle is a valid V8 local handle.
         unsafe { ffi::local_is_float32_array(&self.handle) }
     }
 
     /// Returns true if the value is a `Float64Array`.
     pub fn is_float64_array(&self) -> bool {
+        // SAFETY: self.handle is a valid V8 local handle.
         unsafe { ffi::local_is_float64_array(&self.handle) }
     }
 
     /// Returns true if the value is a `BigInt64Array`.
     pub fn is_bigint64_array(&self) -> bool {
+        // SAFETY: self.handle is a valid V8 local handle.
         unsafe { ffi::local_is_bigint64_array(&self.handle) }
     }
 
     /// Returns true if the value is a `BigUint64Array`.
     pub fn is_biguint64_array(&self) -> bool {
+        // SAFETY: self.handle is a valid V8 local handle.
         unsafe { ffi::local_is_biguint64_array(&self.handle) }
     }
 
     /// Returns true if the value is an `ArrayBuffer`.
     pub fn is_array_buffer(&self) -> bool {
+        // SAFETY: self.handle is a valid V8 local handle.
         unsafe { ffi::local_is_array_buffer(&self.handle) }
     }
 
     /// Returns true if the value is an `ArrayBufferView`.
     pub fn is_array_buffer_view(&self) -> bool {
+        // SAFETY: self.handle is a valid V8 local handle.
         unsafe { ffi::local_is_array_buffer_view(&self.handle) }
     }
 
     /// Returns true if the value is a JavaScript function.
     pub fn is_function(&self) -> bool {
+        // SAFETY: self.handle is a valid V8 local handle.
         unsafe { ffi::local_is_function(&self.handle) }
     }
 
@@ -595,12 +622,14 @@ impl<'a, T> Local<'a, T> {
     ///
     /// Note: For `null`, this returns "object" (JavaScript's historical behavior).
     pub fn type_of(&self) -> String {
+        // SAFETY: self.isolate is valid and self.handle is a valid V8 local handle.
         unsafe { ffi::local_type_of(self.isolate.as_ffi(), &self.handle) }
     }
 }
 
 impl<T> Clone for Local<'_, T> {
     fn clone(&self) -> Self {
+        // SAFETY: self.handle is a valid V8 handle; clone creates an independent copy.
         unsafe { Self::from_ffi(self.isolate, ffi::local_clone(&self.handle)) }
     }
 }
@@ -644,6 +673,7 @@ impl_as!(Array, is_array);
 // Value-specific implementations
 impl<'a> Local<'a, Value> {
     pub fn to_global(self, lock: &'a mut Lock) -> Global<Value> {
+        // SAFETY: Lock guarantees the isolate is locked; self is a valid Local handle.
         unsafe { ffi::local_to_global(lock.isolate().as_ffi(), self.into_ffi()).into() }
     }
 
@@ -660,6 +690,7 @@ impl<'a> Local<'a, Value> {
 
 impl PartialEq for Local<'_, Value> {
     fn eq(&self, other: &Self) -> bool {
+        // SAFETY: Both handles are valid V8 local handles.
         unsafe { ffi::local_eq(&self.handle, &other.handle) }
     }
 }
@@ -689,6 +720,7 @@ impl Local<'_, Function> {
         // Build a contiguous array of ffi::Local handles for the FFI call.
         let ffi_args: Vec<ffi::Local> = args
             .iter()
+            // SAFETY: Each arg's FFI handle is valid within the current HandleScope.
             .map(|a| unsafe { ffi::local_clone(a.as_ffi()) })
             .collect();
 
@@ -775,12 +807,14 @@ impl Local<'_, Array> {
     /// Creates a new JavaScript array with the given length.
     pub fn new<'a>(lock: &mut crate::Lock, len: usize) -> Local<'a, Array> {
         let isolate = lock.isolate();
+        // SAFETY: Lock guarantees the isolate is locked and a HandleScope is active.
         unsafe { Local::from_ffi(isolate, ffi::local_new_array(isolate.as_ffi(), len)) }
     }
 
     /// Returns the length of the array.
     #[inline]
     pub fn len(&self) -> usize {
+        // SAFETY: self.isolate is valid and self.handle is a valid Array handle.
         unsafe { ffi::local_array_length(self.isolate.as_ffi(), &self.handle) as usize }
     }
 
@@ -792,6 +826,7 @@ impl Local<'_, Array> {
 
     /// Sets an element at the given index.
     pub fn set(&mut self, index: usize, value: Local<'_, Value>) {
+        // SAFETY: self.isolate is valid, self.handle is a valid Array, and value is a valid Local.
         unsafe {
             ffi::local_array_set(
                 self.isolate.as_ffi(),
@@ -805,8 +840,10 @@ impl Local<'_, Array> {
     /// Iterates over array elements using V8's native `Array::Iterate()`.
     /// Returns Global handles because Local handles get reused during iteration.
     pub fn iterate(self) -> Vec<Global<Value>> {
+        // SAFETY: self.isolate is valid and self is a valid Array handle.
         unsafe { ffi::local_array_iterate(self.isolate.as_ffi(), self.into_ffi()) }
             .into_iter()
+            // SAFETY: Each Global in the vec was produced by V8's Array::Iterate.
             .map(|g| unsafe { Global::from_ffi(g) })
             .collect()
     }
@@ -816,6 +853,7 @@ impl Local<'_, Array> {
 impl Local<'_, TypedArray> {
     /// Returns the number of elements in this `TypedArray`.
     pub fn len(&self) -> usize {
+        // SAFETY: self.isolate is valid and self.handle is a valid TypedArray handle.
         unsafe { ffi::local_typed_array_length(self.isolate.as_ffi(), &self.handle) }
     }
 
@@ -868,6 +906,7 @@ macro_rules! impl_typed_array {
             /// Returns the number of elements in this `TypedArray`.
             #[inline]
             pub fn len(&self) -> usize {
+                // SAFETY: self.isolate is valid and self.handle is a valid TypedArray handle.
                 unsafe { ffi::local_typed_array_length(self.isolate.as_ffi(), &self.handle) }
             }
 
@@ -885,6 +924,7 @@ macro_rules! impl_typed_array {
             #[inline]
             pub fn get(&self, index: usize) -> $elem {
                 debug_assert!(index < self.len(), "index out of bounds");
+                // SAFETY: self.isolate is valid, self.handle is a valid TypedArray, and index is bounds-checked.
                 unsafe { ffi::$get_fn(self.isolate.as_ffi(), &self.handle, index) }
             }
 
@@ -936,6 +976,7 @@ macro_rules! impl_typed_array {
             #[inline]
             fn next(&mut self) -> Option<Self::Item> {
                 if self.index < self.len {
+                    // SAFETY: The array handle is valid and index is within bounds.
                     let value = unsafe {
                         ffi::$get_fn(self.array.isolate.as_ffi(), &self.array.handle, self.index)
                     };
@@ -960,6 +1001,7 @@ macro_rules! impl_typed_array {
             fn next_back(&mut self) -> Option<Self::Item> {
                 if self.index < self.len {
                     self.len -= 1;
+                    // SAFETY: The array handle is valid and index is within bounds.
                     let value = unsafe {
                         ffi::$get_fn(self.array.isolate.as_ffi(), &self.array.handle, self.len)
                     };
@@ -978,6 +1020,7 @@ macro_rules! impl_typed_array {
             #[inline]
             fn next(&mut self) -> Option<Self::Item> {
                 if self.index < self.len {
+                    // SAFETY: The array handle is valid and index is within bounds.
                     let value = unsafe {
                         ffi::$get_fn(self.array.isolate.as_ffi(), &self.array.handle, self.index)
                     };
@@ -1002,6 +1045,7 @@ macro_rules! impl_typed_array {
             fn next_back(&mut self) -> Option<Self::Item> {
                 if self.index < self.len {
                     self.len -= 1;
+                    // SAFETY: The array handle is valid and index is within bounds.
                     let value = unsafe {
                         ffi::$get_fn(self.array.isolate.as_ffi(), &self.array.handle, self.len)
                     };
@@ -1030,6 +1074,7 @@ impl_typed_array!(BigUint64Array, u64, local_biguint64_array_get);
 // Object-specific implementations
 impl<'a> Local<'a, Object> {
     pub fn set(&mut self, lock: &mut Lock, key: &str, value: Local<'a, Value>) {
+        // SAFETY: Lock guarantees the isolate is locked; self.handle and value are valid.
         unsafe {
             ffi::local_object_set_property(
                 lock.isolate().as_ffi(),
@@ -1041,6 +1086,7 @@ impl<'a> Local<'a, Object> {
     }
 
     pub fn has(&self, lock: &mut Lock, key: &str) -> bool {
+        // SAFETY: Lock guarantees the isolate is locked; self.handle is a valid Object.
         unsafe { ffi::local_object_has_property(lock.isolate().as_ffi(), &self.handle, key) }
     }
 
@@ -1049,6 +1095,7 @@ impl<'a> Local<'a, Object> {
             return None;
         }
 
+        // SAFETY: Lock guarantees the isolate is locked; self.handle is a valid Object.
         unsafe {
             let maybe_local =
                 ffi::local_object_get_property(lock.isolate().as_ffi(), &self.handle, key);
@@ -1086,6 +1133,7 @@ impl<T> Global<T> {
     }
 
     pub fn as_local<'a>(&self, lock: &mut Lock) -> Local<'a, T> {
+        // SAFETY: Lock guarantees the isolate is locked; self.handle is a valid Global.
         unsafe {
             Local::from_ffi(
                 lock.isolate(),
@@ -1108,6 +1156,7 @@ impl<T> Global<T> {
         data: *mut c_void,
         callback: fn(*mut ffi::Isolate, usize) -> (),
     ) {
+        // SAFETY: Caller guarantees isolate is valid and data/callback are safe to use.
         unsafe {
             ffi::global_make_weak(
                 isolate.as_ffi(),
@@ -1122,6 +1171,7 @@ impl<T> Global<T> {
 impl<T> From<Local<'_, T>> for Global<T> {
     fn from(local: Local<'_, T>) -> Self {
         Self {
+            // SAFETY: local.isolate is valid and local is a valid V8 local handle.
             handle: unsafe { ffi::local_to_global(local.isolate.as_ffi(), local.into_ffi()) },
             _marker: PhantomData,
         }
@@ -1162,6 +1212,7 @@ impl<T> Drop for Global<T> {
         let handle = ffi::Global {
             ptr: self.handle.ptr,
         };
+        // SAFETY: self.handle is a valid V8 global handle being released.
         unsafe {
             ffi::global_drop(handle);
         }
@@ -1179,6 +1230,7 @@ impl<T> Global<T> {
     /// JS object. Both the original and clone can be independently dropped.
     #[must_use]
     pub fn clone(&self, lock: &mut Lock) -> Self {
+        // SAFETY: Lock guarantees the isolate is locked; self.handle is a valid Global.
         unsafe { ffi::global_clone(lock.isolate().as_ffi(), &self.handle).into() }
     }
 }
@@ -1189,6 +1241,7 @@ pub trait ToLocalValue {
 
 impl ToLocalValue for u8 {
     fn to_local<'a>(&self, lock: &mut Lock) -> Local<'a, Value> {
+        // SAFETY: Lock guarantees the isolate is locked and a HandleScope is active.
         unsafe {
             Local::from_ffi(
                 lock.isolate(),
@@ -1200,6 +1253,7 @@ impl ToLocalValue for u8 {
 
 impl ToLocalValue for u32 {
     fn to_local<'a>(&self, lock: &mut Lock) -> Local<'a, Value> {
+        // SAFETY: Lock guarantees the isolate is locked and a HandleScope is active.
         unsafe {
             Local::from_ffi(
                 lock.isolate(),
@@ -1217,6 +1271,7 @@ impl ToLocalValue for String {
 
 impl ToLocalValue for &str {
     fn to_local<'a>(&self, lock: &mut Lock) -> Local<'a, Value> {
+        // SAFETY: Lock guarantees the isolate is locked and a HandleScope is active.
         unsafe {
             Local::from_ffi(
                 lock.isolate(),
@@ -1228,6 +1283,7 @@ impl ToLocalValue for &str {
 
 impl ToLocalValue for bool {
     fn to_local<'a>(&self, lock: &mut Lock) -> Local<'a, Value> {
+        // SAFETY: Lock guarantees the isolate is locked and a HandleScope is active.
         unsafe {
             Local::from_ffi(
                 lock.isolate(),
@@ -1239,6 +1295,7 @@ impl ToLocalValue for bool {
 
 impl ToLocalValue for Number {
     fn to_local<'a>(&self, lock: &mut Lock) -> Local<'a, Value> {
+        // SAFETY: Lock guarantees the isolate is locked and a HandleScope is active.
         unsafe {
             Local::from_ffi(
                 lock.isolate(),
@@ -1259,14 +1316,17 @@ impl<'a> FunctionCallbackInfo<'a> {
 
     /// Returns the V8 isolate associated with this function callback.
     pub fn isolate(&self) -> IsolatePtr {
+        // SAFETY: self.0 is a valid FunctionCallbackInfo pointer from a V8 callback.
         unsafe { IsolatePtr::from_ffi(ffi::fci_get_isolate(self.0)) }
     }
 
     pub fn this(&self) -> Local<'a, Value> {
+        // SAFETY: self.0 is a valid FunctionCallbackInfo pointer from a V8 callback.
         unsafe { Local::from_ffi(self.isolate(), ffi::fci_get_this(self.0)) }
     }
 
     pub fn len(&self) -> usize {
+        // SAFETY: self.0 is a valid FunctionCallbackInfo pointer from a V8 callback.
         unsafe { ffi::fci_get_length(self.0) }
     }
 
@@ -1276,10 +1336,12 @@ impl<'a> FunctionCallbackInfo<'a> {
 
     pub fn get(&self, index: usize) -> Local<'a, Value> {
         debug_assert!(index <= self.len(), "index out of bounds");
+        // SAFETY: self.0 is a valid FunctionCallbackInfo pointer from a V8 callback.
         unsafe { Local::from_ffi(self.isolate(), ffi::fci_get_arg(self.0, index)) }
     }
 
     pub fn set_return_value(&self, value: Local<Value>) {
+        // SAFETY: self.0 is a valid FunctionCallbackInfo pointer from a V8 callback.
         unsafe {
             ffi::fci_set_return_value(self.0, value.into_ffi());
         }
@@ -1322,8 +1384,10 @@ impl IsolatePtr {
     /// # Safety
     /// The pointer must be non-null and point to a valid V8 isolate.
     pub unsafe fn from_ffi(handle: *mut ffi::Isolate) -> Self {
+        // SAFETY: Caller guarantees the isolate pointer is valid.
         debug_assert!(unsafe { ffi::isolate_is_locked(handle) });
         Self {
+            // SAFETY: Caller guarantees the pointer is non-null.
             handle: unsafe { NonNull::new_unchecked(handle) },
         }
     }
@@ -1334,6 +1398,7 @@ impl IsolatePtr {
     ///
     /// The caller must ensure the isolate is still valid and not deallocated.
     pub unsafe fn is_locked(&self) -> bool {
+        // SAFETY: Caller guarantees the isolate is still valid.
         unsafe { ffi::isolate_is_locked(self.handle.as_ptr()) }
     }
 

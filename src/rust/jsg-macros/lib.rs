@@ -86,7 +86,7 @@ pub fn jsg_struct(attr: TokenStream, item: TokenStream) -> TokenStream {
                 // TODO(soon): Use a precached ObjectTemplate instance to create the object,
                 // similar to how C++ JSG optimizes object creation. This would avoid recreating
                 // the object shape on every wrap() call and improve performance.
-                unsafe {
+                {
                     let this = self;
                     let mut obj = lock.new_object();
                     #(#field_assignments)*
@@ -215,6 +215,7 @@ pub fn jsg_method(_attr: TokenStream, item: TokenStream) -> TokenStream {
         #fn_vis #fn_sig { #fn_block }
 
         #[automatically_derived]
+        #[expect(clippy::undocumented_unsafe_blocks)]
         extern "C" fn #callback_name(args: *mut jsg::v8::ffi::FunctionCallbackInfo) {
             let mut lock = unsafe { jsg::Lock::from_args(args) };
             let mut args = unsafe { jsg::v8::FunctionCallbackInfo::from_ffi(args) };

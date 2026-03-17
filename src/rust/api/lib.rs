@@ -25,6 +25,7 @@ pub fn register_nodejs_modules(registry: Pin<&mut ffi::ModuleRegistry>) {
     jsg::modules::add_builtin(
         registry,
         "node-internal:dns",
+        // SAFETY: isolate is a valid pointer provided by V8 during module resolution.
         |isolate| unsafe {
             let mut lock = jsg::Lock::from_isolate_ptr(isolate);
             let dns_util = jsg::Ref::new(DnsUtil {
@@ -48,6 +49,7 @@ mod tests {
     #[test]
     fn test_wrap_resource_equality() {
         let harness = Harness::new();
+        // SAFETY: Harness guarantees lock and context are valid within run_in_context.
         harness.run_in_context(|lock, _ctx| unsafe {
             let dns_util = jsg::Ref::new(DnsUtil {
                 _state: ResourceState::default(),

@@ -149,6 +149,7 @@ macro_rules! impl_primitive {
             type ResultType = Self;
 
             fn from_js(lock: &mut Lock, value: v8::Local<v8::Value>) -> Result<Self::ResultType, Error> {
+                // SAFETY: The isolate is locked and value is a valid V8 local handle.
                 Ok(unsafe { v8::ffi::$unwrap_fn(lock.isolate().as_ffi(), value.into_ffi()) })
             }
         }
@@ -182,6 +183,7 @@ impl FromJS for Number {
     type ResultType = Self;
 
     fn from_js(lock: &mut Lock, value: v8::Local<v8::Value>) -> Result<Self::ResultType, Error> {
+        // SAFETY: The isolate is locked and value is a valid V8 local handle.
         let f64_value =
             unsafe { v8::ffi::unwrap_number(lock.isolate().as_ffi(), value.into_ffi()) };
         Ok(Self::new(f64_value))
@@ -205,6 +207,7 @@ impl FromJS for &str {
     type ResultType = String;
 
     fn from_js(lock: &mut Lock, value: v8::Local<v8::Value>) -> Result<Self::ResultType, Error> {
+        // SAFETY: The isolate is locked and value is a valid V8 local handle.
         Ok(unsafe { v8::ffi::unwrap_string(lock.isolate().as_ffi(), value.into_ffi()) })
     }
 }
@@ -255,6 +258,7 @@ macro_rules! impl_integer_from_js {
 
                 #[allow(clippy::cast_possible_truncation, clippy::cast_sign_loss)]
                 fn from_js(lock: &mut Lock, value: v8::Local<v8::Value>) -> Result<Self::ResultType, Error> {
+                    // SAFETY: The isolate is locked and value is a valid V8 local handle.
                     let num = unsafe { v8::ffi::unwrap_number(lock.isolate().as_ffi(), value.into_ffi()) };
                     Ok(num as $type)
                 }
@@ -459,6 +463,7 @@ macro_rules! impl_typed_array {
                 'b: 'a,
             {
                 let isolate = lock.isolate();
+                // SAFETY: Lock guarantees the isolate is locked and a HandleScope is active.
                 unsafe {
                     v8::Local::from_ffi(
                         isolate,
@@ -479,6 +484,7 @@ macro_rules! impl_typed_array {
                         value.type_of()
                     )));
                 }
+                // SAFETY: The isolate is locked and value is a valid V8 local handle of the correct TypedArray type.
                 Ok(unsafe { v8::ffi::$unwrap_fn(lock.isolate().as_ffi(), value.into_ffi()) })
             }
         }

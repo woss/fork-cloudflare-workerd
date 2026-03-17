@@ -162,6 +162,7 @@ fn resource_accepts_array_parameter() {
             _state: ResourceState::default(),
         });
         let mut template = ArrayResourceTemplate::new(lock);
+        // SAFETY: Lock is valid, resource is a valid Ref, and template holds a valid FunctionTemplate.
         let wrapped = unsafe { jsg::wrap_resource(lock, resource, &mut template) };
         ctx.set_global("arr", wrapped);
 
@@ -184,6 +185,7 @@ fn resource_accepts_slice_parameter() {
             _state: ResourceState::default(),
         });
         let mut template = ArrayResourceTemplate::new(lock);
+        // SAFETY: Lock is valid, resource is a valid Ref, and template holds a valid FunctionTemplate.
         let wrapped = unsafe { jsg::wrap_resource(lock, resource, &mut template) };
         ctx.set_global("arr", wrapped);
 
@@ -207,6 +209,7 @@ fn resource_returns_array() {
             _state: ResourceState::default(),
         });
         let mut template = ArrayResourceTemplate::new(lock);
+        // SAFETY: Lock is valid, resource is a valid Ref, and template holds a valid FunctionTemplate.
         let wrapped = unsafe { jsg::wrap_resource(lock, resource, &mut template) };
         ctx.set_global("arr", wrapped);
 
@@ -234,6 +237,7 @@ fn resource_accepts_typed_array_parameter() {
             _state: ResourceState::default(),
         });
         let mut template = ArrayResourceTemplate::new(lock);
+        // SAFETY: Lock is valid, resource is a valid Ref, and template holds a valid FunctionTemplate.
         let wrapped = unsafe { jsg::wrap_resource(lock, resource, &mut template) };
         ctx.set_global("arr", wrapped);
 
@@ -258,6 +262,7 @@ fn resource_returns_typed_array() {
             _state: ResourceState::default(),
         });
         let mut template = ArrayResourceTemplate::new(lock);
+        // SAFETY: Lock is valid, resource is a valid Ref, and template holds a valid FunctionTemplate.
         let wrapped = unsafe { jsg::wrap_resource(lock, resource, &mut template) };
         ctx.set_global("arr", wrapped);
 
@@ -280,6 +285,7 @@ fn resource_accepts_typed_array_slice_parameter() {
             _state: ResourceState::default(),
         });
         let mut template = ArrayResourceTemplate::new(lock);
+        // SAFETY: Lock is valid, resource is a valid Ref, and template holds a valid FunctionTemplate.
         let wrapped = unsafe { jsg::wrap_resource(lock, resource, &mut template) };
         ctx.set_global("arr", wrapped);
 
@@ -313,6 +319,7 @@ fn typed_array_slice_rejects_wrong_type() {
             _state: ResourceState::default(),
         });
         let mut template = ArrayResourceTemplate::new(lock);
+        // SAFETY: Lock is valid, resource is a valid Ref, and template holds a valid FunctionTemplate.
         let wrapped = unsafe { jsg::wrap_resource(lock, resource, &mut template) };
         ctx.set_global("arr", wrapped);
 
@@ -346,6 +353,7 @@ fn resource_accepts_and_returns_struct_array() {
             _state: ResourceState::default(),
         });
         let mut template = ArrayResourceTemplate::new(lock);
+        // SAFETY: Lock is valid, resource is a valid Ref, and template holds a valid FunctionTemplate.
         let wrapped = unsafe { jsg::wrap_resource(lock, resource, &mut template) };
         ctx.set_global("arr", wrapped);
 
@@ -597,6 +605,7 @@ fn typed_array_iter_uint8() {
     harness.run_in_context(|lock, _ctx| {
         let data: Vec<u8> = vec![10, 20, 30];
         let js_val = data.to_js(lock);
+        // SAFETY: The isolate is locked and the FFI handle is from a valid eval result.
         let typed: jsg::v8::Local<'_, jsg::v8::Uint8Array> =
             unsafe { jsg::v8::Local::from_ffi(lock.isolate(), js_val.into_ffi()) };
 
@@ -623,6 +632,7 @@ fn typed_array_into_iter_uint8() {
     harness.run_in_context(|lock, _ctx| {
         let data: Vec<u8> = vec![1, 2, 3, 4, 5];
         let js_val = data.to_js(lock);
+        // SAFETY: The isolate is locked and the FFI handle is from a valid eval result.
         let typed: jsg::v8::Local<'_, jsg::v8::Uint8Array> =
             unsafe { jsg::v8::Local::from_ffi(lock.isolate(), js_val.into_ffi()) };
 
@@ -639,6 +649,7 @@ fn typed_array_iter_int32() {
     harness.run_in_context(|lock, _ctx| {
         let data: Vec<i32> = vec![-100, 0, 100];
         let js_val = data.to_js(lock);
+        // SAFETY: The isolate is locked and the FFI handle is from a valid eval result.
         let typed: jsg::v8::Local<'_, jsg::v8::Int32Array> =
             unsafe { jsg::v8::Local::from_ffi(lock.isolate(), js_val.into_ffi()) };
 
@@ -660,6 +671,7 @@ fn typed_array_iter_reverse() {
     harness.run_in_context(|lock, _ctx| {
         let data: Vec<u8> = vec![1, 2, 3, 4];
         let js_val = data.to_js(lock);
+        // SAFETY: The isolate is locked and the FFI handle is from a valid eval result.
         let typed: jsg::v8::Local<'_, jsg::v8::Uint8Array> =
             unsafe { jsg::v8::Local::from_ffi(lock.isolate(), js_val.into_ffi()) };
 
@@ -676,6 +688,7 @@ fn typed_array_empty() {
     harness.run_in_context(|lock, _ctx| {
         let data: Vec<u8> = vec![];
         let js_val = data.to_js(lock);
+        // SAFETY: The isolate is locked and the FFI handle is from a valid eval result.
         let typed: jsg::v8::Local<'_, jsg::v8::Uint8Array> =
             unsafe { jsg::v8::Local::from_ffi(lock.isolate(), js_val.into_ffi()) };
 
@@ -699,6 +712,7 @@ fn float32_array_parameter_and_return() {
             _state: ResourceState::default(),
         });
         let mut template = ArrayResourceTemplate::new(lock);
+        // SAFETY: Lock is valid, resource is a valid Ref, and template holds a valid FunctionTemplate.
         let wrapped = unsafe { jsg::wrap_resource(lock, resource, &mut template) };
         ctx.set_global("arr", wrapped);
 
@@ -734,6 +748,7 @@ fn float32_array_slice_parameter() {
             _state: ResourceState::default(),
         });
         let mut template = ArrayResourceTemplate::new(lock);
+        // SAFETY: Lock is valid, resource is a valid Ref, and template holds a valid FunctionTemplate.
         let wrapped = unsafe { jsg::wrap_resource(lock, resource, &mut template) };
         ctx.set_global("arr", wrapped);
 
@@ -761,6 +776,7 @@ fn float32_array_rejects_wrong_type() {
             _state: ResourceState::default(),
         });
         let mut template = ArrayResourceTemplate::new(lock);
+        // SAFETY: Lock is valid, resource is a valid Ref, and template holds a valid FunctionTemplate.
         let wrapped = unsafe { jsg::wrap_resource(lock, resource, &mut template) };
         ctx.set_global("arr", wrapped);
 
@@ -829,6 +845,7 @@ fn float64_array_parameter_and_return() {
             _state: ResourceState::default(),
         });
         let mut template = ArrayResourceTemplate::new(lock);
+        // SAFETY: Lock is valid, resource is a valid Ref, and template holds a valid FunctionTemplate.
         let wrapped = unsafe { jsg::wrap_resource(lock, resource, &mut template) };
         ctx.set_global("arr", wrapped);
 
@@ -864,6 +881,7 @@ fn float64_array_slice_parameter() {
             _state: ResourceState::default(),
         });
         let mut template = ArrayResourceTemplate::new(lock);
+        // SAFETY: Lock is valid, resource is a valid Ref, and template holds a valid FunctionTemplate.
         let wrapped = unsafe { jsg::wrap_resource(lock, resource, &mut template) };
         ctx.set_global("arr", wrapped);
 
@@ -891,6 +909,7 @@ fn float64_array_rejects_wrong_type() {
             _state: ResourceState::default(),
         });
         let mut template = ArrayResourceTemplate::new(lock);
+        // SAFETY: Lock is valid, resource is a valid Ref, and template holds a valid FunctionTemplate.
         let wrapped = unsafe { jsg::wrap_resource(lock, resource, &mut template) };
         ctx.set_global("arr", wrapped);
 
@@ -946,6 +965,7 @@ fn bigint64_array_parameter_and_return() {
             _state: ResourceState::default(),
         });
         let mut template = ArrayResourceTemplate::new(lock);
+        // SAFETY: Lock is valid, resource is a valid Ref, and template holds a valid FunctionTemplate.
         let wrapped = unsafe { jsg::wrap_resource(lock, resource, &mut template) };
         ctx.set_global("arr", wrapped);
 
@@ -987,6 +1007,7 @@ fn bigint64_array_slice_parameter() {
             _state: ResourceState::default(),
         });
         let mut template = ArrayResourceTemplate::new(lock);
+        // SAFETY: Lock is valid, resource is a valid Ref, and template holds a valid FunctionTemplate.
         let wrapped = unsafe { jsg::wrap_resource(lock, resource, &mut template) };
         ctx.set_global("arr", wrapped);
 
@@ -1014,6 +1035,7 @@ fn bigint64_array_rejects_wrong_type() {
             _state: ResourceState::default(),
         });
         let mut template = ArrayResourceTemplate::new(lock);
+        // SAFETY: Lock is valid, resource is a valid Ref, and template holds a valid FunctionTemplate.
         let wrapped = unsafe { jsg::wrap_resource(lock, resource, &mut template) };
         ctx.set_global("arr", wrapped);
 
@@ -1068,6 +1090,7 @@ fn biguint64_array_parameter_and_return() {
             _state: ResourceState::default(),
         });
         let mut template = ArrayResourceTemplate::new(lock);
+        // SAFETY: Lock is valid, resource is a valid Ref, and template holds a valid FunctionTemplate.
         let wrapped = unsafe { jsg::wrap_resource(lock, resource, &mut template) };
         ctx.set_global("arr", wrapped);
 
@@ -1103,6 +1126,7 @@ fn biguint64_array_slice_parameter() {
             _state: ResourceState::default(),
         });
         let mut template = ArrayResourceTemplate::new(lock);
+        // SAFETY: Lock is valid, resource is a valid Ref, and template holds a valid FunctionTemplate.
         let wrapped = unsafe { jsg::wrap_resource(lock, resource, &mut template) };
         ctx.set_global("arr", wrapped);
 
@@ -1130,6 +1154,7 @@ fn biguint64_array_rejects_wrong_type() {
             _state: ResourceState::default(),
         });
         let mut template = ArrayResourceTemplate::new(lock);
+        // SAFETY: Lock is valid, resource is a valid Ref, and template holds a valid FunctionTemplate.
         let wrapped = unsafe { jsg::wrap_resource(lock, resource, &mut template) };
         ctx.set_global("arr", wrapped);
 
