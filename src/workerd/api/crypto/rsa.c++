@@ -252,10 +252,10 @@ kj::Maybe<AsymmetricKeyData> Rsa::fromJwk(
 
   static constexpr auto kInvalidBase64Error = "Invalid RSA key in JSON Web Key; invalid base64."_kj;
 
-  auto nDecoded =
-      toBignumOwned(simdutfBase64UrlDecodeChecked(js, n, kInvalidBase64Error).asArrayPtr());
-  auto eDecoded =
-      toBignumOwned(simdutfBase64UrlDecodeChecked(js, e, kInvalidBase64Error).asArrayPtr());
+  auto nBuf = simdutfBase64UrlDecodeChecked(js, n, kInvalidBase64Error);
+  auto nDecoded = toBignumOwned(nBuf.asArrayPtr());
+  auto eBuf = simdutfBase64UrlDecodeChecked(js, e, kInvalidBase64Error);
+  auto eDecoded = toBignumOwned(eBuf.asArrayPtr());
   JSG_REQUIRE(RSA_set0_key(rsa.get(), nDecoded.release(), eDecoded.release(), nullptr) == 1, Error,
       "Invalid RSA key in JSON Web Key; failed to set key parameters");
 
@@ -278,18 +278,18 @@ kj::Maybe<AsymmetricKeyData> Rsa::fromJwk(
     auto qi = JSG_REQUIRE_NONNULL(jwk.qi.map([](auto& str) { return str.asPtr(); }), Error,
         "Invalid RSA key in JSON Web Key; missing or invalid "
         "First CRT Coefficient parameter (\"qi\").");
-    auto dDecoded = toBignumOwned(
-        simdutfBase64UrlDecodeChecked(js, d, "Invalid RSA key in JSON Web Key"_kj).asArrayPtr());
-    auto pDecoded =
-        toBignumOwned(simdutfBase64UrlDecodeChecked(js, p, kInvalidBase64Error).asArrayPtr());
-    auto qDecoded =
-        toBignumOwned(simdutfBase64UrlDecodeChecked(js, q, kInvalidBase64Error).asArrayPtr());
-    auto dpDecoded =
-        toBignumOwned(simdutfBase64UrlDecodeChecked(js, dp, kInvalidBase64Error).asArrayPtr());
-    auto dqDecoded =
-        toBignumOwned(simdutfBase64UrlDecodeChecked(js, dq, kInvalidBase64Error).asArrayPtr());
-    auto qiDecoded =
-        toBignumOwned(simdutfBase64UrlDecodeChecked(js, qi, kInvalidBase64Error).asArrayPtr());
+    auto dBuf = simdutfBase64UrlDecodeChecked(js, d, "Invalid RSA key in JSON Web Key"_kj);
+    auto dDecoded = toBignumOwned(dBuf.asArrayPtr());
+    auto pBuf = simdutfBase64UrlDecodeChecked(js, p, kInvalidBase64Error);
+    auto pDecoded = toBignumOwned(pBuf.asArrayPtr());
+    auto qBuf = simdutfBase64UrlDecodeChecked(js, q, kInvalidBase64Error);
+    auto qDecoded = toBignumOwned(qBuf.asArrayPtr());
+    auto dpBuf = simdutfBase64UrlDecodeChecked(js, dp, kInvalidBase64Error);
+    auto dpDecoded = toBignumOwned(dpBuf.asArrayPtr());
+    auto dqBuf = simdutfBase64UrlDecodeChecked(js, dq, kInvalidBase64Error);
+    auto dqDecoded = toBignumOwned(dqBuf.asArrayPtr());
+    auto qiBuf = simdutfBase64UrlDecodeChecked(js, qi, kInvalidBase64Error);
+    auto qiDecoded = toBignumOwned(qiBuf.asArrayPtr());
 
     // .release() transfers BIGNUM ownership to the RSA key. UniqueBignum ensures
     // cleanup if any earlier allocation or decode throws.
