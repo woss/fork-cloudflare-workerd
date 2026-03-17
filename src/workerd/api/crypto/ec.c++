@@ -1033,6 +1033,7 @@ class EdDsaKey final: public AsymmetricKeyCryptoKeyImpl {
       KJ_ASSERT(privateKeyLen == 32, privateKeyLen);
 
       jwk.d = fastEncodeBase64Url(kj::arrayPtr(rawPrivateKey, privateKeyLen));
+      OPENSSL_cleanse(rawPrivateKey, sizeof(rawPrivateKey));
     }
 
     return jwk;
@@ -1068,6 +1069,7 @@ CryptoKeyPair generateKeyImpl(jsg::Lock& js,
   uint8_t rawPublicKey[keySize] = {0};
   uint8_t rawPrivateKey[keySize * 2] = {0};
   KeypairInit(rawPublicKey, rawPrivateKey);
+  KJ_DEFER(OPENSSL_cleanse(rawPrivateKey, sizeof(rawPrivateKey)));
 
   // The private key technically also contains the public key. Why does the keypair function bother
   // writing out the public key to a separate buffer?
