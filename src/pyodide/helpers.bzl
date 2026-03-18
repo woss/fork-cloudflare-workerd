@@ -245,6 +245,12 @@ _REPLACEMENTS = [
         "var tableBase=metadata.tableSize?wasmTable.length:0;" +
         "Module.snapshotDebug && console.log('loadWebAssemblyModule', libName, memoryBase, tableBase);",
     ],
+    # to ensure we report every fatal error, not just the first one
+    [
+        'console.error("Recursive call to fatal_error. Inner error was:");',
+        'console.error("Recursive call to fatal_error. Inner error was:");\n' +
+        "try { API.on_fatal?.(e); } catch(e2) { console.error(e2); }\n",
+    ],
 ]
 
 def _python_bundle(version, *, pyodide_asm_wasm = None, pyodide_asm_js = None, python_stdlib_zip = None, emscripten_setup_override = None):
