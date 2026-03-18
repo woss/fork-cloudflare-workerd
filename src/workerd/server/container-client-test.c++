@@ -15,6 +15,8 @@
 
 #include <kj/test.h>
 
+#include <cstring>
+
 namespace workerd::server {
 namespace {
 
@@ -132,6 +134,63 @@ KJ_TEST("decodeJsonResponse ContainerMonitorResponse - non-zero exit") {
   auto root = message->getRoot<docker_api::Docker::ContainerMonitorResponse>();
 
   KJ_EXPECT(root.getStatusCode() == 137);
+}
+
+KJ_TEST("labels in StartParams encode to Docker ContainerCreateRequest JSON") {
+  capnp::MallocMessageBuilder paramsMessage;
+  auto params = paramsMessage.initRoot<rpc::Container::StartParams>();
+
+  auto labels = params.initLabels(2);
+  labels[0].setName("team");
+  labels[0].setValue("workers");
+  labels[1].setName("env");
+  labels[1].setValue("staging");
+
+  capnp::JsonCodec codec;
+  codec.handleByAnnotation<docker_api::Docker::ContainerCreateRequest>();
+  capnp::MallocMessageBuilder dockerMessage;
+  auto jsonRoot = dockerMessage.initRoot<docker_api::Docker::ContainerCreateRequest>();
+  jsonRoot.setImage("test-image");
+
+  if (params.hasLabels()) {
+    auto lbls = params.getLabels();
+    auto labelsObj = jsonRoot.initLabels().initObject(lbls.size());
+    for (auto i: kj::zeroTo(lbls.size())) {
+      labelsObj[i].setName(lbls[i].getName());
+      labelsObj[i].initValue().setString(lbls[i].getValue());
+    }
+  }
+
+  auto encoded = codec.encode(jsonRoot);
+
+  KJ_EXPECT(strstr(encoded.cStr(), "\"Labels\"") != nullptr, encoded);
+  KJ_EXPECT(strstr(encoded.cStr(), "\"team\"") != nullptr, encoded);
+  KJ_EXPECT(strstr(encoded.cStr(), "\"workers\"") != nullptr, encoded);
+  KJ_EXPECT(strstr(encoded.cStr(), "\"env\"") != nullptr, encoded);
+  KJ_EXPECT(strstr(encoded.cStr(), "\"staging\"") != nullptr, encoded);
+}
+
+KJ_TEST("no labels in StartParams produces no Labels key in JSON") {
+  capnp::MallocMessageBuilder paramsMessage;
+  auto params = paramsMessage.initRoot<rpc::Container::StartParams>();
+
+  capnp::JsonCodec codec;
+  codec.handleByAnnotation<docker_api::Docker::ContainerCreateRequest>();
+  capnp::MallocMessageBuilder dockerMessage;
+  auto jsonRoot = dockerMessage.initRoot<docker_api::Docker::ContainerCreateRequest>();
+  jsonRoot.setImage("test-image");
+
+  if (params.hasLabels()) {
+    auto lbls = params.getLabels();
+    auto labelsObj = jsonRoot.initLabels().initObject(lbls.size());
+    for (auto i: kj::zeroTo(lbls.size())) {
+      labelsObj[i].setName(lbls[i].getName());
+      labelsObj[i].initValue().setString(lbls[i].getValue());
+    }
+  }
+
+  auto encoded = codec.encode(jsonRoot);
+  KJ_EXPECT(strstr(encoded.cStr(), "\"Labels\"") == nullptr, encoded);
 }
 
 }  // namespace

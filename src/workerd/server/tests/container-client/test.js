@@ -296,6 +296,31 @@ export class DurableObjectExample extends DurableObject {
     await monitor;
   }
 
+  async testLabels() {
+    const container = this.ctx.container;
+    if (container.running) {
+      let monitor = container.monitor().catch((_err) => {});
+      await container.destroy();
+      await monitor;
+    }
+
+    assert.strictEqual(container.running, false);
+
+    container.start({
+      enableInternet: true,
+      labels: { team: 'workers', environment: 'testing' },
+    });
+
+    const monitor = container.monitor().catch((_err) => {});
+    await this.waitUntilContainerIsHealthy();
+
+    assert.strictEqual(container.running, true);
+
+    await container.destroy();
+    await monitor;
+    assert.strictEqual(container.running, false);
+  }
+
   async testPidNamespace() {
     const container = this.ctx.container;
     if (container.running) {
@@ -766,6 +791,17 @@ export const testSetInactivityTimeout = {
       // Container should still be running after DO exited
       await stub.expectRunning(true);
     }
+  },
+};
+
+// Test that custom labels are passed through to the container
+export const testLabels = {
+  async test(_ctrl, env) {
+    const id = env.MY_CONTAINER.idFromName(
+      getRandomDurableObjectName('testLabels')
+    );
+    const stub = env.MY_CONTAINER.get(id);
+    await stub.testLabels();
   },
 };
 

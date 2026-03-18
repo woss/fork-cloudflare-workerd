@@ -44,6 +44,14 @@ interface Container @0x9aaceefc06523bca {
 
     compatibilityFlags @4 :CompatibilityFlags;
     # Compatibility flags for this worker
+
+    labels @5 :List(Label);
+    # Optional key-value metadata labels for metrics/observability.
+  }
+
+  struct Label {
+    name @0 :Text;
+    value @1 :Text;
   }
 
   monitor @2 () -> (exitCode: Int32);

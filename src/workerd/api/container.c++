@@ -56,6 +56,15 @@ void Container::start(jsg::Lock& js, jsg::Optional<StartupOptions> maybeOptions)
     }
   }
 
+  KJ_IF_SOME(labels, options.labels) {
+    auto list = req.initLabels(labels.fields.size());
+    for (auto i: kj::indices(labels.fields)) {
+      auto& field = labels.fields[i];
+      list[i].setName(field.name);
+      list[i].setValue(field.value);
+    }
+  }
+
   req.setCompatibilityFlags(flags);
 
   IoContext::current().addTask(req.sendIgnoringResult());
