@@ -1,3 +1,6 @@
+# Python SDK for workerd now lives in https://github.com/cloudflare/workers-py
+# All new features should be implemented there and this module is only kept for backward compatibility
+
 from ._workers import (
     Blob,
     BlobEnding,

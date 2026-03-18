@@ -931,6 +931,22 @@ void DurableObjectTransaction::maybeRollback() {
   rolledBack = true;
 }
 
+namespace {
+
+// Maximum length of a facet name, in characters.
+constexpr size_t MAX_FACET_NAME_LENGTH = 256;
+
+// Maximum depth of the facet tree, including the root Durable Object. Root is at depth 0, so
+// the deepest allowed facet is at depth MAX_FACET_TREE_DEPTH - 1.
+constexpr uint MAX_FACET_TREE_DEPTH = 4;
+
+inline void requireValidFacetName(kj::StringPtr name) {
+  JSG_REQUIRE(name.size() <= MAX_FACET_NAME_LENGTH, TypeError, "Facet name is too long (max ",
+      MAX_FACET_NAME_LENGTH, " characters).");
+}
+
+}  // namespace
+
 class FacetOutgoingFactory final: public Fetcher::OutgoingFactory {
  public:
   FacetOutgoingFactory(Worker::Actor::FacetManager& facetManager,
@@ -974,7 +990,14 @@ class FacetOutgoingFactory final: public Fetcher::OutgoingFactory {
 jsg::Ref<Fetcher> DurableObjectFacets::get(jsg::Lock& js,
     kj::String name,
     jsg::Function<jsg::Promise<StartupOptions>()> getStartupOptions) {
+  requireValidFacetName(name);
+
   auto& fm = getFacetManager();
+
+  JSG_REQUIRE(fm.getDepth() + 1 < MAX_FACET_TREE_DEPTH, Error,
+      "Facet nesting depth limit exceeded. The maximum depth including the root Durable Object is ",
+      MAX_FACET_TREE_DEPTH, ".");
+
   auto& ioCtx = IoContext::current();
 
   kj::Function<kj::Promise<Worker::Actor::FacetManager::StartInfo>()> getStartInfo =
@@ -1031,10 +1054,12 @@ jsg::Ref<Fetcher> DurableObjectFacets::get(jsg::Lock& js,
 }
 
 void DurableObjectFacets::abort(jsg::Lock& js, kj::String name, jsg::JsValue reason) {
+  requireValidFacetName(name);
   getFacetManager().abortFacet(name, js.exceptionToKj(reason));
 }
 
 void DurableObjectFacets::delete_(jsg::Lock& js, kj::String name) {
+  requireValidFacetName(name);
   getFacetManager().deleteFacet(name);
 }
 

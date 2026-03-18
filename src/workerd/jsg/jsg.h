@@ -2189,10 +2189,15 @@ class JsMessage;
 JS_TYPE_CLASSES(V)
 #undef V
 
+// JsBufferSource is not in JS_TYPE_CLASSES because there is no v8::BufferSource
+// type (and hence no v8::Value::IsBufferSource() check). It is instead handled
+// with special-case logic in JsValue::tryCast and JsValueWrapper.
+class JsBufferSource;
+
 #define V(Name) || kj::isSameType<T, Js##Name>()
 template <typename T>
-concept IsJsValue =
-    kj::isSameType<T, JsValue>() || kj::isSameType<T, JsMessage>() JS_TYPE_CLASSES(V);
+concept IsJsValue = kj::isSameType<T, JsValue>() ||
+    kj::isSameType<T, JsMessage>() JS_TYPE_CLASSES(V) || kj::isSameType<T, JsBufferSource>();
 #undef V
 
 class DOMException;
@@ -2385,6 +2390,12 @@ class Lock {
   static Lock& current() {
     return from(v8::Isolate::GetCurrent());
   }
+
+  // Signals that execution should be terminated immediately, including during C++ iterator
+  // callbacks where V8's own TerminateExecution() interrupt would not be checked.
+  // Also calls V8's TerminateExecution(). See IsolateBase::requestTermination().
+  void requestTermination();
+  bool isTerminationRequested() const;
 
   // RAII construct that reports amount of external memory to be manually attributed to
   // the isolate. When the returned ExtrernalMemoryAdjuster is dropped, the amount will
@@ -2842,6 +2853,14 @@ class Lock {
   // Resolve an internal module namespace from the given specifier.
   // This variation can be used only for internal built-ins.
   kj::Maybe<JsObject> resolveInternalModule(kj::StringPtr specifier);
+
+  // Resolve a user-importable built-in module namespace from the given specifier.
+  // Unlike resolveInternalModule, this only searches user-importable built-ins
+  // (PUBLIC_BUILTIN context), excluding internal-only modules and worker bundle
+  // modules. Use this for user-facing APIs like process.getBuiltinModule() that
+  // must not expose internal modules or return user bundle overrides.
+  // Only valid when the new module registry is in use.
+  kj::Maybe<JsObject> resolvePublicBuiltinModule(kj::StringPtr specifier);
 
   // Resolve a module namespace from the given specifier.
   // This variation includes modules from the worker bundle.

@@ -15,9 +15,14 @@ Python Workers runtime layer. Replaces Pyodide's loader with a minimal substitut
 | `internal/tar.ts`, `tarfs.ts`                 | Tar archive parsing + read-only filesystem for bundles                                                |
 | `internal/topLevelEntropy/`                   | TS+Python: patches `getRandomValues` with deterministic entropy during import, reseeds before request |
 | `internal/pool/`                              | Emscripten setup in plain V8 isolate; `emscriptenSetup.ts` has NO access to C++ extensions            |
-| `internal/workers-api/`                       | Python SDK package (`pyproject.toml` + `uv.lock` managed)                                             |
+| `internal/workers-api/`                       | Python SDK package (frozen)                                            |
 | `internal/metadata.ts`                        | Config flags: `IS_WORKERD`, `LOCKFILE`, `MAIN_MODULE_NAME`, etc.                                      |
 | `pyodide_extra.capnp`                         | Cap'n Proto schema for Pyodide bundle metadata                                                        |
+
+## Python SDK
+
+Python SDK (`internal/workers-api/`) now lives in [cloudflare/workers-py](https://github.com/cloudflare/workers-py) and is installed from PyPI. Keep existing code for backward compatibility; new features go to workers-py.
+
 
 ## TESTING
 

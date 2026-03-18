@@ -315,6 +315,14 @@ void Lock::requestExtraMicrotaskCheckpoint() {
   IsolateBase::from(v8Isolate).requestExtraMicrotaskCheckpoint({});
 }
 
+void Lock::requestTermination() {
+  IsolateBase::from(v8Isolate).requestTermination();
+}
+
+bool Lock::isTerminationRequested() const {
+  return IsolateBase::from(v8Isolate).isTerminationRequested();
+}
+
 void Lock::terminateNextExecution() {
   v8Isolate->TerminateExecution();
 }
@@ -358,6 +366,13 @@ kj::Maybe<JsObject> Lock::resolveInternalModule(kj::StringPtr specifier) {
   KJ_ASSERT(registry != nullptr);
   auto module = registry->resolveInternalImport(*this, specifier);
   return jsg::JsObject(module.getHandle(*this).As<v8::Object>());
+}
+
+kj::Maybe<JsObject> Lock::resolvePublicBuiltinModule(kj::StringPtr specifier) {
+  auto& isolate = IsolateBase::from(v8Isolate);
+  KJ_ASSERT(isolate.isUsingNewModuleRegistry());
+  return jsg::modules::ModuleRegistry::tryResolveModuleNamespace(
+      *this, specifier, jsg::modules::ResolveContext::Type::PUBLIC_BUILTIN);
 }
 
 kj::Maybe<JsObject> Lock::resolveModule(kj::StringPtr specifier, RequireEsm requireEsm) {

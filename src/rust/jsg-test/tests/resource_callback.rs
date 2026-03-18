@@ -83,6 +83,7 @@ fn resource_method_callback_receives_correct_self() {
             prefix: "Hello, ".to_owned(),
         });
         let mut template = EchoResourceTemplate::new(lock);
+        // SAFETY: Lock is valid, resource is a valid Ref, and template holds a valid FunctionTemplate.
         let wrapped = unsafe { jsg::wrap_resource(lock, resource, &mut template) };
         ctx.set_global("echoResource", wrapped);
 
@@ -103,6 +104,7 @@ fn resource_method_can_be_called_multiple_times() {
             prefix: ">> ".to_owned(),
         });
         let mut template = EchoResourceTemplate::new(lock);
+        // SAFETY: Lock is valid, resource is a valid Ref, and template holds a valid FunctionTemplate.
         let wrapped = unsafe { jsg::wrap_resource(lock, resource, &mut template) };
         ctx.set_global("echo", wrapped);
 
@@ -127,6 +129,7 @@ fn resource_method_accepts_str_ref_parameter() {
             prefix: "Hello, ".to_owned(),
         });
         let mut template = EchoResourceTemplate::new(lock);
+        // SAFETY: Lock is valid, resource is a valid Ref, and template holds a valid FunctionTemplate.
         let wrapped = unsafe { jsg::wrap_resource(lock, resource, &mut template) };
         ctx.set_global("echo", wrapped);
 
@@ -148,6 +151,7 @@ fn resource_method_returns_non_result_values() {
             counter: counter.clone(),
         });
         let mut template = DirectReturnResourceTemplate::new(lock);
+        // SAFETY: Lock is valid, resource is a valid Ref, and template holds a valid FunctionTemplate.
         let wrapped = unsafe { jsg::wrap_resource(lock, resource, &mut template) };
         ctx.set_global("resource", wrapped);
 
@@ -238,6 +242,7 @@ fn instance_and_static_methods_coexist() {
         ctx.set_global("MathResource", constructor.into());
 
         // Expose an instance as a global
+        // SAFETY: Lock is valid, resource is a valid Ref, and template holds a valid FunctionTemplate.
         let wrapped = unsafe { jsg::wrap_resource(lock, resource, &mut template) };
         ctx.set_global("math", wrapped);
 
@@ -306,6 +311,7 @@ fn resource_method_returns_null_for_none() {
             counter: Rc::new(Cell::new(0)),
         });
         let mut template = DirectReturnResourceTemplate::new(lock);
+        // SAFETY: Lock is valid, resource is a valid Ref, and template holds a valid FunctionTemplate.
         let wrapped = unsafe { jsg::wrap_resource(lock, resource, &mut template) };
         ctx.set_global("resource", wrapped);
 
@@ -377,6 +383,7 @@ fn static_constant_accessible_on_instance() {
             _state: ResourceState::default(),
         });
         let mut template = ConstantResourceTemplate::new(lock);
+        // SAFETY: Lock is valid, resource is a valid Ref, and template holds a valid FunctionTemplate.
         let wrapped = unsafe { jsg::wrap_resource(lock, resource, &mut template) };
         ctx.set_global("obj", wrapped);
 
@@ -424,6 +431,7 @@ fn static_constant_coexists_with_methods() {
         let constructor = template.get_constructor().as_local_function(lock);
         ctx.set_global("ConstantResource", constructor.into());
 
+        // SAFETY: Lock is valid, resource is a valid Ref, and template holds a valid FunctionTemplate.
         let wrapped = unsafe { jsg::wrap_resource(lock, resource, &mut template) };
         ctx.set_global("obj", wrapped);
 
