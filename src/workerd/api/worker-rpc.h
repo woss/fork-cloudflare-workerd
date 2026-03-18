@@ -370,8 +370,13 @@ class JsRpcProperty: public JsRpcClientProvider {
 // `JsRpcStub::sendJsRpc()`.
 class JsRpcStub: public JsRpcClientProvider {
  public:
+  // Only deserialize() needs ExternalMemoryAdjustment — it extracts a new capability from an RPC
+  // response, creating MembraneHook + forked promise allocations. The other callers (dup() and
+  // constructor()) just refcount existing capabilities or create local loopbacks.
   JsRpcStub(IoOwn<rpc::JsRpcTarget::Client> capnpClient): capnpClient(kj::mv(capnpClient)) {}
-  JsRpcStub(IoOwn<rpc::JsRpcTarget::Client> capnpClient, RpcStubDisposalGroup& disposalGroup);
+  JsRpcStub(IoOwn<rpc::JsRpcTarget::Client> capnpClient,
+      RpcStubDisposalGroup& disposalGroup,
+      jsg::ExternalMemoryAdjustment externalMemoryAdjustment);
   ~JsRpcStub() noexcept(false);
 
   rpc::JsRpcTarget::Client getClient();
@@ -414,6 +419,7 @@ class JsRpcStub: public JsRpcClientProvider {
 
   kj::Maybe<RpcStubDisposalGroup&> disposalGroup;
   kj::ListLink<JsRpcStub> disposalGroupLink;
+  kj::Maybe<jsg::ExternalMemoryAdjustment> externalMemoryAdjustment;
 
   friend class RpcStubDisposalGroup;
 };
