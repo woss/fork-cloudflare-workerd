@@ -2911,3 +2911,80 @@ export const maxOutputLengthExactSize = {
     );
   },
 };
+
+// Regression test for the exception-safety gap in the clearBuffers() fix.
+//
+// When the writeState buffer passed to initialize() is too small (fewer
+// than 2 uint32 elements), updateWriteResult() throws after deflate()
+// has already run.  The original clearBuffers() fix placed explicit calls
+// *after* updateWriteResult(), so the exception unwinds past them —
+// leaving z_stream.next_out pointing into the output buffer's BackingStore.
+// If that buffer is later garbage-collected, a subsequent call to
+// params() -> deflateParams() -> flush_pending() writes to freed memory.
+//
+// The fix uses KJ_DEFER so clearBuffers() runs on every scope exit,
+// including exception unwinding.
+//
+// NOTE: The actual UAF only manifests when GC frees the backing stores
+// (detectable via ASAN + forced gc()).  This test exercises the vulnerable
+// code path to guard against regressions and ensure no crash occurs; the
+// memory-safety guarantee is provided by the KJ_DEFER fix itself.
+export const zlibParamsAfterFailedWriteNoStalePointers = {
+  test() {
+    const streams = [];
+    for (let j = 0; j < 10; j++) {
+      // Access the native handle directly and re-initialize with a writeState
+      // buffer that is intentionally too small (1 uint32 instead of 2).
+      // This causes updateWriteResult() to throw after a successful deflate.
+      const handle = new zlib.DeflateRaw({ level: 0 })._handle;
+      handle.initialize(
+        15,
+        0,
+        8,
+        0,
+        Buffer.from(new Uint32Array(1).buffer),
+        () => {},
+        undefined
+      );
+
+      const payload = Buffer.alloc(64, 0x41);
+      let outputBuffer = Buffer.alloc(4096);
+
+      // writeSync succeeds in deflate() but throws in updateWriteResult()
+      // due to the undersized writeState.  Before the KJ_DEFER fix, this
+      // left z_stream.next_out pointing into outputBuffer.
+      try {
+        handle.writeSync(
+          0,
+          payload,
+          0,
+          payload.length,
+          outputBuffer,
+          0,
+          outputBuffer.length
+        );
+      } catch (e) {
+        // Expected: "Invalid write result buffer"
+      }
+      streams.push({ handle, outputBuffer });
+    }
+
+    // Drop JS references to output buffers.
+    for (const s of streams) s.outputBuffer = null;
+
+    // params() calls deflateParams() which may internally flush.  Before the
+    // fix, this could write through a dangling next_out pointer.  After the
+    // fix, next_out points to a safe dummy byte with avail_out=0, so
+    // deflateParams() returns Z_BUF_ERROR (non-fatal).
+    for (const s of streams) {
+      try {
+        s.handle.params(
+          zlib.constants.Z_DEFAULT_COMPRESSION,
+          zlib.constants.Z_DEFAULT_STRATEGY
+        );
+      } catch (e) {
+        // May throw due to stream state; that's fine — the point is no UAF.
+      }
+    }
+  },
+};
