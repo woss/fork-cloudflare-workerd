@@ -2189,10 +2189,15 @@ class JsMessage;
 JS_TYPE_CLASSES(V)
 #undef V
 
+// JsBufferSource is not in JS_TYPE_CLASSES because there is no v8::BufferSource
+// type (and hence no v8::Value::IsBufferSource() check). It is instead handled
+// with special-case logic in JsValue::tryCast and JsValueWrapper.
+class JsBufferSource;
+
 #define V(Name) || kj::isSameType<T, Js##Name>()
 template <typename T>
-concept IsJsValue =
-    kj::isSameType<T, JsValue>() || kj::isSameType<T, JsMessage>() JS_TYPE_CLASSES(V);
+concept IsJsValue = kj::isSameType<T, JsValue>() ||
+    kj::isSameType<T, JsMessage>() JS_TYPE_CLASSES(V) || kj::isSameType<T, JsBufferSource>();
 #undef V
 
 class DOMException;
