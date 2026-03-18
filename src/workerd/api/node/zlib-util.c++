@@ -488,7 +488,7 @@ void ZlibUtil::CompressionStream<CompressionContext>::writeStream(
     context()->work();
     if (checkError(js)) {
       writing = false;
-      updateWriteResult();
+      updateWriteResult(js);
     }
     // Clear buffer pointers from the compression context after each write.
     // The input/output kj::Array parameters are backed by V8 BackingStores
@@ -515,7 +515,7 @@ void ZlibUtil::CompressionStream<CompressionContext>::writeStream(
     context()->clearBuffers();
     return;
   }
-  updateWriteResult();
+  updateWriteResult(js);
   // Clear buffer pointers — see comment in the sync path above for rationale.
   context()->clearBuffers();
   KJ_IF_SOME(cb, writeCallback) {
@@ -549,16 +549,17 @@ bool ZlibUtil::CompressionStream<CompressionContext>::checkError(jsg::Lock& js) 
 
 template <typename CompressionContext>
 void ZlibUtil::CompressionStream<CompressionContext>::initializeStream(
-    jsg::BufferSource _writeResult, jsg::Function<void()> _writeCallback) {
-  writeResult = kj::mv(_writeResult);
+    jsg::Lock& js, jsg::JsArrayBufferView& _writeResult, jsg::Function<void()> _writeCallback) {
+  writeResult = _writeResult.addRef(js);
   writeCallback = kj::mv(_writeCallback);
   initialized = true;
 }
 
 template <typename CompressionContext>
-void ZlibUtil::CompressionStream<CompressionContext>::updateWriteResult() {
+void ZlibUtil::CompressionStream<CompressionContext>::updateWriteResult(jsg::Lock& js) {
   KJ_IF_SOME(wr, writeResult) {
-    auto ptr = wr.template asArrayPtr<uint32_t>();
+    auto result = wr.getHandle(js);
+    auto ptr = result.template asArrayPtr<uint32_t>();
     JSG_REQUIRE(ptr.size() >= 2, Error, "Invalid write result buffer"_kj);
     context()->getAfterWriteResult(&ptr[1], &ptr[0]);
   }
@@ -612,14 +613,15 @@ jsg::Ref<ZlibUtil::ZlibStream> ZlibUtil::ZlibStream::constructor(
   return js.alloc<ZlibStream>(static_cast<ZlibMode>(mode), js.getExternalMemoryTarget());
 }
 
-void ZlibUtil::ZlibStream::initialize(int windowBits,
+void ZlibUtil::ZlibStream::initialize(jsg::Lock& js,
+    int windowBits,
     int level,
     int memLevel,
     int strategy,
-    jsg::BufferSource writeState,
+    jsg::JsArrayBufferView writeState,
     jsg::Function<void()> writeCallback,
     jsg::Optional<kj::Array<kj::byte>> dictionary) {
-  initializeStream(kj::mv(writeState), kj::mv(writeCallback));
+  initializeStream(js, writeState, kj::mv(writeCallback));
   allocator.configure(context()->getStream());
   context()->initialize(level, windowBits, memLevel, strategy, kj::mv(dictionary));
 }
@@ -991,11 +993,11 @@ jsg::Ref<ZlibUtil::ZstdCompressionStream<CompressionContext>> ZlibUtil::ZstdComp
 
 template <typename CompressionContext>
 bool ZlibUtil::ZstdCompressionStream<CompressionContext>::initialize(jsg::Lock& js,
-    jsg::BufferSource params,
-    jsg::BufferSource writeResult,
+    jsg::JsArrayBufferView params,
+    jsg::JsArrayBufferView writeResult,
     jsg::Function<void()> writeCallback,
     jsg::Optional<uint64_t> pledgedSrcSize) {
-  this->initializeStream(kj::mv(writeResult), kj::mv(writeCallback));
+  this->initializeStream(js, writeResult, kj::mv(writeCallback));
 
   uint64_t srcSize = pledgedSrcSize.orDefault(ZSTD_CONTENTSIZE_UNKNOWN);
 
@@ -1035,10 +1037,10 @@ jsg::Ref<ZlibUtil::BrotliCompressionStream<CompressionContext>> ZlibUtil::Brotli
 
 template <typename CompressionContext>
 bool ZlibUtil::BrotliCompressionStream<CompressionContext>::initialize(jsg::Lock& js,
-    jsg::BufferSource params,
-    jsg::BufferSource writeResult,
+    jsg::JsArrayBufferView params,
+    jsg::JsArrayBufferView writeResult,
     jsg::Function<void()> writeCallback) {
-  this->initializeStream(kj::mv(writeResult), kj::mv(writeCallback));
+  this->initializeStream(js, writeResult, kj::mv(writeCallback));
   auto maybeError = this->context()->initialize(
       CompressionAllocator::AllocForBrotli, CompressionAllocator::FreeForZlib, &this->allocator);
 
