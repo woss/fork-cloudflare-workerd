@@ -731,13 +731,6 @@ kj::Maybe<jsg::Ref<JsRpcProperty>> JsRpcPromise::getProperty(jsg::Lock& js, kj::
   return js.alloc<JsRpcProperty>(JSG_THIS, kj::mv(name));
 }
 
-JsRpcStub::JsRpcStub(
-    IoOwn<rpc::JsRpcTarget::Client> capnpClient, RpcStubDisposalGroup& disposalGroup)
-    : capnpClient(kj::mv(capnpClient)),
-      disposalGroup(disposalGroup) {
-  disposalGroup.list.add(*this);
-}
-
 JsRpcStub::JsRpcStub(IoOwn<rpc::JsRpcTarget::Client> capnpClient,
     RpcStubDisposalGroup& disposalGroup,
     jsg::ExternalMemoryAdjustment externalMemoryAdjustment)
