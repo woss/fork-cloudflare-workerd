@@ -60,6 +60,11 @@ void Container::start(jsg::Lock& js, jsg::Optional<StartupOptions> maybeOptions)
     auto list = req.initLabels(labels.fields.size());
     for (auto i: kj::indices(labels.fields)) {
       auto& field = labels.fields[i];
+      JSG_REQUIRE(field.name.size() > 0, Error, "Label names cannot be empty");
+      JSG_REQUIRE(field.name.findFirst('\0') == kj::none, Error,
+          "Label names cannot contain '\\0': ", field.name);
+      JSG_REQUIRE(field.value.findFirst('\0') == kj::none, Error,
+          "Label values cannot contain '\\0': ", field.name);
       list[i].setName(field.name);
       list[i].setValue(field.value);
     }
