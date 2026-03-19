@@ -507,13 +507,11 @@ void IsolateBase::oomError(const char* location, const v8::OOMDetails& oom) {
 
 v8::ModifyCodeGenerationFromStringsResult IsolateBase::modifyCodeGenCallback(
     v8::Local<v8::Context> context, v8::Local<v8::Value> source, bool isCodeLike) {
-  // For non-string, non-object sources (e.g. eval() with no argument or eval(undefined)),
-  // there is no code generation from strings. V8 returns these primitive values as-is
-  // per spec. We allow them through but default to deny for object types as a
-  // defense-in-depth measure.
-  // Primitives allowed: undefined, null, boolean, number, bigint, symbol.
+  // For undefined sources (e.g. eval() with no argument or eval(undefined)),
+  // there is no code generation from strings. V8 returns undefined as-is per spec.
+  // We allow it through without further checks.
   // Note: Wasm compilation uses a separate callback (AllowWasmCodeGenerationCallback).
-  if (!source->IsString() && !source->IsObject()) {
+  if (source->IsUndefined()) {
     return {.codegen_allowed = true, .modified_source = {}};
   }
 
@@ -540,7 +538,8 @@ v8::ModifyCodeGenerationFromStringsResult IsolateBase::modifyCodeGenCallback(
   // changes, the setup-test and worker-test will fail, signaling that this constant
   // needs updating.
   static constexpr auto kEmptyFunctionSource = "(function anonymous(\n) {\n\n})"_kj;
-  if (isCodeLike && source->IsString() && kj::str(source.As<v8::String>()) == kEmptyFunctionSource) {
+  if (isCodeLike && source->IsString() &&
+      kj::str(source.As<v8::String>()) == kEmptyFunctionSource) {
     return {.codegen_allowed = true, .modified_source = {}};
   }
 
