@@ -19,7 +19,7 @@ jobs:
       pull-requests: write
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
         with:
           fetch-depth: 30 # Fetch some history; not all of it
 
@@ -44,4 +44,10 @@ jobs:
           model: 'cloudflare-ai-gateway/anthropic/claude-opus-4-6'
           forks: 'false'
           permissions: write
+          opencode_version: '1.2.27'
+          # The auto-reviewer must never push to PR branches. Its prompt
+          # (bonk_reviewer.md) already forbids git write ops, but NO_PUSH
+          # enforces that at the token level so it holds even if the model
+          # ignores the instruction.
+          token_permissions: 'NO_PUSH'
           prompt: ${{ steps.prompt.outputs.value }}

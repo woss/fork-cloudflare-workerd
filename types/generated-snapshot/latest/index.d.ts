@@ -583,6 +583,7 @@ interface DurableObjectId {
   toString(): string;
   equals(other: DurableObjectId): boolean;
   readonly name?: string;
+  readonly jurisdiction?: string;
 }
 declare abstract class DurableObjectNamespace<
   T extends Rpc.DurableObjectBranded | undefined = undefined,

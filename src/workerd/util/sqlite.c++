@@ -566,8 +566,10 @@ void SqliteDatabase::handleCriticalError(kj::Maybe<int> errorCode,
     kj::StringPtr errorMessage,
     kj::Maybe<const kj::Exception&> maybeException) {
   KJ_IF_SOME(code, errorCode) {
-    if (code == SQLITE_FULL || code == SQLITE_IOERR || code == SQLITE_BUSY ||
-        code == SQLITE_NOMEM || code == SQLITE_INTERRUPT) {
+    // Only errors listed in https://www.sqlite.org/lang_transaction.html#response_to_errors_within_a_transaction
+    // should be considered here as SQLITE auto rollbacks the transaction when we hit these errors
+    if (code == SQLITE_FULL || code == SQLITE_IOERR || code == SQLITE_NOMEM ||
+        code == SQLITE_INTERRUPT) {
 
       sqlite3* db = &KJ_ASSERT_NONNULL(maybeDb, "previous reset() failed");
       // We are in a transaction
