@@ -2902,26 +2902,28 @@ kj::Maybe<jsg::Promise<DrainingReadResult>> ReadableStreamJsController::draining
     KJ_CASE_ONEOF(consumer, kj::Own<ValueReadable>) {
       // beginOperation MUST be before consumer->drainingRead() — see comment above.
       state.beginOperation();
-      return js.tryCatch([&]() {
+      JSG_TRY(js) {
         return wrapDrainingRead(js, consumer->drainingRead(js, maxRead));
-      }, [&](jsg::Value exception) -> jsg::Promise<DrainingReadResult> {
+      }
+      JSG_CATCH(exception) {
         state.clearPendingState();
         (void)state.endOperation();
         doError(js, exception.getHandle(js));
         return js.rejectedPromise<DrainingReadResult>(kj::mv(exception));
-      });
+      };
     }
     KJ_CASE_ONEOF(consumer, kj::Own<ByteReadable>) {
       // beginOperation MUST be before consumer->drainingRead() — see comment above.
       state.beginOperation();
-      return js.tryCatch([&]() {
+      JSG_TRY(js) {
         return wrapDrainingRead(js, consumer->drainingRead(js, maxRead));
-      }, [&](jsg::Value exception) -> jsg::Promise<DrainingReadResult> {
+      }
+      JSG_CATCH(exception) {
         state.clearPendingState();
         (void)state.endOperation();
         doError(js, exception.getHandle(js));
         return js.rejectedPromise<DrainingReadResult>(kj::mv(exception));
-      });
+      };
     }
   }
   KJ_UNREACHABLE;

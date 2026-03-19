@@ -9,6 +9,9 @@
 //
 // This benchmark establishes a baseline before the DrainingReader adoption,
 // then the same benchmarks are re-run after the change to quantify improvement.
+// This test was originally written to measure improvement from DrainingReader
+// adoption (deployed by an autogate), but remains broadly useful as a benchmark
+// even after we remove the autogate.
 //
 // Usage:
 //   # Capture baseline (before changes):
