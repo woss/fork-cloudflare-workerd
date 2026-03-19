@@ -507,10 +507,13 @@ void IsolateBase::oomError(const char* location, const v8::OOMDetails& oom) {
 
 v8::ModifyCodeGenerationFromStringsResult IsolateBase::modifyCodeGenCallback(
     v8::Local<v8::Context> context, v8::Local<v8::Value> source, bool isCodeLike) {
-  // For non-string sources (e.g. eval() with no argument or a non-string argument),
-  // there is no code generation from strings. Allow it so that V8 can handle these
-  // per spec (return the value as-is).
-  if (!source->IsString()) {
+  // For non-string, non-object sources (e.g. eval() with no argument or eval(undefined)),
+  // there is no code generation from strings. V8 returns these primitive values as-is
+  // per spec. We allow them through but default to deny for object types as a
+  // defense-in-depth measure.
+  // Primitives allowed: undefined, null, boolean, number, bigint, symbol.
+  // Note: Wasm compilation uses a separate callback (AllowWasmCodeGenerationCallback).
+  if (!source->IsString() && !source->IsObject()) {
     return {.codegen_allowed = true, .modified_source = {}};
   }
 
