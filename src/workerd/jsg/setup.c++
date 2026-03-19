@@ -540,7 +540,7 @@ v8::ModifyCodeGenerationFromStringsResult IsolateBase::modifyCodeGenCallback(
   // changes, the setup-test and worker-test will fail, signaling that this constant
   // needs updating.
   static constexpr auto kEmptyFunctionSource = "(function anonymous(\n) {\n\n})"_kj;
-  if (isCodeLike && kj::str(source.As<v8::String>()) == kEmptyFunctionSource) {
+  if (isCodeLike && source->IsString() && kj::str(source.As<v8::String>()) == kEmptyFunctionSource) {
     return {.codegen_allowed = true, .modified_source = {}};
   }
 
