@@ -13,6 +13,8 @@
 #include <workerd/server/docker-api.capnp.h>
 #include <workerd/util/strings.h>
 
+#include <stdio.h>
+
 #include <capnp/compat/json.h>
 #include <capnp/message.h>
 #include <kj/async-io.h>
@@ -248,6 +250,58 @@ kj::StringPtr signalToString(uint32_t signal) {
       return "SIGKILL"_kj;
   }
 }
+
+void writeTarField(kj::ArrayPtr<kj::byte> field, kj::StringPtr value) {
+  auto len = kj::min(value.size(), field.size());
+  field.first(len).copyFrom(value.asBytes().first(len));
+}
+
+// POSIX tar stores file size in an 11-digit octal header field.
+constexpr size_t MAX_TAR_CONTENT_SIZE = 8ull * 1024 * 1024 * 1024;
+
+// createTarWithFile creates simple tar files without importing a full blown TAR library.
+// It's a pretty limited method that creates a single tar file with a single file on it,
+// as the Docker API only accepts tars.
+kj::Array<kj::byte> createTarWithFile(
+    kj::StringPtr filename, kj::ArrayPtr<const kj::byte> content) {
+  KJ_REQUIRE(filename.size() < 100, "tar filename must be < 100 bytes");
+  KJ_REQUIRE(content.size() < MAX_TAR_CONTENT_SIZE, "tar content too large for 11-digit octal");
+
+  size_t paddedSize = (content.size() + 511) & ~static_cast<size_t>(511);
+  size_t totalSize = 512 + paddedSize + 1024;
+  auto tar = kj::heapArray<kj::byte>(totalSize);
+  tar.asPtr().fill(0);
+
+  auto header = tar.first(512);
+  writeTarField(header.slice(0, 100), filename);
+  writeTarField(header.slice(100, 108), "0000644"_kj);
+  writeTarField(header.slice(108, 116), "0000000"_kj);
+  writeTarField(header.slice(116, 124), "0000000"_kj);
+
+  {
+    char sizeBuf[12];
+    snprintf(sizeBuf, sizeof(sizeBuf), "%011" PRIo64, static_cast<uint64_t>(content.size()));
+    writeTarField(header.slice(124, 136), kj::StringPtr(sizeBuf));
+  }
+
+  writeTarField(header.slice(136, 148), "00000000000"_kj);
+  header[156] = '0';
+  writeTarField(header.slice(257, 263), "ustar"_kj);
+  writeTarField(header.slice(263, 265), "00"_kj);
+
+  header.slice(148, 156).fill(' ');
+  uint32_t checksum = 0;
+  for (auto byte: header) checksum += byte;
+
+  {
+    char checksumBuf[8];
+    snprintf(checksumBuf, sizeof(checksumBuf), "%06o ", checksum);
+    writeTarField(header.slice(148, 155), kj::StringPtr(checksumBuf));
+  }
+
+  tar.slice(512, 512 + content.size()).copyFrom(content);
+  return tar;
+}
 }  // namespace
 
 ContainerClient::ContainerClient(capnp::ByteStreamFactory& byteStreamFactory,
@@ -372,9 +426,10 @@ class InnerEgressService final: public kj::HttpService {
  public:
   using ChannelLookup = kj::Function<kj::Maybe<kj::Own<IoChannelFactory::SubrequestChannel>>()>;
 
-  InnerEgressService(ChannelLookup lookupChannel, kj::StringPtr destAddr)
+  InnerEgressService(ChannelLookup lookupChannel, kj::StringPtr destAddr, bool isTls = false)
       : lookupChannel(kj::mv(lookupChannel)),
-        destAddr(kj::str(destAddr)) {}
+        destAddr(kj::str(destAddr)),
+        isTls(isTls) {}
 
   kj::Promise<void> request(kj::HttpMethod method,
       kj::StringPtr requestUri,
@@ -391,10 +446,11 @@ class InnerEgressService final: public kj::HttpService {
     auto urlForWorker = kj::str(requestUri);
     // Probably only a path, try to get it from Host:
     if (requestUri.startsWith("/")) {
-      auto baseUrl = kj::str("http://", destAddr);
+      auto scheme = isTls ? "https://"_kj : "http://"_kj;
+      auto baseUrl = kj::str(scheme, destAddr);
       // Use Host: when possible
       KJ_IF_SOME(host, headers.get(kj::HttpHeaderId::HOST)) {
-        baseUrl = kj::str("http://", host);
+        baseUrl = kj::str(scheme, host);
       }
 
       // Parse url, if invalid, try to use the original requestUri (http://<ip>/<path>
@@ -411,7 +467,14 @@ class InnerEgressService final: public kj::HttpService {
  private:
   ChannelLookup lookupChannel;
   kj::String destAddr;
+  bool isTls;
 };
+
+kj::Promise<void> pumpBidirectional(kj::AsyncIoStream& a, kj::AsyncIoStream& b) {
+  auto aToB = a.pumpTo(b).then([&b](uint64_t) { b.shutdownWrite(); });
+  auto bToA = b.pumpTo(a).then([&a](uint64_t) { a.shutdownWrite(); });
+  co_await kj::joinPromisesFailFast(kj::arr(kj::mv(aToB), kj::mv(bToA)));
+}
 
 // Outer HTTP service that handles CONNECT requests from the sidecar.
 class EgressHttpService final: public kj::HttpService {
@@ -435,64 +498,90 @@ class EgressHttpService final: public kj::HttpService {
       ConnectResponse& response,
       kj::HttpConnectSettings settings) override {
     auto destAddr = kj::str(host);
-    kj::Maybe<kj::String> requestHostname;
-    // X-Hostname is set by proxy-everything
-    // when it peeks over a connection and sees a HTTP header.
-    KJ_IF_SOME(value, getHeader(headers, "X-Hostname")) {
-      requestHostname = kj::str(value);
+    if (co_await handleConnectMode(destAddr, headers, connection, response, "X-Tls-Sni",
+            /*defaultPort=*/443, /*tls=*/true)) {
+      co_return;
+    }
+
+    if (co_await handleConnectMode(destAddr, headers, connection, response, "X-Hostname",
+            /*defaultPort=*/80, /*tls=*/false)) {
+      co_return;
     }
 
     kj::HttpHeaders responseHeaders(headerTable);
-    response.accept(200, "OK", responseHeaders);
+    // 202 is interpreted by proxy-everything as "just send bytes as-is".
+    // If the connection was TLS, it's useful so we just proxy transparently
+    // to the internet.
+    response.accept(202, "Accepted", responseHeaders);
 
-    auto mapping = containerClient.findEgressMapping(destAddr, /*defaultPort=*/80,
+    co_await passThroughConnection(destAddr, connection);
+  }
+
+ private:
+  kj::Promise<bool> handleConnectMode(kj::StringPtr destAddr,
+      const kj::HttpHeaders& headers,
+      kj::AsyncIoStream& connection,
+      ConnectResponse& response,
+      kj::StringPtr hostnameHeader,
+      uint16_t defaultPort,
+      bool tls) {
+    kj::Maybe<kj::String> requestHostname;
+    KJ_IF_SOME(value, getHeader(headers, hostnameHeader)) {
+      requestHostname = kj::str(value);
+    }
+
+    auto mapping = containerClient.findEgressMapping(destAddr, defaultPort,
         requestHostname.map([](auto& hostname) {
       return kj::Maybe<kj::StringPtr>(hostname);
-    }).orDefault(kj::none));
+    }).orDefault(kj::none),
+        tls);
+
+    if (requestHostname == kj::none && mapping == kj::none) {
+      co_return false;
+    }
 
     if (mapping != kj::none) {
-      // Layer an HttpServer on top of the tunnel to handle HTTP parsing/serialization.
-      // InnerEgressService looks up the mapping on each request so channel replacements
-      // via interceptOutboundHttp are picked up on existing tunnels.
+      kj::HttpHeaders responseHeaders(headerTable);
+      response.accept(200, "OK", responseHeaders);
+
       auto innerService = kj::heap<InnerEgressService>(
           [&client = containerClient, addr = kj::str(destAddr),
-              hostname = kj::mv(
-                  requestHostname)]() -> kj::Maybe<kj::Own<IoChannelFactory::SubrequestChannel>> {
-        return client.findEgressMapping(addr, /*defaultPort=*/80,
+              hostname = requestHostname.map([](auto& value) { return kj::str(value); }),
+              defaultPort,
+              tls]() mutable -> kj::Maybe<kj::Own<IoChannelFactory::SubrequestChannel>> {
+        return client.findEgressMapping(addr, defaultPort,
             hostname.map([](auto& value) {
           return kj::Maybe<kj::StringPtr>(value);
-        }).orDefault(kj::none));
+        }).orDefault(kj::none),
+            tls);
       },
-          destAddr);
+          destAddr, tls);
       auto innerServer =
           kj::heap<kj::HttpServer>(containerClient.timer, headerTable, *innerService);
 
       co_await innerServer->listenHttpCleanDrain(connection);
-
-      co_return;
+      co_return true;
     }
 
+    kj::HttpHeaders responseHeaders(headerTable);
+    response.accept(202, "Accepted", responseHeaders);
+
+    co_await passThroughConnection(destAddr, connection);
+    co_return true;
+  }
+
+  kj::Promise<void> passThroughConnection(kj::StringPtr destAddr, kj::AsyncIoStream& connection) {
     if (!containerClient.internetEnabled.orDefault(false)) {
       connection.shutdownWrite();
       co_return;
     }
 
-    // No egress mapping and internet enabled, so forward via raw TCP
     auto addr = co_await containerClient.network.parseAddress(destAddr);
     auto destConn = co_await addr->connect();
-
-    auto connToDestination = connection.pumpTo(*destConn).then(
-        [&destConn = *destConn](uint64_t) { destConn.shutdownWrite(); });
-
-    auto destinationToConn =
-        destConn->pumpTo(connection).then([&connection](uint64_t) { connection.shutdownWrite(); });
-
-    co_await kj::joinPromisesFailFast(
-        kj::arr(kj::mv(connToDestination), kj::mv(destinationToConn)));
+    co_await pumpBidirectional(connection, *destConn);
     co_return;
   }
 
- private:
   ContainerClient& containerClient;
   kj::HttpHeaderTable& headerTable;
 };
@@ -638,6 +727,71 @@ kj::Promise<ContainerClient::Response> ContainerClient::dockerApiRequest(kj::Net
     auto result = co_await response.body->readAllText();
     co_return Response{.statusCode = response.statusCode, .body = kj::mv(result)};
   }
+}
+
+kj::Promise<void> ContainerClient::writeFileToContainer(kj::StringPtr container,
+    kj::StringPtr dir,
+    kj::StringPtr filename,
+    kj::ArrayPtr<const kj::byte> content) {
+  kj::HttpHeaderTable table;
+  auto address = co_await network.parseAddress(kj::str(dockerPath));
+  auto connection = co_await address->connect();
+  auto httpClient = kj::newHttpClient(table, *connection).attach(kj::mv(connection));
+
+  auto tar = createTarWithFile(filename, content);
+
+  kj::HttpHeaders headers(table);
+  headers.setPtr(kj::HttpHeaderId::HOST, "localhost");
+  headers.setPtr(kj::HttpHeaderId::CONTENT_TYPE, "application/x-tar");
+  headers.set(kj::HttpHeaderId::CONTENT_LENGTH, kj::str(tar.size()));
+
+  auto endpoint = kj::str("/containers/", container, "/archive?path=", kj::encodeUriComponent(dir));
+  auto req = httpClient->request(kj::HttpMethod::PUT, endpoint, headers, tar.size());
+  {
+    auto body = kj::mv(req.body);
+    co_await body->write(tar.asBytes());
+  }
+
+  auto response = co_await req.response;
+  auto result = co_await response.body->readAllText();
+  JSG_REQUIRE(response.statusCode == 200, Error, "Failed to write file ", dir, "/", filename,
+      " to container [", response.statusCode, "] ", result);
+}
+
+static constexpr kj::StringPtr cloudflareCaDir = "/etc"_kj;
+static constexpr kj::StringPtr cloudflareCaFilename =
+    "cloudflare/certs/cloudflare-containers-ca.crt"_kj;
+
+kj::Promise<void> ContainerClient::readCACert() {
+  auto ingressPort = KJ_REQUIRE_NONNULL(
+      sidecarIngressHostPort, "Cannot read CA cert: sidecar ingress port not known");
+
+  auto response = co_await dockerApiRequest(
+      network, kj::str("127.0.0.1:", ingressPort), kj::HttpMethod::GET, kj::str("/ca"));
+
+  JSG_REQUIRE(response.statusCode == 200, Error,
+      "Failed to read CA cert from sidecar: ", response.statusCode, " ", response.body);
+
+  caCert = kj::mv(response.body);
+}
+
+kj::Promise<void> ContainerClient::injectCACert() {
+  if (caCertInjected.exchange(true, std::memory_order_acquire)) {
+    co_return;
+  }
+
+  bool succeeded = false;
+  KJ_DEFER(if (!succeeded) caCertInjected.store(false, std::memory_order_release));
+
+  if (caCert == kj::none) {
+    co_await readCACert();
+  }
+
+  auto& cert = KJ_REQUIRE_NONNULL(caCert, "CA cert not read from sidecar yet");
+  co_await writeFileToContainer(
+      containerName, cloudflareCaDir, cloudflareCaFilename, cert.asBytes());
+
+  succeeded = true;
 }
 
 kj::Promise<ContainerClient::InspectResponse> ContainerClient::inspectContainer() {
@@ -909,7 +1063,7 @@ kj::Promise<void> ContainerClient::createSidecarContainer(
 
   // determined by the number of flags we need to pass to proxy-everything
   uint32_t cmdSize =
-      7;  // --http-egress-port <port> --http-ingress-address 0.0.0.0:<port> --docker-gateway-cidr <cidr> --dns-enabled
+      8;  // --http-egress-port <port> --http-ingress-address 0.0.0.0:<port> --docker-gateway-cidr <cidr> --dns-enabled --tls-intercept
   if (!ipv6Enabled) cmdSize += 1;  // --disable-ipv6
 
   auto cmd = jsonRoot.initCmd(cmdSize);
@@ -921,6 +1075,7 @@ kj::Promise<void> ContainerClient::createSidecarContainer(
   cmd.set(idx++, "--docker-gateway-cidr");
   cmd.set(idx++, networkCidr);
   cmd.set(idx++, "--dns-enabled");
+  cmd.set(idx++, "--tls-intercept");
   if (!ipv6Enabled) {
     cmd.set(idx++, "--disable-ipv6");
   }
@@ -1015,6 +1170,7 @@ kj::Promise<void> ContainerClient::status(StatusContext context) {
     this->sidecarIngressHostPort = sidecar.ingressHostPort;
     co_await ensureEgressListenerStarted();
     co_await updateSidecarEgressPort(sidecar.ingressHostPort, egressListenerPort);
+    co_await readCACert();
   }
 
   context.getResults().setRunning(isRunning);
@@ -1045,7 +1201,21 @@ kj::Promise<void> ContainerClient::start(StartContext context) {
   containerSidecarStarted = false;
   co_await ensureSidecarStarted();
 
+  caCertInjected.store(false, std::memory_order_release);
   co_await createContainer(entrypoint, environment, params);
+
+  bool hasTlsMappings = false;
+  for (auto& mapping: egressMappings) {
+    if (mapping.tls) {
+      hasTlsMappings = true;
+      break;
+    }
+  }
+
+  if (hasTlsMappings) {
+    co_await injectCACert();
+  }
+
   co_await startContainer();
 
   containerStarted.store(true, std::memory_order_release);
@@ -1128,7 +1298,9 @@ kj::Promise<void> ContainerClient::listenTcp(ListenTcpContext context) {
 
 void ContainerClient::upsertEgressMapping(EgressMapping mapping) {
   for (auto& m: egressMappings) {
-    if (m.port != mapping.port) {
+    // If the mapping differs in port or needing TLS, we skip it as it's
+    // not the same.
+    if (m.port != mapping.port || m.tls != mapping.tls) {
       continue;
     }
 
@@ -1187,7 +1359,7 @@ kj::Vector<kj::String> ContainerClient::getDnsAllowHostnames() const {
 }
 
 kj::Maybe<kj::Own<workerd::IoChannelFactory::SubrequestChannel>> ContainerClient::findEgressMapping(
-    kj::StringPtr destAddr, uint16_t defaultPort, kj::Maybe<kj::StringPtr> hostname) {
+    kj::StringPtr destAddr, uint16_t defaultPort, kj::Maybe<kj::StringPtr> hostname, bool tls) {
   auto hostAndPort = stripPort(destAddr);
   uint16_t port = hostAndPort.port.orDefault(defaultPort);
   kj::Maybe<kj::String> normalizedHostname;
@@ -1196,8 +1368,13 @@ kj::Maybe<kj::Own<workerd::IoChannelFactory::SubrequestChannel>> ContainerClient
   }
 
   for (auto& mapping: egressMappings) {
-    // Mappings can differ in port, and cidr/hostname.
-    // Users can specify things like google.com:7070, or 0.0.0.0:7070
+    // Mappings can differ in port, whether to do tls and the cidr/hostname.
+    // Users can specify things like google.com:7070, or 0.0.0.0:7070. On top of that,
+    // they might want TLS interception.
+    if (mapping.tls != tls) {
+      continue;
+    }
+
     if (mapping.port != 0 && mapping.port != port) {
       continue;
     }
@@ -1253,11 +1430,13 @@ kj::Promise<void> ContainerClient::ensureSidecarStarted() {
       maybeError = kj::getCaughtExceptionAsKj();
     }
 
-    if (maybeError == kj::none) co_return;
+    if (maybeError == kj::none) break;
     if (attempt >= MAX_READY_RETRIES - 1)
       kj::throwFatalException(kj::mv(KJ_REQUIRE_NONNULL(maybeError)));
     co_await timer.afterDelay(READY_RETRY_DELAY);
   }
+
+  co_await readCACert();
 }
 
 kj::Promise<void> ContainerClient::ensureEgressListenerStarted(uint16_t port) {
@@ -1301,6 +1480,42 @@ kj::Promise<void> ContainerClient::setEgressHttp(SetEgressHttpContext context) {
   upsertEgressMapping(EgressMapping{
     .destination = kj::mv(parsed.destination),
     .port = port,
+    .tls = false,
+    .channel = kj::mv(subrequestChannel),
+  });
+
+  KJ_IF_SOME(ingressHostPort, sidecarIngressHostPort) {
+    co_await updateSidecarEgressConfig(ingressHostPort, egressListenerPort);
+  }
+
+  co_return;
+}
+
+kj::Promise<void> ContainerClient::setEgressHttps(SetEgressHttpsContext context) {
+  auto [ready, done] = getRpcTurn();
+  co_await ready;
+  KJ_DEFER(done->fulfill());
+
+  auto params = context.getParams();
+  auto hostPortStr = kj::str(params.getHostPort());
+  auto tokenBytes = params.getChannelToken();
+
+  auto parsed = parseHostPort(hostPortStr);
+  uint16_t port = parsed.port.orDefault(443);
+
+  co_await ensureEgressListenerStarted();
+
+  if (containerStarted.load(std::memory_order_acquire)) {
+    co_await injectCACert();
+  }
+
+  auto subrequestChannel = channelTokenHandler.decodeSubrequestChannelToken(
+      workerd::IoChannelFactory::ChannelTokenUsage::RPC, tokenBytes);
+
+  upsertEgressMapping(EgressMapping{
+    .destination = kj::mv(parsed.destination),
+    .port = port,
+    .tls = true,
     .channel = kj::mv(subrequestChannel),
   });
 

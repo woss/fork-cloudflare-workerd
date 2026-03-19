@@ -131,6 +131,15 @@ interface Container @0x9aaceefc06523bca {
   # If port is omitted, it's assumed to only cover port 80.
   # This method does not support HTTPs yet.
 
+  setEgressHttps @9 (hostPort :Text, channelToken :Data);
+  # Configures egress HTTPS routing for the container. The format of `hostPort` is the same as
+  # `setEgressHttp`: '<ip|cidr|hostnameGlob>[':'<port>]'. If the host part is not an IP or CIDR,
+  # it is treated as a hostname glob matched against the TLS SNI hostname. If `port` is omitted,
+  # it is assumed to only cover port 443.
+  #
+  # The runtime routes matching decrypted HTTP traffic back to Workers using `channelToken` and
+  # must ensure the container trusts the interception CA.
+
 
   # TODO: setEgressTcp
 }
