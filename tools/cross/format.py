@@ -158,16 +158,12 @@ def buildifier(files: list[Path], check: bool = False) -> bool:
 
 
 def rustfmt(files: list[Path], check: bool = False) -> bool:
-    # Used by edgeworker (via format.json); uses a standalone rustfmt binary to
-    # avoid pulling in the V8 build cache through bazel toolchain resolution.
     if not files:
         return True
     cmd = ["--edition", "2024"]
     if check:
         cmd.append("--check")
-    result = run_bazel_tool(
-        "rustfmt", cmd + files, build_target="//build/deps/formatters:rustfmt@rule"
-    )
+    result = run_bazel_tool("rustfmt", cmd + files)
     return result.returncode == 0
 
 
