@@ -85,7 +85,7 @@ export declare abstract class WorkerGlobalScope extends EventTarget<WorkerGlobal
  * [MDN Reference](https://developer.mozilla.org/docs/Web/API/console)
  */
 export interface Console {
-  "assert"(condition?: boolean, ...data: any[]): void;
+  'assert'(condition?: boolean, ...data: any[]): void;
   /**
    * The **`console.clear()`** static method clears the console if possible.
    *
@@ -218,13 +218,13 @@ export declare namespace WebAssembly {
     constructor(message?: string);
   }
   type ValueType =
-    | "anyfunc"
-    | "externref"
-    | "f32"
-    | "f64"
-    | "i32"
-    | "i64"
-    | "v128";
+    | 'anyfunc'
+    | 'externref'
+    | 'f32'
+    | 'f64'
+    | 'i32'
+    | 'i64'
+    | 'v128';
   interface GlobalDescriptor {
     value: ValueType;
     mutable?: boolean;
@@ -253,7 +253,7 @@ export declare namespace WebAssembly {
     readonly buffer: ArrayBuffer;
     grow(delta: number): number;
   }
-  type ImportExportKind = "function" | "global" | "memory" | "table";
+  type ImportExportKind = 'function' | 'global' | 'memory' | 'table';
   interface ModuleExportDescriptor {
     kind: ImportExportKind;
     name: string;
@@ -268,7 +268,7 @@ export declare namespace WebAssembly {
     static exports(module: Module): ModuleExportDescriptor[];
     static imports(module: Module): ModuleImportDescriptor[];
   }
-  type TableKind = "anyfunc" | "externref";
+  type TableKind = 'anyfunc' | 'externref';
   interface TableDescriptor {
     element: TableKind;
     initial: number;
@@ -314,7 +314,7 @@ export interface ServiceWorkerGlobalScope extends WorkerGlobalScope {
   reportError(error: any): void;
   fetch(
     input: RequestInfo | URL,
-    init?: RequestInit<RequestInitCfProperties>,
+    init?: RequestInit<RequestInitCfProperties>
   ): Promise<Response>;
   self: ServiceWorkerGlobalScope;
   crypto: Crypto;
@@ -387,14 +387,14 @@ export declare function addEventListener<
 >(
   type: Type,
   handler: EventListenerOrEventListenerObject<WorkerGlobalScopeEventMap[Type]>,
-  options?: EventTargetAddEventListenerOptions | boolean,
+  options?: EventTargetAddEventListenerOptions | boolean
 ): void;
 export declare function removeEventListener<
   Type extends keyof WorkerGlobalScopeEventMap,
 >(
   type: Type,
   handler: EventListenerOrEventListenerObject<WorkerGlobalScopeEventMap[Type]>,
-  options?: EventTargetEventListenerOptions | boolean,
+  options?: EventTargetEventListenerOptions | boolean
 ): void;
 /**
  * The **`dispatchEvent()`** method of the EventTarget sends an Event to the object, (synchronously) invoking the affected event listeners in the appropriate order.
@@ -402,7 +402,7 @@ export declare function removeEventListener<
  * [MDN Reference](https://developer.mozilla.org/docs/Web/API/EventTarget/dispatchEvent)
  */
 export declare function dispatchEvent(
-  event: WorkerGlobalScopeEventMap[keyof WorkerGlobalScopeEventMap],
+  event: WorkerGlobalScopeEventMap[keyof WorkerGlobalScopeEventMap]
 ): boolean;
 /* [MDN Reference](https://developer.mozilla.org/docs/Web/API/Window/btoa) */
 export declare function btoa(data: string): string;
@@ -411,7 +411,7 @@ export declare function atob(data: string): string;
 /* [MDN Reference](https://developer.mozilla.org/docs/Web/API/Window/setTimeout) */
 export declare function setTimeout(
   callback: (...args: any[]) => void,
-  msDelay?: number,
+  msDelay?: number
 ): number;
 /* [MDN Reference](https://developer.mozilla.org/docs/Web/API/Window/setTimeout) */
 export declare function setTimeout<Args extends any[]>(
@@ -424,7 +424,7 @@ export declare function clearTimeout(timeoutId: number | null): void;
 /* [MDN Reference](https://developer.mozilla.org/docs/Web/API/Window/setInterval) */
 export declare function setInterval(
   callback: (...args: any[]) => void,
-  msDelay?: number,
+  msDelay?: number
 ): number;
 /* [MDN Reference](https://developer.mozilla.org/docs/Web/API/Window/setInterval) */
 export declare function setInterval<Args extends any[]>(
@@ -439,14 +439,14 @@ export declare function queueMicrotask(task: Function): void;
 /* [MDN Reference](https://developer.mozilla.org/docs/Web/API/Window/structuredClone) */
 export declare function structuredClone<T>(
   value: T,
-  options?: StructuredSerializeOptions,
+  options?: StructuredSerializeOptions
 ): T;
 /* [MDN Reference](https://developer.mozilla.org/docs/Web/API/Window/reportError) */
 export declare function reportError(error: any): void;
 /* [MDN Reference](https://developer.mozilla.org/docs/Web/API/Window/fetch) */
 export declare function fetch(
   input: RequestInfo | URL,
-  init?: RequestInit<RequestInitCfProperties>,
+  init?: RequestInit<RequestInitCfProperties>
 ): Promise<Response>;
 export declare const self: ServiceWorkerGlobalScope;
 /**
@@ -489,27 +489,27 @@ export type ExportedHandlerFetchHandler<
 > = (
   request: Request<CfHostMetadata, IncomingRequestCfProperties<CfHostMetadata>>,
   env: Env,
-  ctx: ExecutionContext<Props>,
+  ctx: ExecutionContext<Props>
 ) => Response | Promise<Response>;
 export type ExportedHandlerTailHandler<Env = unknown, Props = unknown> = (
   events: TraceItem[],
   env: Env,
-  ctx: ExecutionContext<Props>,
+  ctx: ExecutionContext<Props>
 ) => void | Promise<void>;
 export type ExportedHandlerTraceHandler<Env = unknown, Props = unknown> = (
   traces: TraceItem[],
   env: Env,
-  ctx: ExecutionContext<Props>,
+  ctx: ExecutionContext<Props>
 ) => void | Promise<void>;
 export type ExportedHandlerTailStreamHandler<Env = unknown, Props = unknown> = (
   event: TailStream.TailEvent<TailStream.Onset>,
   env: Env,
-  ctx: ExecutionContext<Props>,
+  ctx: ExecutionContext<Props>
 ) => TailStream.TailEventHandlerType | Promise<TailStream.TailEventHandlerType>;
 export type ExportedHandlerScheduledHandler<Env = unknown, Props = unknown> = (
   controller: ScheduledController,
   env: Env,
-  ctx: ExecutionContext<Props>,
+  ctx: ExecutionContext<Props>
 ) => void | Promise<void>;
 export type ExportedHandlerQueueHandler<
   Env = unknown,
@@ -518,12 +518,12 @@ export type ExportedHandlerQueueHandler<
 > = (
   batch: MessageBatch<Message>,
   env: Env,
-  ctx: ExecutionContext<Props>,
+  ctx: ExecutionContext<Props>
 ) => void | Promise<void>;
 export type ExportedHandlerTestHandler<Env = unknown, Props = unknown> = (
   controller: TestController,
   env: Env,
-  ctx: ExecutionContext<Props>,
+  ctx: ExecutionContext<Props>
 ) => void | Promise<void>;
 export interface ExportedHandler<
   Env = unknown,
@@ -562,13 +562,13 @@ export interface DurableObject {
   alarm?(alarmInfo?: AlarmInvocationInfo): void | Promise<void>;
   webSocketMessage?(
     ws: WebSocket,
-    message: string | ArrayBuffer,
+    message: string | ArrayBuffer
   ): void | Promise<void>;
   webSocketClose?(
     ws: WebSocket,
     code: number,
     reason: string,
-    wasClean: boolean,
+    wasClean: boolean
   ): void | Promise<void>;
   webSocketError?(ws: WebSocket, error: unknown): void | Promise<void>;
 }
@@ -576,7 +576,7 @@ export type DurableObjectStub<
   T extends Rpc.DurableObjectBranded | undefined = undefined,
 > = Fetcher<
   T,
-  "alarm" | "webSocketMessage" | "webSocketClose" | "webSocketError"
+  'alarm' | 'webSocketMessage' | 'webSocketClose' | 'webSocketError'
 > & {
   readonly id: DurableObjectId;
   readonly name?: string;
@@ -591,37 +591,37 @@ export declare abstract class DurableObjectNamespace<
   T extends Rpc.DurableObjectBranded | undefined = undefined,
 > {
   newUniqueId(
-    options?: DurableObjectNamespaceNewUniqueIdOptions,
+    options?: DurableObjectNamespaceNewUniqueIdOptions
   ): DurableObjectId;
   idFromName(name: string): DurableObjectId;
   idFromString(id: string): DurableObjectId;
   get(
     id: DurableObjectId,
-    options?: DurableObjectNamespaceGetDurableObjectOptions,
+    options?: DurableObjectNamespaceGetDurableObjectOptions
   ): DurableObjectStub<T>;
   getByName(
     name: string,
-    options?: DurableObjectNamespaceGetDurableObjectOptions,
+    options?: DurableObjectNamespaceGetDurableObjectOptions
   ): DurableObjectStub<T>;
   jurisdiction(
-    jurisdiction: DurableObjectJurisdiction,
+    jurisdiction: DurableObjectJurisdiction
   ): DurableObjectNamespace<T>;
 }
-export type DurableObjectJurisdiction = "eu" | "fedramp" | "fedramp-high";
+export type DurableObjectJurisdiction = 'eu' | 'fedramp' | 'fedramp-high';
 export interface DurableObjectNamespaceNewUniqueIdOptions {
   jurisdiction?: DurableObjectJurisdiction;
 }
 export type DurableObjectLocationHint =
-  | "wnam"
-  | "enam"
-  | "sam"
-  | "weur"
-  | "eeur"
-  | "apac"
-  | "oc"
-  | "afr"
-  | "me";
-export type DurableObjectRoutingMode = "primary-only";
+  | 'wnam'
+  | 'enam'
+  | 'sam'
+  | 'weur'
+  | 'eeur'
+  | 'apac'
+  | 'oc'
+  | 'afr'
+  | 'me';
+export type DurableObjectRoutingMode = 'primary-only';
 export interface DurableObjectNamespaceGetDurableObjectOptions {
   locationHint?: DurableObjectLocationHint;
   routingMode?: DurableObjectRoutingMode;
@@ -650,23 +650,23 @@ export interface DurableObjectState<Props = unknown> {
 export interface DurableObjectTransaction {
   get<T = unknown>(
     key: string,
-    options?: DurableObjectGetOptions,
+    options?: DurableObjectGetOptions
   ): Promise<T | undefined>;
   get<T = unknown>(
     keys: string[],
-    options?: DurableObjectGetOptions,
+    options?: DurableObjectGetOptions
   ): Promise<Map<string, T>>;
   list<T = unknown>(
-    options?: DurableObjectListOptions,
+    options?: DurableObjectListOptions
   ): Promise<Map<string, T>>;
   put<T>(
     key: string,
     value: T,
-    options?: DurableObjectPutOptions,
+    options?: DurableObjectPutOptions
   ): Promise<void>;
   put<T>(
     entries: Record<string, T>,
-    options?: DurableObjectPutOptions,
+    options?: DurableObjectPutOptions
   ): Promise<void>;
   delete(key: string, options?: DurableObjectPutOptions): Promise<boolean>;
   delete(keys: string[], options?: DurableObjectPutOptions): Promise<number>;
@@ -674,41 +674,41 @@ export interface DurableObjectTransaction {
   getAlarm(options?: DurableObjectGetAlarmOptions): Promise<number | null>;
   setAlarm(
     scheduledTime: number | Date,
-    options?: DurableObjectSetAlarmOptions,
+    options?: DurableObjectSetAlarmOptions
   ): Promise<void>;
   deleteAlarm(options?: DurableObjectSetAlarmOptions): Promise<void>;
 }
 export interface DurableObjectStorage {
   get<T = unknown>(
     key: string,
-    options?: DurableObjectGetOptions,
+    options?: DurableObjectGetOptions
   ): Promise<T | undefined>;
   get<T = unknown>(
     keys: string[],
-    options?: DurableObjectGetOptions,
+    options?: DurableObjectGetOptions
   ): Promise<Map<string, T>>;
   list<T = unknown>(
-    options?: DurableObjectListOptions,
+    options?: DurableObjectListOptions
   ): Promise<Map<string, T>>;
   put<T>(
     key: string,
     value: T,
-    options?: DurableObjectPutOptions,
+    options?: DurableObjectPutOptions
   ): Promise<void>;
   put<T>(
     entries: Record<string, T>,
-    options?: DurableObjectPutOptions,
+    options?: DurableObjectPutOptions
   ): Promise<void>;
   delete(key: string, options?: DurableObjectPutOptions): Promise<boolean>;
   delete(keys: string[], options?: DurableObjectPutOptions): Promise<number>;
   deleteAll(options?: DurableObjectPutOptions): Promise<void>;
   transaction<T>(
-    closure: (txn: DurableObjectTransaction) => Promise<T>,
+    closure: (txn: DurableObjectTransaction) => Promise<T>
   ): Promise<T>;
   getAlarm(options?: DurableObjectGetAlarmOptions): Promise<number | null>;
   setAlarm(
     scheduledTime: number | Date,
-    options?: DurableObjectSetAlarmOptions,
+    options?: DurableObjectSetAlarmOptions
   ): Promise<void>;
   deleteAlarm(options?: DurableObjectSetAlarmOptions): Promise<void>;
   sync(): Promise<void>;
@@ -888,7 +888,7 @@ export interface EventInit {
   composed?: boolean;
 }
 export type EventListener<EventType extends Event = Event> = (
-  event: EventType,
+  event: EventType
 ) => void;
 export interface EventListenerObject<EventType extends Event = Event> {
   handleEvent(event: EventType): void;
@@ -913,7 +913,7 @@ export declare class EventTarget<
   addEventListener<Type extends keyof EventMap>(
     type: Type,
     handler: EventListenerOrEventListenerObject<EventMap[Type]>,
-    options?: EventTargetAddEventListenerOptions | boolean,
+    options?: EventTargetAddEventListenerOptions | boolean
   ): void;
   /**
    * The **`removeEventListener()`** method of the EventTarget interface removes an event listener previously registered with EventTarget.addEventListener() from the target.
@@ -923,7 +923,7 @@ export declare class EventTarget<
   removeEventListener<Type extends keyof EventMap>(
     type: Type,
     handler: EventListenerOrEventListenerObject<EventMap[Type]>,
-    options?: EventTargetEventListenerOptions | boolean,
+    options?: EventTargetEventListenerOptions | boolean
   ): void;
   /**
    * The **`dispatchEvent()`** method of the EventTarget sends an Event to the object, (synchronously) invoking the affected event listeners in the appropriate order.
@@ -1058,7 +1058,7 @@ export interface CustomEventCustomEventInit {
 export declare class Blob {
   constructor(
     type?: ((ArrayBuffer | ArrayBufferView) | string | Blob)[],
-    options?: BlobOptions,
+    options?: BlobOptions
   );
   /**
    * The **`size`** read-only property of the Blob interface returns the size of the Blob or File in bytes.
@@ -1115,7 +1115,7 @@ export declare class File extends Blob {
   constructor(
     bits: ((ArrayBuffer | ArrayBufferView) | string | Blob)[] | undefined,
     name: string,
-    options?: FileOptions,
+    options?: FileOptions
   );
   /**
    * The **`name`** read-only property of the File interface returns the name of the file represented by a File object.
@@ -1157,12 +1157,12 @@ export declare abstract class Cache {
   /* [Cloudflare Docs Reference](https://developers.cloudflare.com/workers/runtime-apis/cache/#delete) */
   delete(
     request: RequestInfo | URL,
-    options?: CacheQueryOptions,
+    options?: CacheQueryOptions
   ): Promise<boolean>;
   /* [Cloudflare Docs Reference](https://developers.cloudflare.com/workers/runtime-apis/cache/#match) */
   match(
     request: RequestInfo | URL,
-    options?: CacheQueryOptions,
+    options?: CacheQueryOptions
   ): Promise<Response | undefined>;
   /* [Cloudflare Docs Reference](https://developers.cloudflare.com/workers/runtime-apis/cache/#put) */
   put(request: RequestInfo | URL, response: Response): Promise<void>;
@@ -1226,7 +1226,7 @@ export declare abstract class SubtleCrypto {
   encrypt(
     algorithm: string | SubtleCryptoEncryptAlgorithm,
     key: CryptoKey,
-    plainText: ArrayBuffer | ArrayBufferView,
+    plainText: ArrayBuffer | ArrayBufferView
   ): Promise<ArrayBuffer>;
   /**
    * The **`decrypt()`** method of the SubtleCrypto interface decrypts some encrypted data.
@@ -1236,7 +1236,7 @@ export declare abstract class SubtleCrypto {
   decrypt(
     algorithm: string | SubtleCryptoEncryptAlgorithm,
     key: CryptoKey,
-    cipherText: ArrayBuffer | ArrayBufferView,
+    cipherText: ArrayBuffer | ArrayBufferView
   ): Promise<ArrayBuffer>;
   /**
    * The **`sign()`** method of the SubtleCrypto interface generates a digital signature.
@@ -1246,7 +1246,7 @@ export declare abstract class SubtleCrypto {
   sign(
     algorithm: string | SubtleCryptoSignAlgorithm,
     key: CryptoKey,
-    data: ArrayBuffer | ArrayBufferView,
+    data: ArrayBuffer | ArrayBufferView
   ): Promise<ArrayBuffer>;
   /**
    * The **`verify()`** method of the SubtleCrypto interface verifies a digital signature.
@@ -1257,7 +1257,7 @@ export declare abstract class SubtleCrypto {
     algorithm: string | SubtleCryptoSignAlgorithm,
     key: CryptoKey,
     signature: ArrayBuffer | ArrayBufferView,
-    data: ArrayBuffer | ArrayBufferView,
+    data: ArrayBuffer | ArrayBufferView
   ): Promise<boolean>;
   /**
    * The **`digest()`** method of the SubtleCrypto interface generates a _digest_ of the given data, using the specified hash function.
@@ -1266,7 +1266,7 @@ export declare abstract class SubtleCrypto {
    */
   digest(
     algorithm: string | SubtleCryptoHashAlgorithm,
-    data: ArrayBuffer | ArrayBufferView,
+    data: ArrayBuffer | ArrayBufferView
   ): Promise<ArrayBuffer>;
   /**
    * The **`generateKey()`** method of the SubtleCrypto interface is used to generate a new key (for symmetric algorithms) or key pair (for public-key algorithms).
@@ -1276,7 +1276,7 @@ export declare abstract class SubtleCrypto {
   generateKey(
     algorithm: string | SubtleCryptoGenerateKeyAlgorithm,
     extractable: boolean,
-    keyUsages: string[],
+    keyUsages: string[]
   ): Promise<CryptoKey | CryptoKeyPair>;
   /**
    * The **`deriveKey()`** method of the SubtleCrypto interface can be used to derive a secret key from a master key.
@@ -1288,7 +1288,7 @@ export declare abstract class SubtleCrypto {
     baseKey: CryptoKey,
     derivedKeyAlgorithm: string | SubtleCryptoImportKeyAlgorithm,
     extractable: boolean,
-    keyUsages: string[],
+    keyUsages: string[]
   ): Promise<CryptoKey>;
   /**
    * The **`deriveBits()`** method of the key.
@@ -1298,7 +1298,7 @@ export declare abstract class SubtleCrypto {
   deriveBits(
     algorithm: string | SubtleCryptoDeriveKeyAlgorithm,
     baseKey: CryptoKey,
-    length?: number | null,
+    length?: number | null
   ): Promise<ArrayBuffer>;
   /**
    * The **`importKey()`** method of the SubtleCrypto interface imports a key: that is, it takes as input a key in an external, portable format and gives you a CryptoKey object that you can use in the Web Crypto API.
@@ -1310,7 +1310,7 @@ export declare abstract class SubtleCrypto {
     keyData: (ArrayBuffer | ArrayBufferView) | JsonWebKey,
     algorithm: string | SubtleCryptoImportKeyAlgorithm,
     extractable: boolean,
-    keyUsages: string[],
+    keyUsages: string[]
   ): Promise<CryptoKey>;
   /**
    * The **`exportKey()`** method of the SubtleCrypto interface exports a key: that is, it takes as input a CryptoKey object and gives you the key in an external, portable format.
@@ -1327,7 +1327,7 @@ export declare abstract class SubtleCrypto {
     format: string,
     key: CryptoKey,
     wrappingKey: CryptoKey,
-    wrapAlgorithm: string | SubtleCryptoEncryptAlgorithm,
+    wrapAlgorithm: string | SubtleCryptoEncryptAlgorithm
   ): Promise<ArrayBuffer>;
   /**
    * The **`unwrapKey()`** method of the SubtleCrypto interface 'unwraps' a key.
@@ -1341,11 +1341,11 @@ export declare abstract class SubtleCrypto {
     unwrapAlgorithm: string | SubtleCryptoEncryptAlgorithm,
     unwrappedKeyAlgorithm: string | SubtleCryptoImportKeyAlgorithm,
     extractable: boolean,
-    keyUsages: string[],
+    keyUsages: string[]
   ): Promise<CryptoKey>;
   timingSafeEqual(
     a: ArrayBuffer | ArrayBufferView,
-    b: ArrayBuffer | ArrayBufferView,
+    b: ArrayBuffer | ArrayBufferView
   ): boolean;
 }
 /**
@@ -1505,7 +1505,7 @@ export declare class TextDecoder {
    */
   decode(
     input?: ArrayBuffer | ArrayBufferView,
-    options?: TextDecoderDecodeOptions,
+    options?: TextDecoderDecodeOptions
   ): string;
   get encoding(): string;
   get fatal(): boolean;
@@ -1726,9 +1726,9 @@ export declare class FormData {
       this: This,
       value: File | string,
       key: string,
-      parent: FormData,
+      parent: FormData
     ) => void,
-    thisArg?: This,
+    thisArg?: This
   ): void;
   [Symbol.iterator](): IterableIterator<[key: string, value: File | string]>;
 }
@@ -1739,7 +1739,7 @@ export declare class HTMLRewriter {
   constructor();
   on(
     selector: string,
-    handlers: HTMLRewriterElementContentHandlers,
+    handlers: HTMLRewriterElementContentHandlers
   ): HTMLRewriter;
   onDocument(handlers: HTMLRewriterDocumentContentHandlers): HTMLRewriter;
   transform(response: Response): Response;
@@ -1771,29 +1771,29 @@ export interface Element {
   removeAttribute(name: string): Element;
   before(
     content: string | ReadableStream | Response,
-    options?: ContentOptions,
+    options?: ContentOptions
   ): Element;
   after(
     content: string | ReadableStream | Response,
-    options?: ContentOptions,
+    options?: ContentOptions
   ): Element;
   prepend(
     content: string | ReadableStream | Response,
-    options?: ContentOptions,
+    options?: ContentOptions
   ): Element;
   append(
     content: string | ReadableStream | Response,
-    options?: ContentOptions,
+    options?: ContentOptions
   ): Element;
   replace(
     content: string | ReadableStream | Response,
-    options?: ContentOptions,
+    options?: ContentOptions
   ): Element;
   remove(): Element;
   removeAndKeepContent(): Element;
   setInnerContent(
     content: string | ReadableStream | Response,
-    options?: ContentOptions,
+    options?: ContentOptions
   ): Element;
   onEndTag(handler: (tag: EndTag) => void | Promise<void>): void;
 }
@@ -1801,11 +1801,11 @@ export interface EndTag {
   name: string;
   before(
     content: string | ReadableStream | Response,
-    options?: ContentOptions,
+    options?: ContentOptions
   ): EndTag;
   after(
     content: string | ReadableStream | Response,
-    options?: ContentOptions,
+    options?: ContentOptions
   ): EndTag;
   remove(): EndTag;
 }
@@ -1823,15 +1823,15 @@ export interface Text {
   readonly removed: boolean;
   before(
     content: string | ReadableStream | Response,
-    options?: ContentOptions,
+    options?: ContentOptions
   ): Text;
   after(
     content: string | ReadableStream | Response,
-    options?: ContentOptions,
+    options?: ContentOptions
   ): Text;
   replace(
     content: string | ReadableStream | Response,
-    options?: ContentOptions,
+    options?: ContentOptions
   ): Text;
   remove(): Text;
 }
@@ -1908,7 +1908,7 @@ export declare class Headers {
   delete(name: string): void;
   forEach<This = unknown>(
     callback: (this: This, value: string, key: string, parent: Headers) => void,
-    thisArg?: This,
+    thisArg?: This
   ): void;
   /* Returns an iterator allowing to go through all key/value pairs contained in this object. */
   entries(): IterableIterator<[key: string, value: string]>;
@@ -2013,7 +2013,7 @@ export interface Response extends Body {
    *
    * [MDN Reference](https://developer.mozilla.org/docs/Web/API/Response/type)
    */
-  type: "default" | "error";
+  type: 'default' | 'error';
 }
 export interface ResponseInit {
   status?: number;
@@ -2021,7 +2021,7 @@ export interface ResponseInit {
   headers?: HeadersInit;
   cf?: any;
   webSocket?: WebSocket | null;
-  encodeBody?: "automatic" | "manual";
+  encodeBody?: 'automatic' | 'manual';
 }
 export type RequestInfo<
   CfHostMetadata = unknown,
@@ -2036,7 +2036,7 @@ export declare var Request: {
   prototype: Request;
   new <CfHostMetadata = unknown, Cf = CfProperties<CfHostMetadata>>(
     input: RequestInfo<CfProperties> | URL,
-    init?: RequestInit<Cf>,
+    init?: RequestInit<Cf>
   ): Request<CfHostMetadata, Cf>;
 };
 /**
@@ -2103,7 +2103,7 @@ export interface Request<
    *
    * [MDN Reference](https://developer.mozilla.org/docs/Web/API/Request/cache)
    */
-  cache?: "no-store" | "no-cache";
+  cache?: 'no-store' | 'no-cache';
 }
 export interface RequestInit<Cf = CfProperties> {
   /* A string to set request's method. */
@@ -2117,12 +2117,12 @@ export interface RequestInit<Cf = CfProperties> {
   fetcher?: Fetcher | null;
   cf?: Cf;
   /* A string indicating how the request will interact with the browser's cache to set request's cache. */
-  cache?: "no-store" | "no-cache";
+  cache?: 'no-store' | 'no-cache';
   /* A cryptographic hash of the resource to be fetched by request. Sets request's integrity. */
   integrity?: string;
   /* An AbortSignal to set request's signal. */
   signal?: AbortSignal | null;
-  encodeResponseBody?: "automatic" | "manual";
+  encodeResponseBody?: 'automatic' | 'manual';
 }
 export type Service<
   T extends
@@ -2141,7 +2141,7 @@ export type Fetcher<
   T extends Rpc.EntrypointBranded | undefined = undefined,
   Reserved extends string = never,
 > = (T extends Rpc.EntrypointBranded
-  ? Rpc.Provider<T, Reserved | "fetch" | "connect">
+  ? Rpc.Provider<T, Reserved | 'fetch' | 'connect'>
   : unknown) & {
   fetch(input: RequestInfo | URL, init?: RequestInit): Promise<Response>;
   connect(address: SocketAddress | string, options?: SocketOptions): Socket;
@@ -2166,113 +2166,113 @@ export type KVNamespaceListResult<Metadata, Key extends string = string> =
 export interface KVNamespace<Key extends string = string> {
   get(
     key: Key,
-    options?: Partial<KVNamespaceGetOptions<undefined>>,
+    options?: Partial<KVNamespaceGetOptions<undefined>>
   ): Promise<string | null>;
-  get(key: Key, type: "text"): Promise<string | null>;
+  get(key: Key, type: 'text'): Promise<string | null>;
   get<ExpectedValue = unknown>(
     key: Key,
-    type: "json",
+    type: 'json'
   ): Promise<ExpectedValue | null>;
-  get(key: Key, type: "arrayBuffer"): Promise<ArrayBuffer | null>;
-  get(key: Key, type: "stream"): Promise<ReadableStream | null>;
+  get(key: Key, type: 'arrayBuffer'): Promise<ArrayBuffer | null>;
+  get(key: Key, type: 'stream'): Promise<ReadableStream | null>;
   get(
     key: Key,
-    options?: KVNamespaceGetOptions<"text">,
+    options?: KVNamespaceGetOptions<'text'>
   ): Promise<string | null>;
   get<ExpectedValue = unknown>(
     key: Key,
-    options?: KVNamespaceGetOptions<"json">,
+    options?: KVNamespaceGetOptions<'json'>
   ): Promise<ExpectedValue | null>;
   get(
     key: Key,
-    options?: KVNamespaceGetOptions<"arrayBuffer">,
+    options?: KVNamespaceGetOptions<'arrayBuffer'>
   ): Promise<ArrayBuffer | null>;
   get(
     key: Key,
-    options?: KVNamespaceGetOptions<"stream">,
+    options?: KVNamespaceGetOptions<'stream'>
   ): Promise<ReadableStream | null>;
-  get(key: Array<Key>, type: "text"): Promise<Map<string, string | null>>;
+  get(key: Array<Key>, type: 'text'): Promise<Map<string, string | null>>;
   get<ExpectedValue = unknown>(
     key: Array<Key>,
-    type: "json",
+    type: 'json'
   ): Promise<Map<string, ExpectedValue | null>>;
   get(
     key: Array<Key>,
-    options?: Partial<KVNamespaceGetOptions<undefined>>,
+    options?: Partial<KVNamespaceGetOptions<undefined>>
   ): Promise<Map<string, string | null>>;
   get(
     key: Array<Key>,
-    options?: KVNamespaceGetOptions<"text">,
+    options?: KVNamespaceGetOptions<'text'>
   ): Promise<Map<string, string | null>>;
   get<ExpectedValue = unknown>(
     key: Array<Key>,
-    options?: KVNamespaceGetOptions<"json">,
+    options?: KVNamespaceGetOptions<'json'>
   ): Promise<Map<string, ExpectedValue | null>>;
   list<Metadata = unknown>(
-    options?: KVNamespaceListOptions,
+    options?: KVNamespaceListOptions
   ): Promise<KVNamespaceListResult<Metadata, Key>>;
   put(
     key: Key,
     value: string | ArrayBuffer | ArrayBufferView | ReadableStream,
-    options?: KVNamespacePutOptions,
+    options?: KVNamespacePutOptions
   ): Promise<void>;
   getWithMetadata<Metadata = unknown>(
     key: Key,
-    options?: Partial<KVNamespaceGetOptions<undefined>>,
+    options?: Partial<KVNamespaceGetOptions<undefined>>
   ): Promise<KVNamespaceGetWithMetadataResult<string, Metadata>>;
   getWithMetadata<Metadata = unknown>(
     key: Key,
-    type: "text",
+    type: 'text'
   ): Promise<KVNamespaceGetWithMetadataResult<string, Metadata>>;
   getWithMetadata<ExpectedValue = unknown, Metadata = unknown>(
     key: Key,
-    type: "json",
+    type: 'json'
   ): Promise<KVNamespaceGetWithMetadataResult<ExpectedValue, Metadata>>;
   getWithMetadata<Metadata = unknown>(
     key: Key,
-    type: "arrayBuffer",
+    type: 'arrayBuffer'
   ): Promise<KVNamespaceGetWithMetadataResult<ArrayBuffer, Metadata>>;
   getWithMetadata<Metadata = unknown>(
     key: Key,
-    type: "stream",
+    type: 'stream'
   ): Promise<KVNamespaceGetWithMetadataResult<ReadableStream, Metadata>>;
   getWithMetadata<Metadata = unknown>(
     key: Key,
-    options: KVNamespaceGetOptions<"text">,
+    options: KVNamespaceGetOptions<'text'>
   ): Promise<KVNamespaceGetWithMetadataResult<string, Metadata>>;
   getWithMetadata<ExpectedValue = unknown, Metadata = unknown>(
     key: Key,
-    options: KVNamespaceGetOptions<"json">,
+    options: KVNamespaceGetOptions<'json'>
   ): Promise<KVNamespaceGetWithMetadataResult<ExpectedValue, Metadata>>;
   getWithMetadata<Metadata = unknown>(
     key: Key,
-    options: KVNamespaceGetOptions<"arrayBuffer">,
+    options: KVNamespaceGetOptions<'arrayBuffer'>
   ): Promise<KVNamespaceGetWithMetadataResult<ArrayBuffer, Metadata>>;
   getWithMetadata<Metadata = unknown>(
     key: Key,
-    options: KVNamespaceGetOptions<"stream">,
+    options: KVNamespaceGetOptions<'stream'>
   ): Promise<KVNamespaceGetWithMetadataResult<ReadableStream, Metadata>>;
   getWithMetadata<Metadata = unknown>(
     key: Array<Key>,
-    type: "text",
+    type: 'text'
   ): Promise<Map<string, KVNamespaceGetWithMetadataResult<string, Metadata>>>;
   getWithMetadata<ExpectedValue = unknown, Metadata = unknown>(
     key: Array<Key>,
-    type: "json",
+    type: 'json'
   ): Promise<
     Map<string, KVNamespaceGetWithMetadataResult<ExpectedValue, Metadata>>
   >;
   getWithMetadata<Metadata = unknown>(
     key: Array<Key>,
-    options?: Partial<KVNamespaceGetOptions<undefined>>,
+    options?: Partial<KVNamespaceGetOptions<undefined>>
   ): Promise<Map<string, KVNamespaceGetWithMetadataResult<string, Metadata>>>;
   getWithMetadata<Metadata = unknown>(
     key: Array<Key>,
-    options?: KVNamespaceGetOptions<"text">,
+    options?: KVNamespaceGetOptions<'text'>
   ): Promise<Map<string, KVNamespaceGetWithMetadataResult<string, Metadata>>>;
   getWithMetadata<ExpectedValue = unknown, Metadata = unknown>(
     key: Array<Key>,
-    options?: KVNamespaceGetOptions<"json">,
+    options?: KVNamespaceGetOptions<'json'>
   ): Promise<
     Map<string, KVNamespaceGetWithMetadataResult<ExpectedValue, Metadata>>
   >;
@@ -2297,12 +2297,12 @@ export interface KVNamespaceGetWithMetadataResult<Value, Metadata> {
   metadata: Metadata | null;
   cacheStatus: string | null;
 }
-export type QueueContentType = "text" | "bytes" | "json" | "v8";
+export type QueueContentType = 'text' | 'bytes' | 'json' | 'v8';
 export interface Queue<Body = unknown> {
   send(message: Body, options?: QueueSendOptions): Promise<void>;
   sendBatch(
     messages: Iterable<MessageSendRequest<Body>>,
-    options?: QueueSendBatchOptions,
+    options?: QueueSendBatchOptions
   ): Promise<void>;
 }
 export interface QueueSendOptions {
@@ -2353,7 +2353,7 @@ export interface R2ListOptions {
   cursor?: string;
   delimiter?: string;
   startAfter?: string;
-  include?: ("httpMetadata" | "customMetadata")[];
+  include?: ('httpMetadata' | 'customMetadata')[];
 }
 export declare abstract class R2Bucket {
   head(key: string): Promise<R2Object | null>;
@@ -2361,7 +2361,7 @@ export declare abstract class R2Bucket {
     key: string,
     options: R2GetOptions & {
       onlyIf: R2Conditional | Headers;
-    },
+    }
   ): Promise<R2ObjectBody | R2Object | null>;
   get(key: string, options?: R2GetOptions): Promise<R2ObjectBody | null>;
   put(
@@ -2375,7 +2375,7 @@ export declare abstract class R2Bucket {
       | Blob,
     options?: R2PutOptions & {
       onlyIf: R2Conditional | Headers;
-    },
+    }
   ): Promise<R2Object | null>;
   put(
     key: string,
@@ -2386,11 +2386,11 @@ export declare abstract class R2Bucket {
       | string
       | null
       | Blob,
-    options?: R2PutOptions,
+    options?: R2PutOptions
   ): Promise<R2Object>;
   createMultipartUpload(
     key: string,
-    options?: R2MultipartOptions,
+    options?: R2MultipartOptions
   ): Promise<R2MultipartUpload>;
   resumeMultipartUpload(key: string, uploadId: string): R2MultipartUpload;
   delete(keys: string | string[]): Promise<void>;
@@ -2402,7 +2402,7 @@ export interface R2MultipartUpload {
   uploadPart(
     partNumber: number,
     value: ReadableStream | (ArrayBuffer | ArrayBufferView) | string | Blob,
-    options?: R2UploadPartOptions,
+    options?: R2UploadPartOptions
   ): Promise<R2UploadedPart>;
   abort(): Promise<void>;
   complete(uploadedParts: R2UploadedPart[]): Promise<R2Object>;
@@ -2534,25 +2534,25 @@ export interface UnderlyingSink<W = any> {
   start?: (controller: WritableStreamDefaultController) => void | Promise<void>;
   write?: (
     chunk: W,
-    controller: WritableStreamDefaultController,
+    controller: WritableStreamDefaultController
   ) => void | Promise<void>;
   abort?: (reason: any) => void | Promise<void>;
   close?: () => void | Promise<void>;
 }
 export interface UnderlyingByteSource {
-  type: "bytes";
+  type: 'bytes';
   autoAllocateChunkSize?: number;
   start?: (controller: ReadableByteStreamController) => void | Promise<void>;
   pull?: (controller: ReadableByteStreamController) => void | Promise<void>;
   cancel?: (reason: any) => void | Promise<void>;
 }
 export interface UnderlyingSource<R = any> {
-  type?: "" | undefined;
+  type?: '' | undefined;
   start?: (
-    controller: ReadableStreamDefaultController<R>,
+    controller: ReadableStreamDefaultController<R>
   ) => void | Promise<void>;
   pull?: (
-    controller: ReadableStreamDefaultController<R>,
+    controller: ReadableStreamDefaultController<R>
   ) => void | Promise<void>;
   cancel?: (reason: any) => void | Promise<void>;
   expectedLength?: number | bigint;
@@ -2561,14 +2561,14 @@ export interface Transformer<I = any, O = any> {
   readableType?: string;
   writableType?: string;
   start?: (
-    controller: TransformStreamDefaultController<O>,
+    controller: TransformStreamDefaultController<O>
   ) => void | Promise<void>;
   transform?: (
     chunk: I,
-    controller: TransformStreamDefaultController<O>,
+    controller: TransformStreamDefaultController<O>
   ) => void | Promise<void>;
   flush?: (
-    controller: TransformStreamDefaultController<O>,
+    controller: TransformStreamDefaultController<O>
   ) => void | Promise<void>;
   cancel?: (reason: any) => void | Promise<void>;
   expectedLength?: number;
@@ -2642,7 +2642,7 @@ export interface ReadableStream<R = any> {
    */
   pipeThrough<T>(
     transform: ReadableWritablePair<T, R>,
-    options?: StreamPipeOptions,
+    options?: StreamPipeOptions
   ): ReadableStream<T>;
   /**
    * The **`pipeTo()`** method of the ReadableStream interface pipes the current `ReadableStream` to a given WritableStream and returns a Promise that fulfills when the piping process completes successfully, or rejects if any errors were encountered.
@@ -2651,7 +2651,7 @@ export interface ReadableStream<R = any> {
    */
   pipeTo(
     destination: WritableStream<R>,
-    options?: StreamPipeOptions,
+    options?: StreamPipeOptions
   ): Promise<void>;
   /**
    * The **`tee()`** method of the two-element array containing the two resulting branches as new ReadableStream instances.
@@ -2661,7 +2661,7 @@ export interface ReadableStream<R = any> {
   tee(): [ReadableStream<R>, ReadableStream<R>];
   values(options?: ReadableStreamValuesOptions): AsyncIterableIterator<R>;
   [Symbol.asyncIterator](
-    options?: ReadableStreamValuesOptions,
+    options?: ReadableStreamValuesOptions
   ): AsyncIterableIterator<R>;
 }
 /**
@@ -2673,11 +2673,11 @@ export declare const ReadableStream: {
   prototype: ReadableStream;
   new (
     underlyingSource: UnderlyingByteSource,
-    strategy?: QueuingStrategy<Uint8Array>,
+    strategy?: QueuingStrategy<Uint8Array>
   ): ReadableStream<Uint8Array>;
   new <R = any>(
     underlyingSource?: UnderlyingSource<R>,
-    strategy?: QueuingStrategy<R>,
+    strategy?: QueuingStrategy<R>
   ): ReadableStream<R>;
 };
 /**
@@ -2717,7 +2717,7 @@ export declare class ReadableStreamBYOBReader {
    * [MDN Reference](https://developer.mozilla.org/docs/Web/API/ReadableStreamBYOBReader/read)
    */
   read<T extends ArrayBufferView>(
-    view: T,
+    view: T
   ): Promise<ReadableStreamReadResult<T>>;
   /**
    * The **`releaseLock()`** method of the ReadableStreamBYOBReader interface releases the reader's lock on the stream.
@@ -2727,7 +2727,7 @@ export declare class ReadableStreamBYOBReader {
   releaseLock(): void;
   readAtLeast<T extends ArrayBufferView>(
     minElements: number,
-    view: T,
+    view: T
   ): Promise<ReadableStreamReadResult<T>>;
 }
 export interface ReadableStreamBYOBReaderReadableStreamBYOBReaderReadOptions {
@@ -2739,7 +2739,7 @@ export interface ReadableStreamGetReaderOptions {
    *
    * This call behaves the same way as the no-argument variant, except that it only works on readable byte streams, i.e. streams which were constructed specifically with the ability to handle "bring your own buffer" reading. The returned BYOB reader provides the ability to directly read individual chunks from the stream via its read() method, into developer-supplied buffers, allowing more precise control over allocation.
    */
-  mode: "byob";
+  mode: 'byob';
 }
 /**
  * The **`ReadableStreamBYOBRequest`** interface of the Streams API represents a 'pull request' for data from an underlying source that will made as a zero-copy transfer to a consumer (bypassing the stream's internal queues).
@@ -2902,7 +2902,7 @@ export interface ReadableWritablePair<R = any, W = any> {
 export declare class WritableStream<W = any> {
   constructor(
     underlyingSink?: UnderlyingSink,
-    queuingStrategy?: QueuingStrategy,
+    queuingStrategy?: QueuingStrategy
   );
   /**
    * The **`locked`** read-only property of the WritableStream interface returns a boolean indicating whether the `WritableStream` is locked to a writer.
@@ -2988,7 +2988,7 @@ export declare class TransformStream<I = any, O = any> {
   constructor(
     transformer?: Transformer<I, O>,
     writableStrategy?: QueuingStrategy<I>,
-    readableStrategy?: QueuingStrategy<O>,
+    readableStrategy?: QueuingStrategy<O>
   );
   /**
    * The **`readable`** read-only property of the TransformStream interface returns the ReadableStream instance controlled by this `TransformStream`.
@@ -3006,7 +3006,7 @@ export declare class TransformStream<I = any, O = any> {
 export declare class FixedLengthStream extends IdentityTransformStream {
   constructor(
     expectedLength: number | bigint,
-    queuingStrategy?: IdentityTransformStreamQueuingStrategy,
+    queuingStrategy?: IdentityTransformStreamQueuingStrategy
   );
 }
 export declare class IdentityTransformStream extends TransformStream<
@@ -3030,7 +3030,7 @@ export declare class CompressionStream extends TransformStream<
   ArrayBuffer | ArrayBufferView,
   Uint8Array
 > {
-  constructor(format: "gzip" | "deflate" | "deflate-raw");
+  constructor(format: 'gzip' | 'deflate' | 'deflate-raw');
 }
 /**
  * The **`DecompressionStream`** interface of the Compression Streams API is an API for decompressing a stream of data.
@@ -3041,7 +3041,7 @@ export declare class DecompressionStream extends TransformStream<
   ArrayBuffer | ArrayBufferView,
   Uint8Array
 > {
-  constructor(format: "gzip" | "deflate" | "deflate-raw");
+  constructor(format: 'gzip' | 'deflate' | 'deflate-raw');
 }
 /**
  * The **`TextEncoderStream`** interface of the Encoding API converts a stream of strings into bytes in the UTF-8 encoding.
@@ -3412,7 +3412,7 @@ export declare class URL {
  */
 export declare class URLSearchParams {
   constructor(
-    init?: Iterable<Iterable<string>> | Record<string, string> | string,
+    init?: Iterable<Iterable<string>> | Record<string, string> | string
   );
   /**
    * The **`size`** read-only property of the URLSearchParams interface indicates the total number of search parameter entries.
@@ -3473,9 +3473,9 @@ export declare class URLSearchParams {
       this: This,
       value: string,
       key: string,
-      parent: URLSearchParams,
+      parent: URLSearchParams
     ) => void,
-    thisArg?: This,
+    thisArg?: This
   ): void;
   /*function toString() { [native code] }*/
   toString(): string;
@@ -3485,7 +3485,7 @@ export declare class URLPattern {
   constructor(
     input?: string | URLPatternInit,
     baseURL?: string | URLPatternOptions,
-    patternOptions?: URLPatternOptions,
+    patternOptions?: URLPatternOptions
   );
   get protocol(): string;
   get username(): string;
@@ -3499,7 +3499,7 @@ export declare class URLPattern {
   test(input?: string | URLPatternInit, baseURL?: string): boolean;
   exec(
     input?: string | URLPatternInit,
-    baseURL?: string,
+    baseURL?: string
   ): URLPatternResult | null;
 }
 export interface URLPatternInit {
@@ -3635,7 +3635,7 @@ export interface WebSocket extends EventTarget<WebSocketEventMap> {
    *
    * [MDN Reference](https://developer.mozilla.org/docs/Web/API/WebSocket/binaryType)
    */
-  binaryType: "blob" | "arraybuffer";
+  binaryType: 'blob' | 'arraybuffer';
 }
 export interface WebSocketAcceptOptions {
   /**
@@ -3690,7 +3690,7 @@ export interface Socket {
   get closed(): Promise<void>;
   get opened(): Promise<SocketInfo>;
   get upgraded(): boolean;
-  get secureTransport(): "on" | "off" | "starttls";
+  get secureTransport(): 'on' | 'off' | 'starttls';
   close(): Promise<void>;
   startTls(options?: TlsOptions): Socket;
 }
@@ -3773,22 +3773,11 @@ export interface Container {
   interceptOutboundHttp(addr: string, binding: Fetcher): Promise<void>;
   interceptAllOutboundHttp(binding: Fetcher): Promise<void>;
 }
-export interface ContainerDirectorySnapshot {
-  id: string;
-  size: number;
-  dir: string;
-  name?: string;
-}
-export interface ContainerSnapshotRestoreParams {
-  snapshot: ContainerDirectorySnapshot;
-  mountPoint?: string;
-}
 export interface ContainerStartupOptions {
   entrypoint?: string[];
   enableInternet: boolean;
   env?: Record<string, string>;
   hardTimeout?: number | bigint;
-  snapshots?: ContainerSnapshotRestoreParams[];
   labels?: Record<string, string>;
 }
 /**
@@ -3804,7 +3793,7 @@ export declare abstract class MessagePort extends EventTarget {
    */
   postMessage(
     data?: any,
-    options?: any[] | MessagePortPostMessageOptions,
+    options?: any[] | MessagePortPostMessageOptions
   ): void;
   /**
    * The **`close()`** method of the MessagePort interface disconnects the port, so it is no longer active.
@@ -3885,7 +3874,7 @@ export interface SyncKvListOptions {
 export interface WorkerStub {
   getEntrypoint<T extends Rpc.WorkerEntrypointBranded | undefined>(
     name?: string,
-    options?: WorkerStubEntrypointOptions,
+    options?: WorkerStubEntrypointOptions
   ): Fetcher<T>;
 }
 export interface WorkerStubEntrypointOptions {
@@ -3894,7 +3883,7 @@ export interface WorkerStubEntrypointOptions {
 export interface WorkerLoader {
   get(
     name: string | null,
-    getCode: () => WorkerLoaderWorkerCode | Promise<WorkerLoaderWorkerCode>,
+    getCode: () => WorkerLoaderWorkerCode | Promise<WorkerLoaderWorkerCode>
   ): WorkerStub;
   load(code: WorkerLoaderWorkerCode): WorkerStub;
 }
@@ -3943,12 +3932,12 @@ export interface AiSearchNameNotSetError extends Error {}
 // AI Search V2 Request Types
 export type AiSearchSearchRequest = {
   messages: Array<{
-    role: "system" | "developer" | "user" | "assistant" | "tool";
+    role: 'system' | 'developer' | 'user' | 'assistant' | 'tool';
     content: string | null;
   }>;
   ai_search_options?: {
     retrieval?: {
-      retrieval_type?: "vector" | "keyword" | "hybrid";
+      retrieval_type?: 'vector' | 'keyword' | 'hybrid';
       /** Match threshold (0-1, default 0.4) */
       match_threshold?: number;
       /** Maximum number of results (1-50, default 10) */
@@ -3967,7 +3956,7 @@ export type AiSearchSearchRequest = {
     reranking?: {
       /** Enable reranking (default false) */
       enabled?: boolean;
-      model?: "@cf/baai/bge-reranker-base" | "";
+      model?: '@cf/baai/bge-reranker-base' | '';
       /** Match threshold (0-1, default 0.4) */
       match_threshold?: number;
       [key: string]: unknown;
@@ -3977,14 +3966,14 @@ export type AiSearchSearchRequest = {
 };
 export type AiSearchChatCompletionsRequest = {
   messages: Array<{
-    role: "system" | "developer" | "user" | "assistant" | "tool";
+    role: 'system' | 'developer' | 'user' | 'assistant' | 'tool';
     content: string | null;
   }>;
   model?: string;
   stream?: boolean;
   ai_search_options?: {
     retrieval?: {
-      retrieval_type?: "vector" | "keyword" | "hybrid";
+      retrieval_type?: 'vector' | 'keyword' | 'hybrid';
       match_threshold?: number;
       max_num_results?: number;
       filters?: VectorizeVectorMetadataFilter;
@@ -3999,7 +3988,7 @@ export type AiSearchChatCompletionsRequest = {
     };
     reranking?: {
       enabled?: boolean;
-      model?: "@cf/baai/bge-reranker-base" | "";
+      model?: '@cf/baai/bge-reranker-base' | '';
       match_threshold?: number;
       [key: string]: unknown;
     };
@@ -4036,14 +4025,14 @@ export type AiSearchListResponse = Array<{
   account_tag?: string;
   /** Whether the instance is enabled (default true) */
   enable?: boolean;
-  type?: "r2" | "web-crawler";
+  type?: 'r2' | 'web-crawler';
   source?: string;
   [key: string]: unknown;
 }>;
 export type AiSearchConfig = {
   /** Instance ID (1-32 chars, pattern: ^[a-z0-9_]+(?:-[a-z0-9_]+)*$) */
   id: string;
-  type: "r2" | "web-crawler";
+  type: 'r2' | 'web-crawler';
   source: string;
   source_params?: object;
   /** Token ID (UUID format) */
@@ -4059,7 +4048,7 @@ export type AiSearchConfig = {
 export type AiSearchInstance = {
   id: string;
   enable?: boolean;
-  type?: "r2" | "web-crawler";
+  type?: 'r2' | 'web-crawler';
   source?: string;
   [key: string]: unknown;
 };
@@ -4077,7 +4066,7 @@ export declare abstract class AiSearchInstanceService {
    * @returns Response object (if streaming) or chat completion result
    */
   chatCompletions(
-    params: AiSearchChatCompletionsRequest,
+    params: AiSearchChatCompletionsRequest
   ): Promise<Response | object>;
   /**
    * Delete this AI Search instance.
@@ -4241,10 +4230,10 @@ export declare abstract class BaseAiTextEmbeddings {
 }
 export type RoleScopedChatInput = {
   role:
-    | "user"
-    | "assistant"
-    | "system"
-    | "tool"
+    | 'user'
+    | 'assistant'
+    | 'system'
+    | 'tool'
     | (string & NonNullable<unknown>);
   content: string;
   name?: string;
@@ -4253,7 +4242,7 @@ export type AiTextGenerationToolLegacyInput = {
   name: string;
   description: string;
   parameters?: {
-    type: "object" | (string & NonNullable<unknown>);
+    type: 'object' | (string & NonNullable<unknown>);
     properties: {
       [key: string]: {
         type: string;
@@ -4264,12 +4253,12 @@ export type AiTextGenerationToolLegacyInput = {
   };
 };
 export type AiTextGenerationToolInput = {
-  type: "function" | (string & NonNullable<unknown>);
+  type: 'function' | (string & NonNullable<unknown>);
   function: {
     name: string;
     description: string;
     parameters?: {
-      type: "object" | (string & NonNullable<unknown>);
+      type: 'object' | (string & NonNullable<unknown>);
       properties: {
         [key: string]: {
           type: string;
@@ -4314,7 +4303,7 @@ export type AiTextGenerationToolLegacyOutput = {
 };
 export type AiTextGenerationToolOutput = {
   id: string;
-  type: "function";
+  type: 'function';
   function: {
     name: string;
     arguments: string;
@@ -4382,26 +4371,26 @@ export declare abstract class BaseAiTranslation {
  * Workers AI support for OpenAI's Chat Completions API
  */
 export type ChatCompletionContentPartText = {
-  type: "text";
+  type: 'text';
   text: string;
 };
 export type ChatCompletionContentPartImage = {
-  type: "image_url";
+  type: 'image_url';
   image_url: {
     url: string;
-    detail?: "auto" | "low" | "high";
+    detail?: 'auto' | 'low' | 'high';
   };
 };
 export type ChatCompletionContentPartInputAudio = {
-  type: "input_audio";
+  type: 'input_audio';
   input_audio: {
     /** Base64 encoded audio data. */
     data: string;
-    format: "wav" | "mp3";
+    format: 'wav' | 'mp3';
   };
 };
 export type ChatCompletionContentPartFile = {
-  type: "file";
+  type: 'file';
   file: {
     /** Base64 encoded file data. */
     file_data?: string;
@@ -4411,7 +4400,7 @@ export type ChatCompletionContentPartFile = {
   };
 };
 export type ChatCompletionContentPartRefusal = {
-  type: "refusal";
+  type: 'refusal';
   refusal: string;
 };
 export type ChatCompletionContentPart =
@@ -4426,24 +4415,24 @@ export type FunctionDefinition = {
   strict?: boolean | null;
 };
 export type ChatCompletionFunctionTool = {
-  type: "function";
+  type: 'function';
   function: FunctionDefinition;
 };
 export type ChatCompletionCustomToolGrammarFormat = {
-  type: "grammar";
+  type: 'grammar';
   grammar: {
     definition: string;
-    syntax: "lark" | "regex";
+    syntax: 'lark' | 'regex';
   };
 };
 export type ChatCompletionCustomToolTextFormat = {
-  type: "text";
+  type: 'text';
 };
 export type ChatCompletionCustomToolFormat =
   | ChatCompletionCustomToolTextFormat
   | ChatCompletionCustomToolGrammarFormat;
 export type ChatCompletionCustomTool = {
-  type: "custom";
+  type: 'custom';
   custom: {
     name: string;
     description?: string;
@@ -4455,7 +4444,7 @@ export type ChatCompletionTool =
   | ChatCompletionCustomTool;
 export type ChatCompletionMessageFunctionToolCall = {
   id: string;
-  type: "function";
+  type: 'function';
   function: {
     name: string;
     /** JSON-encoded arguments string. */
@@ -4464,7 +4453,7 @@ export type ChatCompletionMessageFunctionToolCall = {
 };
 export type ChatCompletionMessageCustomToolCall = {
   id: string;
-  type: "custom";
+  type: 'custom';
   custom: {
     name: string;
     input: string;
@@ -4474,47 +4463,47 @@ export type ChatCompletionMessageToolCall =
   | ChatCompletionMessageFunctionToolCall
   | ChatCompletionMessageCustomToolCall;
 export type ChatCompletionToolChoiceFunction = {
-  type: "function";
+  type: 'function';
   function: {
     name: string;
   };
 };
 export type ChatCompletionToolChoiceCustom = {
-  type: "custom";
+  type: 'custom';
   custom: {
     name: string;
   };
 };
 export type ChatCompletionToolChoiceAllowedTools = {
-  type: "allowed_tools";
+  type: 'allowed_tools';
   allowed_tools: {
-    mode: "auto" | "required";
+    mode: 'auto' | 'required';
     tools: Array<Record<string, unknown>>;
   };
 };
 export type ChatCompletionToolChoiceOption =
-  | "none"
-  | "auto"
-  | "required"
+  | 'none'
+  | 'auto'
+  | 'required'
   | ChatCompletionToolChoiceFunction
   | ChatCompletionToolChoiceCustom
   | ChatCompletionToolChoiceAllowedTools;
 export type DeveloperMessage = {
-  role: "developer";
+  role: 'developer';
   content:
     | string
     | Array<{
-        type: "text";
+        type: 'text';
         text: string;
       }>;
   name?: string;
 };
 export type SystemMessage = {
-  role: "system";
+  role: 'system';
   content:
     | string
     | Array<{
-        type: "text";
+        type: 'text';
         text: string;
       }>;
   name?: string;
@@ -4527,15 +4516,15 @@ export type SystemMessage = {
  * different array elements, so the schema uses a single merged object.
  */
 export type UserMessageContentPart = {
-  type: "text" | "image_url" | "input_audio" | "file";
+  type: 'text' | 'image_url' | 'input_audio' | 'file';
   text?: string;
   image_url?: {
     url?: string;
-    detail?: "auto" | "low" | "high";
+    detail?: 'auto' | 'low' | 'high';
   };
   input_audio?: {
     data?: string;
-    format?: "wav" | "mp3";
+    format?: 'wav' | 'mp3';
   };
   file?: {
     file_data?: string;
@@ -4544,17 +4533,17 @@ export type UserMessageContentPart = {
   };
 };
 export type UserMessage = {
-  role: "user";
+  role: 'user';
   content: string | Array<UserMessageContentPart>;
   name?: string;
 };
 export type AssistantMessageContentPart = {
-  type: "text" | "refusal";
+  type: 'text' | 'refusal';
   text?: string;
   refusal?: string;
 };
 export type AssistantMessage = {
-  role: "assistant";
+  role: 'assistant';
   content?: string | null | Array<AssistantMessageContentPart>;
   refusal?: string | null;
   name?: string;
@@ -4568,17 +4557,17 @@ export type AssistantMessage = {
   };
 };
 export type ToolMessage = {
-  role: "tool";
+  role: 'tool';
   content:
     | string
     | Array<{
-        type: "text";
+        type: 'text';
         text: string;
       }>;
   tool_call_id: string;
 };
 export type FunctionMessage = {
-  role: "function";
+  role: 'function';
   content: string;
   name: string;
 };
@@ -4590,13 +4579,13 @@ export type ChatCompletionMessageParam =
   | ToolMessage
   | FunctionMessage;
 export type ChatCompletionsResponseFormatText = {
-  type: "text";
+  type: 'text';
 };
 export type ChatCompletionsResponseFormatJSONObject = {
-  type: "json_object";
+  type: 'json_object';
 };
 export type ResponseFormatJSONSchema = {
-  type: "json_schema";
+  type: 'json_schema';
   json_schema: {
     name: string;
     description?: string;
@@ -4613,11 +4602,11 @@ export type ChatCompletionsStreamOptions = {
   include_obfuscation?: boolean;
 };
 export type PredictionContent = {
-  type: "content";
+  type: 'content';
   content:
     | string
     | Array<{
-        type: "text";
+        type: 'text';
         text: string;
       }>;
 };
@@ -4627,10 +4616,10 @@ export type AudioParams = {
     | {
         id: string;
       };
-  format: "wav" | "aac" | "mp3" | "flac" | "opus" | "pcm16";
+  format: 'wav' | 'aac' | 'mp3' | 'flac' | 'opus' | 'pcm16';
 };
 export type WebSearchUserLocation = {
-  type: "approximate";
+  type: 'approximate';
   approximate: {
     city?: string;
     country?: string;
@@ -4639,7 +4628,7 @@ export type WebSearchUserLocation = {
   };
 };
 export type WebSearchOptions = {
-  search_context_size?: "low" | "medium" | "high";
+  search_context_size?: 'low' | 'medium' | 'high';
   user_location?: WebSearchUserLocation;
 };
 export type ChatTemplateKwargs = {
@@ -4659,16 +4648,16 @@ export type ChatCompletionsCommonOptions = {
   max_tokens?: number | null;
   max_completion_tokens?: number | null;
   metadata?: Record<string, unknown> | null;
-  modalities?: Array<"text" | "audio"> | null;
+  modalities?: Array<'text' | 'audio'> | null;
   n?: number | null;
   parallel_tool_calls?: boolean;
   prediction?: PredictionContent;
   presence_penalty?: number | null;
-  reasoning_effort?: "low" | "medium" | "high" | null;
+  reasoning_effort?: 'low' | 'medium' | 'high' | null;
   chat_template_kwargs?: ChatTemplateKwargs;
   response_format?: ResponseFormat;
   seed?: number | null;
-  service_tier?: "auto" | "default" | "flex" | "scale" | "priority" | null;
+  service_tier?: 'auto' | 'default' | 'flex' | 'scale' | 'priority' | null;
   stop?: string | Array<string> | null;
   store?: boolean | null;
   stream?: boolean | null;
@@ -4680,8 +4669,8 @@ export type ChatCompletionsCommonOptions = {
   user?: string;
   web_search_options?: WebSearchOptions;
   function_call?:
-    | "none"
-    | "auto"
+    | 'none'
+    | 'auto'
     | {
         name: string;
       };
@@ -4723,7 +4712,7 @@ export type ChatCompletionAudio = {
   transcript: string;
 };
 export type ChatCompletionUrlCitation = {
-  type: "url_citation";
+  type: 'url_citation';
   url_citation: {
     url: string;
     title: string;
@@ -4732,7 +4721,7 @@ export type ChatCompletionUrlCitation = {
   };
 };
 export type ChatCompletionResponseMessage = {
-  role: "assistant";
+  role: 'assistant';
   content: string | null;
   refusal: string | null;
   annotations?: Array<ChatCompletionUrlCitation>;
@@ -4751,11 +4740,11 @@ export type ChatCompletionChoice = {
   index: number;
   message: ChatCompletionResponseMessage;
   finish_reason:
-    | "stop"
-    | "length"
-    | "tool_calls"
-    | "content_filter"
-    | "function_call";
+    | 'stop'
+    | 'length'
+    | 'tool_calls'
+    | 'content_filter'
+    | 'function_call';
   logprobs: ChatCompletionLogprobs | null;
 };
 export type ChatCompletionsPromptInput = {
@@ -4772,7 +4761,7 @@ export type ChatCompletionsOutput = {
   choices: Array<ChatCompletionChoice>;
   usage?: CompletionUsage;
   system_fingerprint?: string | null;
-  service_tier?: "auto" | "default" | "flex" | "scale" | "priority" | null;
+  service_tier?: 'auto' | 'default' | 'flex' | 'scale' | 'priority' | null;
 };
 /**
  * Workers AI support for OpenAI's Responses API
@@ -4796,7 +4785,7 @@ export type ResponsesInput = {
   prompt_cache_key?: string;
   reasoning?: Reasoning | null;
   safety_identifier?: string;
-  service_tier?: "auto" | "default" | "flex" | "scale" | "priority" | null;
+  service_tier?: 'auto' | 'default' | 'flex' | 'scale' | 'priority' | null;
   stream?: boolean | null;
   stream_options?: StreamOptions | null;
   temperature?: number | null;
@@ -4804,7 +4793,7 @@ export type ResponsesInput = {
   tool_choice?: ToolChoiceOptions | ToolChoiceFunction;
   tools?: Array<Tool>;
   top_p?: number | null;
-  truncation?: "auto" | "disabled" | null;
+  truncation?: 'auto' | 'disabled' | null;
 };
 export type ResponsesOutput = {
   id?: string;
@@ -4813,7 +4802,7 @@ export type ResponsesOutput = {
   error?: ResponseError | null;
   incomplete_details?: ResponseIncompleteDetails | null;
   instructions?: string | Array<ResponseInputItem> | null;
-  object?: "response";
+  object?: 'response';
   output?: Array<ResponseOutputItem>;
   parallel_tool_calls?: boolean;
   temperature?: number | null;
@@ -4825,16 +4814,16 @@ export type ResponsesOutput = {
   prompt?: ResponsePrompt | null;
   reasoning?: Reasoning | null;
   safety_identifier?: string;
-  service_tier?: "auto" | "default" | "flex" | "scale" | "priority" | null;
+  service_tier?: 'auto' | 'default' | 'flex' | 'scale' | 'priority' | null;
   status?: ResponseStatus;
   text?: ResponseTextConfig;
-  truncation?: "auto" | "disabled" | null;
+  truncation?: 'auto' | 'disabled' | null;
   usage?: ResponseUsage;
 };
 export type EasyInputMessage = {
   content: string | ResponseInputMessageContentList;
-  role: "user" | "assistant" | "system" | "developer";
-  type?: "message";
+  role: 'user' | 'assistant' | 'system' | 'developer';
+  type?: 'message';
 };
 export type ResponsesFunctionTool = {
   name: string;
@@ -4842,11 +4831,11 @@ export type ResponsesFunctionTool = {
     [key: string]: unknown;
   } | null;
   strict: boolean | null;
-  type: "function";
+  type: 'function';
   description?: string | null;
 };
 export type ResponseIncompleteDetails = {
-  reason?: "max_output_tokens" | "content_filter";
+  reason?: 'max_output_tokens' | 'content_filter';
 };
 export type ResponsePrompt = {
   id: string;
@@ -4857,8 +4846,8 @@ export type ResponsePrompt = {
 };
 export type Reasoning = {
   effort?: ReasoningEffort | null;
-  generate_summary?: "auto" | "concise" | "detailed" | null;
-  summary?: "auto" | "concise" | "detailed" | null;
+  generate_summary?: 'auto' | 'concise' | 'detailed' | null;
+  summary?: 'auto' | 'concise' | 'detailed' | null;
 };
 export type ResponseContent =
   | ResponseInputText
@@ -4868,7 +4857,7 @@ export type ResponseContent =
   | ResponseContentReasoningText;
 export type ResponseContentReasoningText = {
   text: string;
-  type: "reasoning_text";
+  type: 'reasoning_text';
 };
 export type ResponseConversationParam = {
   id: string;
@@ -4876,34 +4865,34 @@ export type ResponseConversationParam = {
 export type ResponseCreatedEvent = {
   response: Response;
   sequence_number: number;
-  type: "response.created";
+  type: 'response.created';
 };
 export type ResponseCustomToolCallOutput = {
   call_id: string;
   output: string | Array<ResponseInputText | ResponseInputImage>;
-  type: "custom_tool_call_output";
+  type: 'custom_tool_call_output';
   id?: string;
 };
 export type ResponseError = {
   code:
-    | "server_error"
-    | "rate_limit_exceeded"
-    | "invalid_prompt"
-    | "vector_store_timeout"
-    | "invalid_image"
-    | "invalid_image_format"
-    | "invalid_base64_image"
-    | "invalid_image_url"
-    | "image_too_large"
-    | "image_too_small"
-    | "image_parse_error"
-    | "image_content_policy_violation"
-    | "invalid_image_mode"
-    | "image_file_too_large"
-    | "unsupported_image_media_type"
-    | "empty_image_file"
-    | "failed_to_download_image"
-    | "image_file_not_found";
+    | 'server_error'
+    | 'rate_limit_exceeded'
+    | 'invalid_prompt'
+    | 'vector_store_timeout'
+    | 'invalid_image'
+    | 'invalid_image_format'
+    | 'invalid_base64_image'
+    | 'invalid_image_url'
+    | 'image_too_large'
+    | 'image_too_small'
+    | 'image_parse_error'
+    | 'image_content_policy_violation'
+    | 'invalid_image_mode'
+    | 'image_file_too_large'
+    | 'unsupported_image_media_type'
+    | 'empty_image_file'
+    | 'failed_to_download_image'
+    | 'image_file_not_found';
   message: string;
 };
 export type ResponseErrorEvent = {
@@ -4911,18 +4900,18 @@ export type ResponseErrorEvent = {
   message: string;
   param: string | null;
   sequence_number: number;
-  type: "error";
+  type: 'error';
 };
 export type ResponseFailedEvent = {
   response: Response;
   sequence_number: number;
-  type: "response.failed";
+  type: 'response.failed';
 };
 export type ResponseFormatText = {
-  type: "text";
+  type: 'text';
 };
 export type ResponseFormatJSONObject = {
-  type: "json_object";
+  type: 'json_object';
 };
 export type ResponseFormatTextConfig =
   | ResponseFormatText
@@ -4933,7 +4922,7 @@ export type ResponseFormatTextJSONSchemaConfig = {
   schema: {
     [key: string]: unknown;
   };
-  type: "json_schema";
+  type: 'json_schema';
   description?: string;
   strict?: boolean | null;
 };
@@ -4942,7 +4931,7 @@ export type ResponseFunctionCallArgumentsDeltaEvent = {
   item_id: string;
   output_index: number;
   sequence_number: number;
-  type: "response.function_call_arguments.delta";
+  type: 'response.function_call_arguments.delta';
 };
 export type ResponseFunctionCallArgumentsDoneEvent = {
   arguments: string;
@@ -4950,7 +4939,7 @@ export type ResponseFunctionCallArgumentsDoneEvent = {
   name: string;
   output_index: number;
   sequence_number: number;
-  type: "response.function_call_arguments.done";
+  type: 'response.function_call_arguments.done';
 };
 export type ResponseFunctionCallOutputItem =
   | ResponseInputTextContent
@@ -4961,9 +4950,9 @@ export type ResponseFunctionToolCall = {
   arguments: string;
   call_id: string;
   name: string;
-  type: "function_call";
+  type: 'function_call';
   id?: string;
-  status?: "in_progress" | "completed" | "incomplete";
+  status?: 'in_progress' | 'completed' | 'incomplete';
 };
 export interface ResponseFunctionToolCallItem extends ResponseFunctionToolCall {
   id: string;
@@ -4972,30 +4961,30 @@ export type ResponseFunctionToolCallOutputItem = {
   id: string;
   call_id: string;
   output: string | Array<ResponseInputText | ResponseInputImage>;
-  type: "function_call_output";
-  status?: "in_progress" | "completed" | "incomplete";
+  type: 'function_call_output';
+  status?: 'in_progress' | 'completed' | 'incomplete';
 };
 export type ResponseIncludable =
-  | "message.input_image.image_url"
-  | "message.output_text.logprobs";
+  | 'message.input_image.image_url'
+  | 'message.output_text.logprobs';
 export type ResponseIncompleteEvent = {
   response: Response;
   sequence_number: number;
-  type: "response.incomplete";
+  type: 'response.incomplete';
 };
 export type ResponseInput = Array<ResponseInputItem>;
 export type ResponseInputContent = ResponseInputText | ResponseInputImage;
 export type ResponseInputImage = {
-  detail: "low" | "high" | "auto";
-  type: "input_image";
+  detail: 'low' | 'high' | 'auto';
+  type: 'input_image';
   /**
    * Base64 encoded image
    */
   image_url?: string | null;
 };
 export type ResponseInputImageContent = {
-  type: "input_image";
-  detail?: "low" | "high" | "auto" | null;
+  type: 'input_image';
+  detail?: 'low' | 'high' | 'auto' | null;
   /**
    * Base64 encoded image
    */
@@ -5011,31 +5000,31 @@ export type ResponseInputItem =
 export type ResponseInputItemFunctionCallOutput = {
   call_id: string;
   output: string | ResponseFunctionCallOutputItemList;
-  type: "function_call_output";
+  type: 'function_call_output';
   id?: string | null;
-  status?: "in_progress" | "completed" | "incomplete" | null;
+  status?: 'in_progress' | 'completed' | 'incomplete' | null;
 };
 export type ResponseInputItemMessage = {
   content: ResponseInputMessageContentList;
-  role: "user" | "system" | "developer";
-  status?: "in_progress" | "completed" | "incomplete";
-  type?: "message";
+  role: 'user' | 'system' | 'developer';
+  status?: 'in_progress' | 'completed' | 'incomplete';
+  type?: 'message';
 };
 export type ResponseInputMessageContentList = Array<ResponseInputContent>;
 export type ResponseInputMessageItem = {
   id: string;
   content: ResponseInputMessageContentList;
-  role: "user" | "system" | "developer";
-  status?: "in_progress" | "completed" | "incomplete";
-  type?: "message";
+  role: 'user' | 'system' | 'developer';
+  status?: 'in_progress' | 'completed' | 'incomplete';
+  type?: 'message';
 };
 export type ResponseInputText = {
   text: string;
-  type: "input_text";
+  type: 'input_text';
 };
 export type ResponseInputTextContent = {
   text: string;
-  type: "input_text";
+  type: 'input_text';
 };
 export type ResponseItem =
   | ResponseInputMessageItem
@@ -5050,45 +5039,45 @@ export type ResponseOutputItemAddedEvent = {
   item: ResponseOutputItem;
   output_index: number;
   sequence_number: number;
-  type: "response.output_item.added";
+  type: 'response.output_item.added';
 };
 export type ResponseOutputItemDoneEvent = {
   item: ResponseOutputItem;
   output_index: number;
   sequence_number: number;
-  type: "response.output_item.done";
+  type: 'response.output_item.done';
 };
 export type ResponseOutputMessage = {
   id: string;
   content: Array<ResponseOutputText | ResponseOutputRefusal>;
-  role: "assistant";
-  status: "in_progress" | "completed" | "incomplete";
-  type: "message";
+  role: 'assistant';
+  status: 'in_progress' | 'completed' | 'incomplete';
+  type: 'message';
 };
 export type ResponseOutputRefusal = {
   refusal: string;
-  type: "refusal";
+  type: 'refusal';
 };
 export type ResponseOutputText = {
   text: string;
-  type: "output_text";
+  type: 'output_text';
   logprobs?: Array<Logprob>;
 };
 export type ResponseReasoningItem = {
   id: string;
   summary: Array<ResponseReasoningSummaryItem>;
-  type: "reasoning";
+  type: 'reasoning';
   content?: Array<ResponseReasoningContentItem>;
   encrypted_content?: string | null;
-  status?: "in_progress" | "completed" | "incomplete";
+  status?: 'in_progress' | 'completed' | 'incomplete';
 };
 export type ResponseReasoningSummaryItem = {
   text: string;
-  type: "summary_text";
+  type: 'summary_text';
 };
 export type ResponseReasoningContentItem = {
   text: string;
-  type: "reasoning_text";
+  type: 'reasoning_text';
 };
 export type ResponseReasoningTextDeltaEvent = {
   content_index: number;
@@ -5096,7 +5085,7 @@ export type ResponseReasoningTextDeltaEvent = {
   item_id: string;
   output_index: number;
   sequence_number: number;
-  type: "response.reasoning_text.delta";
+  type: 'response.reasoning_text.delta';
 };
 export type ResponseReasoningTextDoneEvent = {
   content_index: number;
@@ -5104,7 +5093,7 @@ export type ResponseReasoningTextDoneEvent = {
   output_index: number;
   sequence_number: number;
   text: string;
-  type: "response.reasoning_text.done";
+  type: 'response.reasoning_text.done';
 };
 export type ResponseRefusalDeltaEvent = {
   content_index: number;
@@ -5112,7 +5101,7 @@ export type ResponseRefusalDeltaEvent = {
   item_id: string;
   output_index: number;
   sequence_number: number;
-  type: "response.refusal.delta";
+  type: 'response.refusal.delta';
 };
 export type ResponseRefusalDoneEvent = {
   content_index: number;
@@ -5120,15 +5109,15 @@ export type ResponseRefusalDoneEvent = {
   output_index: number;
   refusal: string;
   sequence_number: number;
-  type: "response.refusal.done";
+  type: 'response.refusal.done';
 };
 export type ResponseStatus =
-  | "completed"
-  | "failed"
-  | "in_progress"
-  | "cancelled"
-  | "queued"
-  | "incomplete";
+  | 'completed'
+  | 'failed'
+  | 'in_progress'
+  | 'cancelled'
+  | 'queued'
+  | 'incomplete';
 export type ResponseStreamEvent =
   | ResponseCompletedEvent
   | ResponseCreatedEvent
@@ -5148,11 +5137,11 @@ export type ResponseStreamEvent =
 export type ResponseCompletedEvent = {
   response: Response;
   sequence_number: number;
-  type: "response.completed";
+  type: 'response.completed';
 };
 export type ResponseTextConfig = {
   format?: ResponseFormatTextConfig;
-  verbosity?: "low" | "medium" | "high" | null;
+  verbosity?: 'low' | 'medium' | 'high' | null;
 };
 export type ResponseTextDeltaEvent = {
   content_index: number;
@@ -5161,7 +5150,7 @@ export type ResponseTextDeltaEvent = {
   logprobs: Array<Logprob>;
   output_index: number;
   sequence_number: number;
-  type: "response.output_text.delta";
+  type: 'response.output_text.delta';
 };
 export type ResponseTextDoneEvent = {
   content_index: number;
@@ -5170,7 +5159,7 @@ export type ResponseTextDoneEvent = {
   output_index: number;
   sequence_number: number;
   text: string;
-  type: "response.output_text.done";
+  type: 'response.output_text.done';
 };
 export type Logprob = {
   token: string;
@@ -5189,10 +5178,10 @@ export type ResponseUsage = {
 export type Tool = ResponsesFunctionTool;
 export type ToolChoiceFunction = {
   name: string;
-  type: "function";
+  type: 'function';
 };
-export type ToolChoiceOptions = "none";
-export type ReasoningEffort = "minimal" | "low" | "medium" | "high" | null;
+export type ToolChoiceOptions = 'none';
+export type ReasoningEffort = 'minimal' | 'low' | 'medium' | 'high' | null;
 export type StreamOptions = {
   include_obfuscation?: boolean;
 };
@@ -5208,7 +5197,7 @@ export type Ai_Cf_Baai_Bge_Base_En_V1_5_Input =
       /**
        * The pooling method used in the embedding process. `cls` pooling will generate more accurate embeddings on larger inputs - however, embeddings created with cls pooling are not compatible with embeddings generated with mean pooling. The default pooling method is `mean` in order for this to not be a breaking change, but we highly suggest using the new `cls` pooling for better accuracy.
        */
-      pooling?: "mean" | "cls";
+      pooling?: 'mean' | 'cls';
     }
   | {
       /**
@@ -5219,7 +5208,7 @@ export type Ai_Cf_Baai_Bge_Base_En_V1_5_Input =
         /**
          * The pooling method used in the embedding process. `cls` pooling will generate more accurate embeddings on larger inputs - however, embeddings created with cls pooling are not compatible with embeddings generated with mean pooling. The default pooling method is `mean` in order for this to not be a breaking change, but we highly suggest using the new `cls` pooling for better accuracy.
          */
-        pooling?: "mean" | "cls";
+        pooling?: 'mean' | 'cls';
       }[];
     };
 export type Ai_Cf_Baai_Bge_Base_En_V1_5_Output =
@@ -5232,7 +5221,7 @@ export type Ai_Cf_Baai_Bge_Base_En_V1_5_Output =
       /**
        * The pooling method used in the embedding process.
        */
-      pooling?: "mean" | "cls";
+      pooling?: 'mean' | 'cls';
     }
   | Ai_Cf_Baai_Bge_Base_En_V1_5_AsyncResponse;
 export interface Ai_Cf_Baai_Bge_Base_En_V1_5_AsyncResponse {
@@ -5334,7 +5323,7 @@ export type Ai_Cf_Baai_Bge_Small_En_V1_5_Input =
       /**
        * The pooling method used in the embedding process. `cls` pooling will generate more accurate embeddings on larger inputs - however, embeddings created with cls pooling are not compatible with embeddings generated with mean pooling. The default pooling method is `mean` in order for this to not be a breaking change, but we highly suggest using the new `cls` pooling for better accuracy.
        */
-      pooling?: "mean" | "cls";
+      pooling?: 'mean' | 'cls';
     }
   | {
       /**
@@ -5345,7 +5334,7 @@ export type Ai_Cf_Baai_Bge_Small_En_V1_5_Input =
         /**
          * The pooling method used in the embedding process. `cls` pooling will generate more accurate embeddings on larger inputs - however, embeddings created with cls pooling are not compatible with embeddings generated with mean pooling. The default pooling method is `mean` in order for this to not be a breaking change, but we highly suggest using the new `cls` pooling for better accuracy.
          */
-        pooling?: "mean" | "cls";
+        pooling?: 'mean' | 'cls';
       }[];
     };
 export type Ai_Cf_Baai_Bge_Small_En_V1_5_Output =
@@ -5358,7 +5347,7 @@ export type Ai_Cf_Baai_Bge_Small_En_V1_5_Output =
       /**
        * The pooling method used in the embedding process.
        */
-      pooling?: "mean" | "cls";
+      pooling?: 'mean' | 'cls';
     }
   | Ai_Cf_Baai_Bge_Small_En_V1_5_AsyncResponse;
 export interface Ai_Cf_Baai_Bge_Small_En_V1_5_AsyncResponse {
@@ -5377,7 +5366,7 @@ export type Ai_Cf_Baai_Bge_Large_En_V1_5_Input =
       /**
        * The pooling method used in the embedding process. `cls` pooling will generate more accurate embeddings on larger inputs - however, embeddings created with cls pooling are not compatible with embeddings generated with mean pooling. The default pooling method is `mean` in order for this to not be a breaking change, but we highly suggest using the new `cls` pooling for better accuracy.
        */
-      pooling?: "mean" | "cls";
+      pooling?: 'mean' | 'cls';
     }
   | {
       /**
@@ -5388,7 +5377,7 @@ export type Ai_Cf_Baai_Bge_Large_En_V1_5_Input =
         /**
          * The pooling method used in the embedding process. `cls` pooling will generate more accurate embeddings on larger inputs - however, embeddings created with cls pooling are not compatible with embeddings generated with mean pooling. The default pooling method is `mean` in order for this to not be a breaking change, but we highly suggest using the new `cls` pooling for better accuracy.
          */
-        pooling?: "mean" | "cls";
+        pooling?: 'mean' | 'cls';
       }[];
     };
 export type Ai_Cf_Baai_Bge_Large_En_V1_5_Output =
@@ -5401,7 +5390,7 @@ export type Ai_Cf_Baai_Bge_Large_En_V1_5_Output =
       /**
        * The pooling method used in the embedding process.
        */
-      pooling?: "mean" | "cls";
+      pooling?: 'mean' | 'cls';
     }
   | Ai_Cf_Baai_Bge_Large_En_V1_5_AsyncResponse;
 export interface Ai_Cf_Baai_Bge_Large_En_V1_5_AsyncResponse {
@@ -5712,7 +5701,7 @@ export interface Ai_Cf_Baai_Bge_M3_Output_EmbeddingFor_Contexts {
   /**
    * The pooling method used in the embedding process.
    */
-  pooling?: "mean" | "cls";
+  pooling?: 'mean' | 'cls';
 }
 export interface Ai_Cf_Baai_Bge_M3_Output_Embedding {
   shape?: number[];
@@ -5723,7 +5712,7 @@ export interface Ai_Cf_Baai_Bge_M3_Output_Embedding {
   /**
    * The pooling method used in the embedding process.
    */
-  pooling?: "mean" | "cls";
+  pooling?: 'mean' | 'cls';
 }
 export interface Ai_Cf_Baai_Bge_M3_AsyncResponse {
   /**
@@ -6062,7 +6051,7 @@ export interface Ai_Cf_Meta_Llama_3_3_70B_Instruct_Fp8_Fast_Prompt {
   presence_penalty?: number;
 }
 export interface Ai_Cf_Meta_Llama_3_3_70B_Instruct_Fp8_Fast_JSON_Mode {
-  type?: "json_object" | "json_schema";
+  type?: 'json_object' | 'json_schema';
   json_schema?: unknown;
 }
 export interface Ai_Cf_Meta_Llama_3_3_70B_Instruct_Fp8_Fast_Messages {
@@ -6224,7 +6213,7 @@ export interface Ai_Cf_Meta_Llama_3_3_70B_Instruct_Fp8_Fast_Messages {
   presence_penalty?: number;
 }
 export interface Ai_Cf_Meta_Llama_3_3_70B_Instruct_Fp8_Fast_JSON_Mode_1 {
-  type?: "json_object" | "json_schema";
+  type?: 'json_object' | 'json_schema';
   json_schema?: unknown;
 }
 export interface Ai_Cf_Meta_Llama_3_3_70B_Instruct_Fp8_Fast_Async_Batch {
@@ -6273,7 +6262,7 @@ export interface Ai_Cf_Meta_Llama_3_3_70B_Instruct_Fp8_Fast_Async_Batch {
   }[];
 }
 export interface Ai_Cf_Meta_Llama_3_3_70B_Instruct_Fp8_Fast_JSON_Mode_2 {
-  type?: "json_object" | "json_schema";
+  type?: 'json_object' | 'json_schema';
   json_schema?: unknown;
 }
 export type Ai_Cf_Meta_Llama_3_3_70B_Instruct_Fp8_Fast_Output =
@@ -6333,7 +6322,7 @@ export interface Ai_Cf_Meta_Llama_Guard_3_8B_Input {
     /**
      * The role of the message sender must alternate between 'user' and 'assistant'.
      */
-    role: "user" | "assistant";
+    role: 'user' | 'assistant';
     /**
      * The content of the message as a string.
      */
@@ -6481,7 +6470,7 @@ export interface Ai_Cf_Qwen_Qwen2_5_Coder_32B_Instruct_Prompt {
   presence_penalty?: number;
 }
 export interface Ai_Cf_Qwen_Qwen2_5_Coder_32B_Instruct_JSON_Mode {
-  type?: "json_object" | "json_schema";
+  type?: 'json_object' | 'json_schema';
   json_schema?: unknown;
 }
 export interface Ai_Cf_Qwen_Qwen2_5_Coder_32B_Instruct_Messages {
@@ -6635,7 +6624,7 @@ export interface Ai_Cf_Qwen_Qwen2_5_Coder_32B_Instruct_Messages {
   presence_penalty?: number;
 }
 export interface Ai_Cf_Qwen_Qwen2_5_Coder_32B_Instruct_JSON_Mode_1 {
-  type?: "json_object" | "json_schema";
+  type?: 'json_object' | 'json_schema';
   json_schema?: unknown;
 }
 export type Ai_Cf_Qwen_Qwen2_5_Coder_32B_Instruct_Output = {
@@ -7539,7 +7528,7 @@ export interface Ai_Cf_Meta_Llama_4_Scout_17B_16E_Instruct_Prompt {
   presence_penalty?: number;
 }
 export interface Ai_Cf_Meta_Llama_4_Scout_17B_16E_Instruct_JSON_Mode {
-  type?: "json_object" | "json_schema";
+  type?: 'json_object' | 'json_schema';
   json_schema?: unknown;
 }
 export interface Ai_Cf_Meta_Llama_4_Scout_17B_16E_Instruct_Messages {
@@ -8072,7 +8061,7 @@ export interface Ai_Cf_Qwen_Qwen3_30B_A3B_Fp8_Prompt {
   presence_penalty?: number;
 }
 export interface Ai_Cf_Qwen_Qwen3_30B_A3B_Fp8_JSON_Mode {
-  type?: "json_object" | "json_schema";
+  type?: 'json_object' | 'json_schema';
   json_schema?: unknown;
 }
 export interface Ai_Cf_Qwen_Qwen3_30B_A3B_Fp8_Messages {
@@ -8234,7 +8223,7 @@ export interface Ai_Cf_Qwen_Qwen3_30B_A3B_Fp8_Messages {
   presence_penalty?: number;
 }
 export interface Ai_Cf_Qwen_Qwen3_30B_A3B_Fp8_JSON_Mode_1 {
-  type?: "json_object" | "json_schema";
+  type?: 'json_object' | 'json_schema';
   json_schema?: unknown;
 }
 export interface Ai_Cf_Qwen_Qwen3_30B_A3B_Fp8_Async_Batch {
@@ -8295,7 +8284,7 @@ export interface Ai_Cf_Qwen_Qwen3_30B_A3B_Fp8_Prompt_1 {
   presence_penalty?: number;
 }
 export interface Ai_Cf_Qwen_Qwen3_30B_A3B_Fp8_JSON_Mode_2 {
-  type?: "json_object" | "json_schema";
+  type?: 'json_object' | 'json_schema';
   json_schema?: unknown;
 }
 export interface Ai_Cf_Qwen_Qwen3_30B_A3B_Fp8_Messages_1 {
@@ -8457,7 +8446,7 @@ export interface Ai_Cf_Qwen_Qwen3_30B_A3B_Fp8_Messages_1 {
   presence_penalty?: number;
 }
 export interface Ai_Cf_Qwen_Qwen3_30B_A3B_Fp8_JSON_Mode_3 {
-  type?: "json_object" | "json_schema";
+  type?: 'json_object' | 'json_schema';
   json_schema?: unknown;
 }
 export type Ai_Cf_Qwen_Qwen3_30B_A3B_Fp8_Output =
@@ -8473,7 +8462,7 @@ export interface Ai_Cf_Qwen_Qwen3_30B_A3B_Fp8_Chat_Completion_Response {
   /**
    * Object type identifier
    */
-  object?: "chat.completion";
+  object?: 'chat.completion';
   /**
    * Unix timestamp of when the completion was created
    */
@@ -8517,7 +8506,7 @@ export interface Ai_Cf_Qwen_Qwen3_30B_A3B_Fp8_Chat_Completion_Response {
         /**
          * Type of tool call
          */
-        type: "function";
+        type: 'function';
         function: {
           /**
            * Name of the function to call
@@ -8573,7 +8562,7 @@ export interface Ai_Cf_Qwen_Qwen3_30B_A3B_Fp8_Text_Completion_Response {
   /**
    * Object type identifier
    */
-  object?: "text_completion";
+  object?: 'text_completion';
   /**
    * Unix timestamp of when the completion was created
    */
@@ -8647,7 +8636,7 @@ export interface Ai_Cf_Deepgram_Nova_3_Input {
   /**
    * Sets how the model will interpret strings submitted to the custom_topic param. When strict, the model will only return topics submitted using the custom_topic param. When extended, the model will return its own detected topics in addition to those submitted using the custom_topic param.
    */
-  custom_topic_mode?: "extended" | "strict";
+  custom_topic_mode?: 'extended' | 'strict';
   /**
    * Custom topics you want the model to detect within your input audio or text if present Submit up to 100
    */
@@ -8655,7 +8644,7 @@ export interface Ai_Cf_Deepgram_Nova_3_Input {
   /**
    * Sets how the model will interpret intents submitted to the custom_intent param. When strict, the model will only return intents submitted using the custom_intent param. When extended, the model will return its own detected intents in addition those submitted using the custom_intents param
    */
-  custom_intent_mode?: "extended" | "strict";
+  custom_intent_mode?: 'extended' | 'strict';
   /**
    * Custom intents you want the model to detect within your input audio if present
    */
@@ -8680,14 +8669,14 @@ export interface Ai_Cf_Deepgram_Nova_3_Input {
    * Specify the expected encoding of your submitted audio
    */
   encoding?:
-    | "linear16"
-    | "flac"
-    | "mulaw"
-    | "amr-nb"
-    | "amr-wb"
-    | "opus"
-    | "speex"
-    | "g729";
+    | 'linear16'
+    | 'flac'
+    | 'mulaw'
+    | 'amr-nb'
+    | 'amr-wb'
+    | 'opus'
+    | 'speex'
+    | 'g729';
   /**
    * Arbitrary key-value pairs that are attached to the API response for usage in downstream processing
    */
@@ -8719,7 +8708,7 @@ export interface Ai_Cf_Deepgram_Nova_3_Input {
   /**
    * Mode of operation for the model representing broad area of topic that will be talked about in the supplied audio
    */
-  mode?: "general" | "medical" | "finance";
+  mode?: 'general' | 'medical' | 'finance';
   /**
    * Transcribe each audio channel independently.
    */
@@ -8859,7 +8848,7 @@ export type Ai_Cf_Pipecat_Ai_Smart_Turn_V2_Input =
       /**
        * type of data PCM data that's sent to the inference server as raw array
        */
-      dtype?: "uint8" | "float32" | "float64";
+      dtype?: 'uint8' | 'float32' | 'float64';
     }
   | {
       /**
@@ -8869,7 +8858,7 @@ export type Ai_Cf_Pipecat_Ai_Smart_Turn_V2_Input =
       /**
        * type of data PCM data that's sent to the inference server as raw array
        */
-      dtype?: "uint8" | "float32" | "float64";
+      dtype?: 'uint8' | 'float32' | 'float64';
     };
 export interface Ai_Cf_Pipecat_Ai_Smart_Turn_V2_Output {
   /**
@@ -8976,26 +8965,26 @@ export interface Ai_Cf_Deepgram_Aura_1_Input {
    * Speaker used to produce the audio.
    */
   speaker?:
-    | "angus"
-    | "asteria"
-    | "arcas"
-    | "orion"
-    | "orpheus"
-    | "athena"
-    | "luna"
-    | "zeus"
-    | "perseus"
-    | "helios"
-    | "hera"
-    | "stella";
+    | 'angus'
+    | 'asteria'
+    | 'arcas'
+    | 'orion'
+    | 'orpheus'
+    | 'athena'
+    | 'luna'
+    | 'zeus'
+    | 'perseus'
+    | 'helios'
+    | 'hera'
+    | 'stella';
   /**
    * Encoding of the output audio.
    */
-  encoding?: "linear16" | "flac" | "mulaw" | "alaw" | "mp3" | "opus" | "aac";
+  encoding?: 'linear16' | 'flac' | 'mulaw' | 'alaw' | 'mp3' | 'opus' | 'aac';
   /**
    * Container specifies the file format wrapper for the output audio. The available options depend on the encoding type..
    */
-  container?: "none" | "wav" | "ogg";
+  container?: 'none' | 'wav' | 'ogg';
   /**
    * The text content to be converted to speech
    */
@@ -9026,40 +9015,40 @@ export interface Ai_Cf_Ai4Bharat_Indictrans2_En_Indic_1B_Input {
    * Target langauge to translate to
    */
   target_language:
-    | "asm_Beng"
-    | "awa_Deva"
-    | "ben_Beng"
-    | "bho_Deva"
-    | "brx_Deva"
-    | "doi_Deva"
-    | "eng_Latn"
-    | "gom_Deva"
-    | "gon_Deva"
-    | "guj_Gujr"
-    | "hin_Deva"
-    | "hne_Deva"
-    | "kan_Knda"
-    | "kas_Arab"
-    | "kas_Deva"
-    | "kha_Latn"
-    | "lus_Latn"
-    | "mag_Deva"
-    | "mai_Deva"
-    | "mal_Mlym"
-    | "mar_Deva"
-    | "mni_Beng"
-    | "mni_Mtei"
-    | "npi_Deva"
-    | "ory_Orya"
-    | "pan_Guru"
-    | "san_Deva"
-    | "sat_Olck"
-    | "snd_Arab"
-    | "snd_Deva"
-    | "tam_Taml"
-    | "tel_Telu"
-    | "urd_Arab"
-    | "unr_Deva";
+    | 'asm_Beng'
+    | 'awa_Deva'
+    | 'ben_Beng'
+    | 'bho_Deva'
+    | 'brx_Deva'
+    | 'doi_Deva'
+    | 'eng_Latn'
+    | 'gom_Deva'
+    | 'gon_Deva'
+    | 'guj_Gujr'
+    | 'hin_Deva'
+    | 'hne_Deva'
+    | 'kan_Knda'
+    | 'kas_Arab'
+    | 'kas_Deva'
+    | 'kha_Latn'
+    | 'lus_Latn'
+    | 'mag_Deva'
+    | 'mai_Deva'
+    | 'mal_Mlym'
+    | 'mar_Deva'
+    | 'mni_Beng'
+    | 'mni_Mtei'
+    | 'npi_Deva'
+    | 'ory_Orya'
+    | 'pan_Guru'
+    | 'san_Deva'
+    | 'sat_Olck'
+    | 'snd_Arab'
+    | 'snd_Deva'
+    | 'tam_Taml'
+    | 'tel_Telu'
+    | 'urd_Arab'
+    | 'unr_Deva';
 }
 export interface Ai_Cf_Ai4Bharat_Indictrans2_En_Indic_1B_Output {
   /**
@@ -9127,7 +9116,7 @@ export interface Ai_Cf_Aisingapore_Gemma_Sea_Lion_V4_27B_It_Prompt {
   presence_penalty?: number;
 }
 export interface Ai_Cf_Aisingapore_Gemma_Sea_Lion_V4_27B_It_JSON_Mode {
-  type?: "json_object" | "json_schema";
+  type?: 'json_object' | 'json_schema';
   json_schema?: unknown;
 }
 export interface Ai_Cf_Aisingapore_Gemma_Sea_Lion_V4_27B_It_Messages {
@@ -9289,7 +9278,7 @@ export interface Ai_Cf_Aisingapore_Gemma_Sea_Lion_V4_27B_It_Messages {
   presence_penalty?: number;
 }
 export interface Ai_Cf_Aisingapore_Gemma_Sea_Lion_V4_27B_It_JSON_Mode_1 {
-  type?: "json_object" | "json_schema";
+  type?: 'json_object' | 'json_schema';
   json_schema?: unknown;
 }
 export interface Ai_Cf_Aisingapore_Gemma_Sea_Lion_V4_27B_It_Async_Batch {
@@ -9350,7 +9339,7 @@ export interface Ai_Cf_Aisingapore_Gemma_Sea_Lion_V4_27B_It_Prompt_1 {
   presence_penalty?: number;
 }
 export interface Ai_Cf_Aisingapore_Gemma_Sea_Lion_V4_27B_It_JSON_Mode_2 {
-  type?: "json_object" | "json_schema";
+  type?: 'json_object' | 'json_schema';
   json_schema?: unknown;
 }
 export interface Ai_Cf_Aisingapore_Gemma_Sea_Lion_V4_27B_It_Messages_1 {
@@ -9512,7 +9501,7 @@ export interface Ai_Cf_Aisingapore_Gemma_Sea_Lion_V4_27B_It_Messages_1 {
   presence_penalty?: number;
 }
 export interface Ai_Cf_Aisingapore_Gemma_Sea_Lion_V4_27B_It_JSON_Mode_3 {
-  type?: "json_object" | "json_schema";
+  type?: 'json_object' | 'json_schema';
   json_schema?: unknown;
 }
 export type Ai_Cf_Aisingapore_Gemma_Sea_Lion_V4_27B_It_Output =
@@ -9528,7 +9517,7 @@ export interface Ai_Cf_Aisingapore_Gemma_Sea_Lion_V4_27B_It_Chat_Completion_Resp
   /**
    * Object type identifier
    */
-  object?: "chat.completion";
+  object?: 'chat.completion';
   /**
    * Unix timestamp of when the completion was created
    */
@@ -9572,7 +9561,7 @@ export interface Ai_Cf_Aisingapore_Gemma_Sea_Lion_V4_27B_It_Chat_Completion_Resp
         /**
          * Type of tool call
          */
-        type: "function";
+        type: 'function';
         function: {
           /**
            * Name of the function to call
@@ -9628,7 +9617,7 @@ export interface Ai_Cf_Aisingapore_Gemma_Sea_Lion_V4_27B_It_Text_Completion_Resp
   /**
    * Object type identifier
    */
-  object?: "text_completion";
+  object?: 'text_completion';
   /**
    * Unix timestamp of when the completion was created
    */
@@ -9721,7 +9710,7 @@ export interface Ai_Cf_Deepgram_Flux_Input {
   /**
    * Encoding of the audio stream. Currently only supports raw signed little-endian 16-bit PCM.
    */
-  encoding: "linear16";
+  encoding: 'linear16';
   /**
    * Sample rate of the audio stream in Hz.
    */
@@ -9745,7 +9734,7 @@ export interface Ai_Cf_Deepgram_Flux_Input {
   /**
    * Opts out requests from the Deepgram Model Improvement Program. Refer to Deepgram Docs for pricing impacts before setting this to true. https://dpgr.am/deepgram-mip
    */
-  mip_opt_out?: "true" | "false";
+  mip_opt_out?: 'true' | 'false';
   /**
    * Label your requests for the purpose of identification during usage reporting
    */
@@ -9767,11 +9756,11 @@ export interface Ai_Cf_Deepgram_Flux_Output {
    * The type of event being reported.
    */
   event?:
-    | "Update"
-    | "StartOfTurn"
-    | "EagerEndOfTurn"
-    | "TurnResumed"
-    | "EndOfTurn";
+    | 'Update'
+    | 'StartOfTurn'
+    | 'EagerEndOfTurn'
+    | 'TurnResumed'
+    | 'EndOfTurn';
   /**
    * The index of the current turn
    */
@@ -9815,54 +9804,54 @@ export interface Ai_Cf_Deepgram_Aura_2_En_Input {
    * Speaker used to produce the audio.
    */
   speaker?:
-    | "amalthea"
-    | "andromeda"
-    | "apollo"
-    | "arcas"
-    | "aries"
-    | "asteria"
-    | "athena"
-    | "atlas"
-    | "aurora"
-    | "callista"
-    | "cora"
-    | "cordelia"
-    | "delia"
-    | "draco"
-    | "electra"
-    | "harmonia"
-    | "helena"
-    | "hera"
-    | "hermes"
-    | "hyperion"
-    | "iris"
-    | "janus"
-    | "juno"
-    | "jupiter"
-    | "luna"
-    | "mars"
-    | "minerva"
-    | "neptune"
-    | "odysseus"
-    | "ophelia"
-    | "orion"
-    | "orpheus"
-    | "pandora"
-    | "phoebe"
-    | "pluto"
-    | "saturn"
-    | "thalia"
-    | "theia"
-    | "vesta"
-    | "zeus";
+    | 'amalthea'
+    | 'andromeda'
+    | 'apollo'
+    | 'arcas'
+    | 'aries'
+    | 'asteria'
+    | 'athena'
+    | 'atlas'
+    | 'aurora'
+    | 'callista'
+    | 'cora'
+    | 'cordelia'
+    | 'delia'
+    | 'draco'
+    | 'electra'
+    | 'harmonia'
+    | 'helena'
+    | 'hera'
+    | 'hermes'
+    | 'hyperion'
+    | 'iris'
+    | 'janus'
+    | 'juno'
+    | 'jupiter'
+    | 'luna'
+    | 'mars'
+    | 'minerva'
+    | 'neptune'
+    | 'odysseus'
+    | 'ophelia'
+    | 'orion'
+    | 'orpheus'
+    | 'pandora'
+    | 'phoebe'
+    | 'pluto'
+    | 'saturn'
+    | 'thalia'
+    | 'theia'
+    | 'vesta'
+    | 'zeus';
   /**
    * Encoding of the output audio.
    */
-  encoding?: "linear16" | "flac" | "mulaw" | "alaw" | "mp3" | "opus" | "aac";
+  encoding?: 'linear16' | 'flac' | 'mulaw' | 'alaw' | 'mp3' | 'opus' | 'aac';
   /**
    * Container specifies the file format wrapper for the output audio. The available options depend on the encoding type..
    */
-  container?: "none" | "wav" | "ogg";
+  container?: 'none' | 'wav' | 'ogg';
   /**
    * The text content to be converted to speech
    */
@@ -9889,24 +9878,24 @@ export interface Ai_Cf_Deepgram_Aura_2_Es_Input {
    * Speaker used to produce the audio.
    */
   speaker?:
-    | "sirio"
-    | "nestor"
-    | "carina"
-    | "celeste"
-    | "alvaro"
-    | "diana"
-    | "aquila"
-    | "selena"
-    | "estrella"
-    | "javier";
+    | 'sirio'
+    | 'nestor'
+    | 'carina'
+    | 'celeste'
+    | 'alvaro'
+    | 'diana'
+    | 'aquila'
+    | 'selena'
+    | 'estrella'
+    | 'javier';
   /**
    * Encoding of the output audio.
    */
-  encoding?: "linear16" | "flac" | "mulaw" | "alaw" | "mp3" | "opus" | "aac";
+  encoding?: 'linear16' | 'flac' | 'mulaw' | 'alaw' | 'mp3' | 'opus' | 'aac';
   /**
    * Container specifies the file format wrapper for the output audio. The available options depend on the encoding type..
    */
-  container?: "none" | "wav" | "ogg";
+  container?: 'none' | 'wav' | 'ogg';
   /**
    * The text content to be converted to speech
    */
@@ -9989,95 +9978,95 @@ export declare abstract class Base_Ai_Cf_Nvidia_Nemotron_3_120B_A12B {
   postProcessedOutputs: ChatCompletionsOutput;
 }
 export interface AiModels {
-  "@cf/huggingface/distilbert-sst-2-int8": BaseAiTextClassification;
-  "@cf/stabilityai/stable-diffusion-xl-base-1.0": BaseAiTextToImage;
-  "@cf/runwayml/stable-diffusion-v1-5-inpainting": BaseAiTextToImage;
-  "@cf/runwayml/stable-diffusion-v1-5-img2img": BaseAiTextToImage;
-  "@cf/lykon/dreamshaper-8-lcm": BaseAiTextToImage;
-  "@cf/bytedance/stable-diffusion-xl-lightning": BaseAiTextToImage;
-  "@cf/myshell-ai/melotts": BaseAiTextToSpeech;
-  "@cf/google/embeddinggemma-300m": BaseAiTextEmbeddings;
-  "@cf/microsoft/resnet-50": BaseAiImageClassification;
-  "@cf/meta/llama-2-7b-chat-int8": BaseAiTextGeneration;
-  "@cf/mistral/mistral-7b-instruct-v0.1": BaseAiTextGeneration;
-  "@cf/meta/llama-2-7b-chat-fp16": BaseAiTextGeneration;
-  "@hf/thebloke/llama-2-13b-chat-awq": BaseAiTextGeneration;
-  "@hf/thebloke/mistral-7b-instruct-v0.1-awq": BaseAiTextGeneration;
-  "@hf/thebloke/zephyr-7b-beta-awq": BaseAiTextGeneration;
-  "@hf/thebloke/openhermes-2.5-mistral-7b-awq": BaseAiTextGeneration;
-  "@hf/thebloke/neural-chat-7b-v3-1-awq": BaseAiTextGeneration;
-  "@hf/thebloke/deepseek-coder-6.7b-base-awq": BaseAiTextGeneration;
-  "@hf/thebloke/deepseek-coder-6.7b-instruct-awq": BaseAiTextGeneration;
-  "@cf/deepseek-ai/deepseek-math-7b-instruct": BaseAiTextGeneration;
-  "@cf/defog/sqlcoder-7b-2": BaseAiTextGeneration;
-  "@cf/openchat/openchat-3.5-0106": BaseAiTextGeneration;
-  "@cf/tiiuae/falcon-7b-instruct": BaseAiTextGeneration;
-  "@cf/thebloke/discolm-german-7b-v1-awq": BaseAiTextGeneration;
-  "@cf/qwen/qwen1.5-0.5b-chat": BaseAiTextGeneration;
-  "@cf/qwen/qwen1.5-7b-chat-awq": BaseAiTextGeneration;
-  "@cf/qwen/qwen1.5-14b-chat-awq": BaseAiTextGeneration;
-  "@cf/tinyllama/tinyllama-1.1b-chat-v1.0": BaseAiTextGeneration;
-  "@cf/microsoft/phi-2": BaseAiTextGeneration;
-  "@cf/qwen/qwen1.5-1.8b-chat": BaseAiTextGeneration;
-  "@cf/mistral/mistral-7b-instruct-v0.2-lora": BaseAiTextGeneration;
-  "@hf/nousresearch/hermes-2-pro-mistral-7b": BaseAiTextGeneration;
-  "@hf/nexusflow/starling-lm-7b-beta": BaseAiTextGeneration;
-  "@hf/google/gemma-7b-it": BaseAiTextGeneration;
-  "@cf/meta-llama/llama-2-7b-chat-hf-lora": BaseAiTextGeneration;
-  "@cf/google/gemma-2b-it-lora": BaseAiTextGeneration;
-  "@cf/google/gemma-7b-it-lora": BaseAiTextGeneration;
-  "@hf/mistral/mistral-7b-instruct-v0.2": BaseAiTextGeneration;
-  "@cf/meta/llama-3-8b-instruct": BaseAiTextGeneration;
-  "@cf/fblgit/una-cybertron-7b-v2-bf16": BaseAiTextGeneration;
-  "@cf/meta/llama-3-8b-instruct-awq": BaseAiTextGeneration;
-  "@cf/meta/llama-3.1-8b-instruct-fp8": BaseAiTextGeneration;
-  "@cf/meta/llama-3.1-8b-instruct-awq": BaseAiTextGeneration;
-  "@cf/meta/llama-3.2-3b-instruct": BaseAiTextGeneration;
-  "@cf/meta/llama-3.2-1b-instruct": BaseAiTextGeneration;
-  "@cf/deepseek-ai/deepseek-r1-distill-qwen-32b": BaseAiTextGeneration;
-  "@cf/ibm-granite/granite-4.0-h-micro": BaseAiTextGeneration;
-  "@cf/facebook/bart-large-cnn": BaseAiSummarization;
-  "@cf/llava-hf/llava-1.5-7b-hf": BaseAiImageToText;
-  "@cf/baai/bge-base-en-v1.5": Base_Ai_Cf_Baai_Bge_Base_En_V1_5;
-  "@cf/openai/whisper": Base_Ai_Cf_Openai_Whisper;
-  "@cf/meta/m2m100-1.2b": Base_Ai_Cf_Meta_M2M100_1_2B;
-  "@cf/baai/bge-small-en-v1.5": Base_Ai_Cf_Baai_Bge_Small_En_V1_5;
-  "@cf/baai/bge-large-en-v1.5": Base_Ai_Cf_Baai_Bge_Large_En_V1_5;
-  "@cf/unum/uform-gen2-qwen-500m": Base_Ai_Cf_Unum_Uform_Gen2_Qwen_500M;
-  "@cf/openai/whisper-tiny-en": Base_Ai_Cf_Openai_Whisper_Tiny_En;
-  "@cf/openai/whisper-large-v3-turbo": Base_Ai_Cf_Openai_Whisper_Large_V3_Turbo;
-  "@cf/baai/bge-m3": Base_Ai_Cf_Baai_Bge_M3;
-  "@cf/black-forest-labs/flux-1-schnell": Base_Ai_Cf_Black_Forest_Labs_Flux_1_Schnell;
-  "@cf/meta/llama-3.2-11b-vision-instruct": Base_Ai_Cf_Meta_Llama_3_2_11B_Vision_Instruct;
-  "@cf/meta/llama-3.3-70b-instruct-fp8-fast": Base_Ai_Cf_Meta_Llama_3_3_70B_Instruct_Fp8_Fast;
-  "@cf/meta/llama-guard-3-8b": Base_Ai_Cf_Meta_Llama_Guard_3_8B;
-  "@cf/baai/bge-reranker-base": Base_Ai_Cf_Baai_Bge_Reranker_Base;
-  "@cf/qwen/qwen2.5-coder-32b-instruct": Base_Ai_Cf_Qwen_Qwen2_5_Coder_32B_Instruct;
-  "@cf/qwen/qwq-32b": Base_Ai_Cf_Qwen_Qwq_32B;
-  "@cf/mistralai/mistral-small-3.1-24b-instruct": Base_Ai_Cf_Mistralai_Mistral_Small_3_1_24B_Instruct;
-  "@cf/google/gemma-3-12b-it": Base_Ai_Cf_Google_Gemma_3_12B_It;
-  "@cf/meta/llama-4-scout-17b-16e-instruct": Base_Ai_Cf_Meta_Llama_4_Scout_17B_16E_Instruct;
-  "@cf/qwen/qwen3-30b-a3b-fp8": Base_Ai_Cf_Qwen_Qwen3_30B_A3B_Fp8;
-  "@cf/deepgram/nova-3": Base_Ai_Cf_Deepgram_Nova_3;
-  "@cf/qwen/qwen3-embedding-0.6b": Base_Ai_Cf_Qwen_Qwen3_Embedding_0_6B;
-  "@cf/pipecat-ai/smart-turn-v2": Base_Ai_Cf_Pipecat_Ai_Smart_Turn_V2;
-  "@cf/openai/gpt-oss-120b": Base_Ai_Cf_Openai_Gpt_Oss_120B;
-  "@cf/openai/gpt-oss-20b": Base_Ai_Cf_Openai_Gpt_Oss_20B;
-  "@cf/leonardo/phoenix-1.0": Base_Ai_Cf_Leonardo_Phoenix_1_0;
-  "@cf/leonardo/lucid-origin": Base_Ai_Cf_Leonardo_Lucid_Origin;
-  "@cf/deepgram/aura-1": Base_Ai_Cf_Deepgram_Aura_1;
-  "@cf/ai4bharat/indictrans2-en-indic-1B": Base_Ai_Cf_Ai4Bharat_Indictrans2_En_Indic_1B;
-  "@cf/aisingapore/gemma-sea-lion-v4-27b-it": Base_Ai_Cf_Aisingapore_Gemma_Sea_Lion_V4_27B_It;
-  "@cf/pfnet/plamo-embedding-1b": Base_Ai_Cf_Pfnet_Plamo_Embedding_1B;
-  "@cf/deepgram/flux": Base_Ai_Cf_Deepgram_Flux;
-  "@cf/deepgram/aura-2-en": Base_Ai_Cf_Deepgram_Aura_2_En;
-  "@cf/deepgram/aura-2-es": Base_Ai_Cf_Deepgram_Aura_2_Es;
-  "@cf/black-forest-labs/flux-2-dev": Base_Ai_Cf_Black_Forest_Labs_Flux_2_Dev;
-  "@cf/black-forest-labs/flux-2-klein-4b": Base_Ai_Cf_Black_Forest_Labs_Flux_2_Klein_4B;
-  "@cf/black-forest-labs/flux-2-klein-9b": Base_Ai_Cf_Black_Forest_Labs_Flux_2_Klein_9B;
-  "@cf/zai-org/glm-4.7-flash": Base_Ai_Cf_Zai_Org_Glm_4_7_Flash;
-  "@cf/moonshotai/kimi-k2.5": Base_Ai_Cf_Moonshotai_Kimi_K2_5;
-  "@cf/nvidia/nemotron-3-120b-a12b": Base_Ai_Cf_Nvidia_Nemotron_3_120B_A12B;
+  '@cf/huggingface/distilbert-sst-2-int8': BaseAiTextClassification;
+  '@cf/stabilityai/stable-diffusion-xl-base-1.0': BaseAiTextToImage;
+  '@cf/runwayml/stable-diffusion-v1-5-inpainting': BaseAiTextToImage;
+  '@cf/runwayml/stable-diffusion-v1-5-img2img': BaseAiTextToImage;
+  '@cf/lykon/dreamshaper-8-lcm': BaseAiTextToImage;
+  '@cf/bytedance/stable-diffusion-xl-lightning': BaseAiTextToImage;
+  '@cf/myshell-ai/melotts': BaseAiTextToSpeech;
+  '@cf/google/embeddinggemma-300m': BaseAiTextEmbeddings;
+  '@cf/microsoft/resnet-50': BaseAiImageClassification;
+  '@cf/meta/llama-2-7b-chat-int8': BaseAiTextGeneration;
+  '@cf/mistral/mistral-7b-instruct-v0.1': BaseAiTextGeneration;
+  '@cf/meta/llama-2-7b-chat-fp16': BaseAiTextGeneration;
+  '@hf/thebloke/llama-2-13b-chat-awq': BaseAiTextGeneration;
+  '@hf/thebloke/mistral-7b-instruct-v0.1-awq': BaseAiTextGeneration;
+  '@hf/thebloke/zephyr-7b-beta-awq': BaseAiTextGeneration;
+  '@hf/thebloke/openhermes-2.5-mistral-7b-awq': BaseAiTextGeneration;
+  '@hf/thebloke/neural-chat-7b-v3-1-awq': BaseAiTextGeneration;
+  '@hf/thebloke/deepseek-coder-6.7b-base-awq': BaseAiTextGeneration;
+  '@hf/thebloke/deepseek-coder-6.7b-instruct-awq': BaseAiTextGeneration;
+  '@cf/deepseek-ai/deepseek-math-7b-instruct': BaseAiTextGeneration;
+  '@cf/defog/sqlcoder-7b-2': BaseAiTextGeneration;
+  '@cf/openchat/openchat-3.5-0106': BaseAiTextGeneration;
+  '@cf/tiiuae/falcon-7b-instruct': BaseAiTextGeneration;
+  '@cf/thebloke/discolm-german-7b-v1-awq': BaseAiTextGeneration;
+  '@cf/qwen/qwen1.5-0.5b-chat': BaseAiTextGeneration;
+  '@cf/qwen/qwen1.5-7b-chat-awq': BaseAiTextGeneration;
+  '@cf/qwen/qwen1.5-14b-chat-awq': BaseAiTextGeneration;
+  '@cf/tinyllama/tinyllama-1.1b-chat-v1.0': BaseAiTextGeneration;
+  '@cf/microsoft/phi-2': BaseAiTextGeneration;
+  '@cf/qwen/qwen1.5-1.8b-chat': BaseAiTextGeneration;
+  '@cf/mistral/mistral-7b-instruct-v0.2-lora': BaseAiTextGeneration;
+  '@hf/nousresearch/hermes-2-pro-mistral-7b': BaseAiTextGeneration;
+  '@hf/nexusflow/starling-lm-7b-beta': BaseAiTextGeneration;
+  '@hf/google/gemma-7b-it': BaseAiTextGeneration;
+  '@cf/meta-llama/llama-2-7b-chat-hf-lora': BaseAiTextGeneration;
+  '@cf/google/gemma-2b-it-lora': BaseAiTextGeneration;
+  '@cf/google/gemma-7b-it-lora': BaseAiTextGeneration;
+  '@hf/mistral/mistral-7b-instruct-v0.2': BaseAiTextGeneration;
+  '@cf/meta/llama-3-8b-instruct': BaseAiTextGeneration;
+  '@cf/fblgit/una-cybertron-7b-v2-bf16': BaseAiTextGeneration;
+  '@cf/meta/llama-3-8b-instruct-awq': BaseAiTextGeneration;
+  '@cf/meta/llama-3.1-8b-instruct-fp8': BaseAiTextGeneration;
+  '@cf/meta/llama-3.1-8b-instruct-awq': BaseAiTextGeneration;
+  '@cf/meta/llama-3.2-3b-instruct': BaseAiTextGeneration;
+  '@cf/meta/llama-3.2-1b-instruct': BaseAiTextGeneration;
+  '@cf/deepseek-ai/deepseek-r1-distill-qwen-32b': BaseAiTextGeneration;
+  '@cf/ibm-granite/granite-4.0-h-micro': BaseAiTextGeneration;
+  '@cf/facebook/bart-large-cnn': BaseAiSummarization;
+  '@cf/llava-hf/llava-1.5-7b-hf': BaseAiImageToText;
+  '@cf/baai/bge-base-en-v1.5': Base_Ai_Cf_Baai_Bge_Base_En_V1_5;
+  '@cf/openai/whisper': Base_Ai_Cf_Openai_Whisper;
+  '@cf/meta/m2m100-1.2b': Base_Ai_Cf_Meta_M2M100_1_2B;
+  '@cf/baai/bge-small-en-v1.5': Base_Ai_Cf_Baai_Bge_Small_En_V1_5;
+  '@cf/baai/bge-large-en-v1.5': Base_Ai_Cf_Baai_Bge_Large_En_V1_5;
+  '@cf/unum/uform-gen2-qwen-500m': Base_Ai_Cf_Unum_Uform_Gen2_Qwen_500M;
+  '@cf/openai/whisper-tiny-en': Base_Ai_Cf_Openai_Whisper_Tiny_En;
+  '@cf/openai/whisper-large-v3-turbo': Base_Ai_Cf_Openai_Whisper_Large_V3_Turbo;
+  '@cf/baai/bge-m3': Base_Ai_Cf_Baai_Bge_M3;
+  '@cf/black-forest-labs/flux-1-schnell': Base_Ai_Cf_Black_Forest_Labs_Flux_1_Schnell;
+  '@cf/meta/llama-3.2-11b-vision-instruct': Base_Ai_Cf_Meta_Llama_3_2_11B_Vision_Instruct;
+  '@cf/meta/llama-3.3-70b-instruct-fp8-fast': Base_Ai_Cf_Meta_Llama_3_3_70B_Instruct_Fp8_Fast;
+  '@cf/meta/llama-guard-3-8b': Base_Ai_Cf_Meta_Llama_Guard_3_8B;
+  '@cf/baai/bge-reranker-base': Base_Ai_Cf_Baai_Bge_Reranker_Base;
+  '@cf/qwen/qwen2.5-coder-32b-instruct': Base_Ai_Cf_Qwen_Qwen2_5_Coder_32B_Instruct;
+  '@cf/qwen/qwq-32b': Base_Ai_Cf_Qwen_Qwq_32B;
+  '@cf/mistralai/mistral-small-3.1-24b-instruct': Base_Ai_Cf_Mistralai_Mistral_Small_3_1_24B_Instruct;
+  '@cf/google/gemma-3-12b-it': Base_Ai_Cf_Google_Gemma_3_12B_It;
+  '@cf/meta/llama-4-scout-17b-16e-instruct': Base_Ai_Cf_Meta_Llama_4_Scout_17B_16E_Instruct;
+  '@cf/qwen/qwen3-30b-a3b-fp8': Base_Ai_Cf_Qwen_Qwen3_30B_A3B_Fp8;
+  '@cf/deepgram/nova-3': Base_Ai_Cf_Deepgram_Nova_3;
+  '@cf/qwen/qwen3-embedding-0.6b': Base_Ai_Cf_Qwen_Qwen3_Embedding_0_6B;
+  '@cf/pipecat-ai/smart-turn-v2': Base_Ai_Cf_Pipecat_Ai_Smart_Turn_V2;
+  '@cf/openai/gpt-oss-120b': Base_Ai_Cf_Openai_Gpt_Oss_120B;
+  '@cf/openai/gpt-oss-20b': Base_Ai_Cf_Openai_Gpt_Oss_20B;
+  '@cf/leonardo/phoenix-1.0': Base_Ai_Cf_Leonardo_Phoenix_1_0;
+  '@cf/leonardo/lucid-origin': Base_Ai_Cf_Leonardo_Lucid_Origin;
+  '@cf/deepgram/aura-1': Base_Ai_Cf_Deepgram_Aura_1;
+  '@cf/ai4bharat/indictrans2-en-indic-1B': Base_Ai_Cf_Ai4Bharat_Indictrans2_En_Indic_1B;
+  '@cf/aisingapore/gemma-sea-lion-v4-27b-it': Base_Ai_Cf_Aisingapore_Gemma_Sea_Lion_V4_27B_It;
+  '@cf/pfnet/plamo-embedding-1b': Base_Ai_Cf_Pfnet_Plamo_Embedding_1B;
+  '@cf/deepgram/flux': Base_Ai_Cf_Deepgram_Flux;
+  '@cf/deepgram/aura-2-en': Base_Ai_Cf_Deepgram_Aura_2_En;
+  '@cf/deepgram/aura-2-es': Base_Ai_Cf_Deepgram_Aura_2_Es;
+  '@cf/black-forest-labs/flux-2-dev': Base_Ai_Cf_Black_Forest_Labs_Flux_2_Dev;
+  '@cf/black-forest-labs/flux-2-klein-4b': Base_Ai_Cf_Black_Forest_Labs_Flux_2_Klein_4B;
+  '@cf/black-forest-labs/flux-2-klein-9b': Base_Ai_Cf_Black_Forest_Labs_Flux_2_Klein_9B;
+  '@cf/zai-org/glm-4.7-flash': Base_Ai_Cf_Zai_Org_Glm_4_7_Flash;
+  '@cf/moonshotai/kimi-k2.5': Base_Ai_Cf_Moonshotai_Kimi_K2_5;
+  '@cf/nvidia/nemotron-3-120b-a12b': Base_Ai_Cf_Nvidia_Nemotron_3_120B_A12B;
 }
 export type AiOptions = {
   /**
@@ -10193,11 +10182,11 @@ export declare abstract class Ai<
   run<
     Name extends keyof AiModelList,
     Options extends AiOptions,
-    InputOptions extends AiModelList[Name]["inputs"],
+    InputOptions extends AiModelList[Name]['inputs'],
   >(
     model: Name,
     inputs: InputOptions,
-    options?: Options,
+    options?: Options
   ): Promise<
     Options extends
       | {
@@ -10211,23 +10200,23 @@ export declare abstract class Ai<
             stream: true;
           }
         ? ReadableStream
-        : AiModelList[Name]["postProcessedOutputs"]
+        : AiModelList[Name]['postProcessedOutputs']
   >;
   models(params?: AiModelsSearchParams): Promise<AiModelsSearchObject[]>;
   toMarkdown(): ToMarkdownService;
   toMarkdown(
     files: MarkdownDocument[],
-    options?: ConversionRequestOptions,
+    options?: ConversionRequestOptions
   ): Promise<ConversionResponse[]>;
   toMarkdown(
     files: MarkdownDocument,
-    options?: ConversionRequestOptions,
+    options?: ConversionRequestOptions
   ): Promise<ConversionResponse>;
 }
 export type GatewayRetries = {
   maxAttempts?: 1 | 2 | 3 | 4 | 5;
   retryDelayMs?: number;
-  backoff?: "constant" | "linear" | "exponential";
+  backoff?: 'constant' | 'linear' | 'exponential';
 };
 export type GatewayOptions = {
   id: string;
@@ -10240,7 +10229,7 @@ export type GatewayOptions = {
   requestTimeoutMs?: number;
   retries?: GatewayRetries;
 };
-export type UniversalGatewayOptions = Exclude<GatewayOptions, "id"> & {
+export type UniversalGatewayOptions = Exclude<GatewayOptions, 'id'> & {
   /**
    ** @deprecated
    */
@@ -10279,31 +10268,31 @@ export type AiGatewayLog = {
   created_at: Date;
 };
 export type AIGatewayProviders =
-  | "workers-ai"
-  | "anthropic"
-  | "aws-bedrock"
-  | "azure-openai"
-  | "google-vertex-ai"
-  | "huggingface"
-  | "openai"
-  | "perplexity-ai"
-  | "replicate"
-  | "groq"
-  | "cohere"
-  | "google-ai-studio"
-  | "mistral"
-  | "grok"
-  | "openrouter"
-  | "deepseek"
-  | "cerebras"
-  | "cartesia"
-  | "elevenlabs"
-  | "adobe-firefly";
+  | 'workers-ai'
+  | 'anthropic'
+  | 'aws-bedrock'
+  | 'azure-openai'
+  | 'google-vertex-ai'
+  | 'huggingface'
+  | 'openai'
+  | 'perplexity-ai'
+  | 'replicate'
+  | 'groq'
+  | 'cohere'
+  | 'google-ai-studio'
+  | 'mistral'
+  | 'grok'
+  | 'openrouter'
+  | 'deepseek'
+  | 'cerebras'
+  | 'cartesia'
+  | 'elevenlabs'
+  | 'adobe-firefly';
 export type AIGatewayHeaders = {
-  "cf-aig-metadata":
+  'cf-aig-metadata':
     | Record<string, number | string | boolean | null | bigint>
     | string;
-  "cf-aig-custom-cost":
+  'cf-aig-custom-cost':
     | {
         per_token_in?: number;
         per_token_out?: number;
@@ -10312,17 +10301,17 @@ export type AIGatewayHeaders = {
         total_cost?: number;
       }
     | string;
-  "cf-aig-cache-ttl": number | string;
-  "cf-aig-skip-cache": boolean | string;
-  "cf-aig-cache-key": string;
-  "cf-aig-event-id": string;
-  "cf-aig-request-timeout": number | string;
-  "cf-aig-max-attempts": number | string;
-  "cf-aig-retry-delay": number | string;
-  "cf-aig-backoff": string;
-  "cf-aig-collect-log": boolean | string;
+  'cf-aig-cache-ttl': number | string;
+  'cf-aig-skip-cache': boolean | string;
+  'cf-aig-cache-key': string;
+  'cf-aig-event-id': string;
+  'cf-aig-request-timeout': number | string;
+  'cf-aig-max-attempts': number | string;
+  'cf-aig-retry-delay': number | string;
+  'cf-aig-backoff': string;
+  'cf-aig-collect-log': boolean | string;
   Authorization: string;
-  "Content-Type": string;
+  'Content-Type': string;
   [key: string]: string | number | boolean | object;
 };
 export type AIGatewayUniversalRequest = {
@@ -10341,7 +10330,7 @@ export declare abstract class AiGateway {
     options?: {
       gateway?: UniversalGatewayOptions;
       extraHeaders?: object;
-    },
+    }
   ): Promise<Response>;
   getUrl(provider?: AIGatewayProviders | string): Promise<string>; // eslint-disable-line
 }
@@ -10366,11 +10355,11 @@ export interface AutoRAGUnauthorizedError extends Error {}
 export interface AutoRAGNameNotSetError extends Error {}
 export type ComparisonFilter = {
   key: string;
-  type: "eq" | "ne" | "gt" | "gte" | "lt" | "lte";
+  type: 'eq' | 'ne' | 'gt' | 'gte' | 'lt' | 'lte';
   value: string | number | boolean;
 };
 export type CompoundFilter = {
-  type: "and" | "or";
+  type: 'and' | 'or';
   filters: ComparisonFilter[];
 };
 /**
@@ -10408,7 +10397,7 @@ export type AutoRagAiSearchRequest = AutoRagSearchRequest & {
  */
 export type AutoRagAiSearchRequestStreaming = Omit<
   AutoRagAiSearchRequest,
-  "stream"
+  'stream'
 > & {
   stream: true;
 };
@@ -10418,7 +10407,7 @@ export type AutoRagAiSearchRequestStreaming = Omit<
  * @see AiSearchSearchResponse
  */
 export type AutoRagSearchResponse = {
-  object: "vector_store.search_results.page";
+  object: 'vector_store.search_results.page';
   search_query: string;
   data: {
     file_id: string;
@@ -10426,7 +10415,7 @@ export type AutoRagSearchResponse = {
     score: number;
     attributes: Record<string, string | number | boolean | null>;
     content: {
-      type: "text";
+      type: 'text';
       text: string;
     }[];
   }[];
@@ -10493,7 +10482,7 @@ export declare abstract class AutoRAG {
    * @see AiSearchInstanceService.chatCompletions
    */
   aiSearch(
-    params: AutoRagAiSearchRequest,
+    params: AutoRagAiSearchRequest
   ): Promise<AutoRagAiSearchResponse | Response>;
 }
 export interface BasicImageTransformations {
@@ -10531,13 +10520,13 @@ export interface BasicImageTransformations {
    *  - squeeze: Stretches and deforms to the width and height given, even if it
    *    breaks aspect ratio
    */
-  fit?: "scale-down" | "contain" | "cover" | "crop" | "pad" | "squeeze";
+  fit?: 'scale-down' | 'contain' | 'cover' | 'crop' | 'pad' | 'squeeze';
   /**
    * Image segmentation using artificial intelligence models. Sets pixels not
    * within selected segment area to transparent e.g "foreground" sets every
    * background pixel as transparent.
    */
-  segment?: "foreground";
+  segment?: 'foreground';
   /**
    * When cropping with fit: "cover", this defines the side or point that should
    * be left uncropped. The value is either a string
@@ -10551,14 +10540,14 @@ export interface BasicImageTransformations {
    * source image.
    */
   gravity?:
-    | "face"
-    | "left"
-    | "right"
-    | "top"
-    | "bottom"
-    | "center"
-    | "auto"
-    | "entropy"
+    | 'face'
+    | 'left'
+    | 'right'
+    | 'top'
+    | 'bottom'
+    | 'center'
+    | 'auto'
+    | 'entropy'
     | BasicImageTransformationsGravityCoordinates;
   /**
    * Background color to add underneath the image. Applies only to images with
@@ -10575,7 +10564,7 @@ export interface BasicImageTransformations {
 export interface BasicImageTransformationsGravityCoordinates {
   x?: number;
   y?: number;
-  mode?: "remainder" | "box-center";
+  mode?: 'remainder' | 'box-center';
 }
 /**
  * In addition to the properties you can set in the RequestInit dict
@@ -10620,7 +10609,7 @@ export interface RequestInitCfProperties extends Record<string, unknown> {
   image?: RequestInitCfPropertiesImage;
   minify?: RequestInitCfPropertiesImageMinify;
   mirage?: boolean;
-  polish?: "lossy" | "lossless" | "off";
+  polish?: 'lossy' | 'lossless' | 'off';
   r2?: RequestInitCfPropertiesR2;
   /**
    * Redirects the request to an alternate origin server. You can use this,
@@ -10657,7 +10646,7 @@ export interface RequestInitCfPropertiesImageDraw extends BasicImageTransformati
    * - If set to "y", the overlay image will be tiled vertically only
    *   (form a line).
    */
-  repeat?: true | "x" | "y";
+  repeat?: true | 'x' | 'y';
   /**
    * Position of the overlay image relative to a given edge. Each property is
    * an offset in pixels. 0 aligns exactly to the edge. For example, left: 10
@@ -10696,7 +10685,7 @@ export interface RequestInitCfPropertiesImage extends BasicImageTransformations 
    *    - keep: the number of pixels of border to keep
    */
   trim?:
-    | "border"
+    | 'border'
     | {
         top?: number;
         bottom?: number;
@@ -10717,7 +10706,7 @@ export interface RequestInitCfPropertiesImage extends BasicImageTransformations 
    * make images look worse, but load faster. The default is 85. It applies only
    * to JPEG and WebP images. It doesn’t have any effect on PNG.
    */
-  quality?: number | "low" | "medium-low" | "medium-high" | "high";
+  quality?: number | 'low' | 'medium-low' | 'medium-high' | 'high';
   /**
    * Output format to generate. It can be:
    *  - avif: generate images in AVIF format.
@@ -10730,14 +10719,14 @@ export interface RequestInitCfPropertiesImage extends BasicImageTransformations 
    * - png: generate images in PNG format.
    */
   format?:
-    | "avif"
-    | "webp"
-    | "json"
-    | "jpeg"
-    | "png"
-    | "baseline-jpeg"
-    | "png-force"
-    | "svg";
+    | 'avif'
+    | 'webp'
+    | 'json'
+    | 'jpeg'
+    | 'png'
+    | 'baseline-jpeg'
+    | 'png-force'
+    | 'svg';
   /**
    * Whether to preserve animation frames from input files. Default is true.
    * Setting it to false reduces animations to still images. This setting is
@@ -10760,7 +10749,7 @@ export interface RequestInitCfPropertiesImage extends BasicImageTransformations 
    *  - none: Discard all invisible EXIF metadata. Currently WebP and PNG
    *    output formats always discard metadata.
    */
-  metadata?: "keep" | "copyright" | "none";
+  metadata?: 'keep' | 'copyright' | 'none';
   /**
    * Strength of sharpening filter to apply to the image. Floating-point
    * number between 0 (no sharpening, default) and 10 (maximum). 1.0 is a
@@ -10782,7 +10771,7 @@ export interface RequestInitCfPropertiesImage extends BasicImageTransformations 
    * pass authentication headers (Authorization, Cookie, etc.) through to
    * the origin.
    */
-  "origin-auth"?: "share-publicly";
+  'origin-auth'?: 'share-publicly';
   /**
    * Adds a border around the image. The border is added after resizing. Border
    * width takes dpr into account, and can be specified either using a single
@@ -10828,7 +10817,7 @@ export interface RequestInitCfPropertiesImage extends BasicImageTransformations 
    * rotation, so if you apply flip=h,rotate=90 then the image will be flipped
    * horizontally, then rotated by 90 degrees.
    */
-  flip?: "h" | "v" | "hv";
+  flip?: 'h' | 'v' | 'hv';
   /**
    * Slightly reduces latency on a cache miss by selecting a
    * quickest-to-compress file format, at a cost of increased file size and
@@ -10837,7 +10826,7 @@ export interface RequestInitCfPropertiesImage extends BasicImageTransformations 
    * unusual circumstances like resizing uncacheable dynamically-generated
    * images.
    */
-  compression?: "fast";
+  compression?: 'fast';
 }
 export interface RequestInitCfPropertiesImageMinify {
   javascript?: boolean;
@@ -11065,13 +11054,13 @@ export interface IncomingRequestCfPropertiesGeographicInformation {
    *
    * @example "GB"
    */
-  country?: Iso3166Alpha2Code | "T1";
+  country?: Iso3166Alpha2Code | 'T1';
   /**
    * If present, this property indicates that the request originated in the EU
    *
    * @example "1"
    */
-  isEUCountry?: "1";
+  isEUCountry?: '1';
   /**
    * A two-letter code indicating the continent the request originated from.
    *
@@ -11132,19 +11121,19 @@ export interface IncomingRequestCfPropertiesGeographicInformation {
 /** Data about the incoming request's TLS certificate */
 export interface IncomingRequestCfPropertiesTLSClientAuth {
   /** Always `"1"`, indicating that the certificate was presented */
-  certPresented: "1";
+  certPresented: '1';
   /**
    * Result of certificate verification.
    *
    * @example "FAILED:self signed certificate"
    */
-  certVerified: Exclude<CertVerificationStatus, "NONE">;
+  certVerified: Exclude<CertVerificationStatus, 'NONE'>;
   /** The presented certificate's revokation status.
    *
    * - A value of `"1"` indicates the certificate has been revoked
    * - A value of `"0"` indicates the certificate has not been revoked
    */
-  certRevoked: "1" | "0";
+  certRevoked: '1' | '0';
   /**
    * The certificate issuer's [distinguished name](https://knowledge.digicert.com/generalinformation/INFO1745.html)
    *
@@ -11224,40 +11213,40 @@ export interface IncomingRequestCfPropertiesTLSClientAuth {
 }
 /** Placeholder values for TLS Client Authorization */
 export interface IncomingRequestCfPropertiesTLSClientAuthPlaceholder {
-  certPresented: "0";
-  certVerified: "NONE";
-  certRevoked: "0";
-  certIssuerDN: "";
-  certSubjectDN: "";
-  certIssuerDNRFC2253: "";
-  certSubjectDNRFC2253: "";
-  certIssuerDNLegacy: "";
-  certSubjectDNLegacy: "";
-  certSerial: "";
-  certIssuerSerial: "";
-  certSKI: "";
-  certIssuerSKI: "";
-  certFingerprintSHA1: "";
-  certFingerprintSHA256: "";
-  certNotBefore: "";
-  certNotAfter: "";
+  certPresented: '0';
+  certVerified: 'NONE';
+  certRevoked: '0';
+  certIssuerDN: '';
+  certSubjectDN: '';
+  certIssuerDNRFC2253: '';
+  certSubjectDNRFC2253: '';
+  certIssuerDNLegacy: '';
+  certSubjectDNLegacy: '';
+  certSerial: '';
+  certIssuerSerial: '';
+  certSKI: '';
+  certIssuerSKI: '';
+  certFingerprintSHA1: '';
+  certFingerprintSHA256: '';
+  certNotBefore: '';
+  certNotAfter: '';
 }
 /** Possible outcomes of TLS verification */
 export declare type CertVerificationStatus =
   /** Authentication succeeded */
-  | "SUCCESS"
+  | 'SUCCESS'
   /** No certificate was presented */
-  | "NONE"
+  | 'NONE'
   /** Failed because the certificate was self-signed */
-  | "FAILED:self signed certificate"
+  | 'FAILED:self signed certificate'
   /** Failed because the certificate failed a trust chain check */
-  | "FAILED:unable to verify the first certificate"
+  | 'FAILED:unable to verify the first certificate'
   /** Failed because the certificate not yet valid */
-  | "FAILED:certificate is not yet valid"
+  | 'FAILED:certificate is not yet valid'
   /** Failed because the certificate is expired */
-  | "FAILED:certificate has expired"
+  | 'FAILED:certificate has expired'
   /** Failed for another unspecified reason */
-  | "FAILED";
+  | 'FAILED';
 /**
  * An upstream endpoint's response to a TCP `keepalive` message from Cloudflare.
  */
@@ -11270,264 +11259,264 @@ export declare type IncomingRequestCfPropertiesEdgeRequestKeepAliveStatus =
   | 5; /** connection re-use, accepted by the origin server */
 /** ISO 3166-1 Alpha-2 codes */
 export declare type Iso3166Alpha2Code =
-  | "AD"
-  | "AE"
-  | "AF"
-  | "AG"
-  | "AI"
-  | "AL"
-  | "AM"
-  | "AO"
-  | "AQ"
-  | "AR"
-  | "AS"
-  | "AT"
-  | "AU"
-  | "AW"
-  | "AX"
-  | "AZ"
-  | "BA"
-  | "BB"
-  | "BD"
-  | "BE"
-  | "BF"
-  | "BG"
-  | "BH"
-  | "BI"
-  | "BJ"
-  | "BL"
-  | "BM"
-  | "BN"
-  | "BO"
-  | "BQ"
-  | "BR"
-  | "BS"
-  | "BT"
-  | "BV"
-  | "BW"
-  | "BY"
-  | "BZ"
-  | "CA"
-  | "CC"
-  | "CD"
-  | "CF"
-  | "CG"
-  | "CH"
-  | "CI"
-  | "CK"
-  | "CL"
-  | "CM"
-  | "CN"
-  | "CO"
-  | "CR"
-  | "CU"
-  | "CV"
-  | "CW"
-  | "CX"
-  | "CY"
-  | "CZ"
-  | "DE"
-  | "DJ"
-  | "DK"
-  | "DM"
-  | "DO"
-  | "DZ"
-  | "EC"
-  | "EE"
-  | "EG"
-  | "EH"
-  | "ER"
-  | "ES"
-  | "ET"
-  | "FI"
-  | "FJ"
-  | "FK"
-  | "FM"
-  | "FO"
-  | "FR"
-  | "GA"
-  | "GB"
-  | "GD"
-  | "GE"
-  | "GF"
-  | "GG"
-  | "GH"
-  | "GI"
-  | "GL"
-  | "GM"
-  | "GN"
-  | "GP"
-  | "GQ"
-  | "GR"
-  | "GS"
-  | "GT"
-  | "GU"
-  | "GW"
-  | "GY"
-  | "HK"
-  | "HM"
-  | "HN"
-  | "HR"
-  | "HT"
-  | "HU"
-  | "ID"
-  | "IE"
-  | "IL"
-  | "IM"
-  | "IN"
-  | "IO"
-  | "IQ"
-  | "IR"
-  | "IS"
-  | "IT"
-  | "JE"
-  | "JM"
-  | "JO"
-  | "JP"
-  | "KE"
-  | "KG"
-  | "KH"
-  | "KI"
-  | "KM"
-  | "KN"
-  | "KP"
-  | "KR"
-  | "KW"
-  | "KY"
-  | "KZ"
-  | "LA"
-  | "LB"
-  | "LC"
-  | "LI"
-  | "LK"
-  | "LR"
-  | "LS"
-  | "LT"
-  | "LU"
-  | "LV"
-  | "LY"
-  | "MA"
-  | "MC"
-  | "MD"
-  | "ME"
-  | "MF"
-  | "MG"
-  | "MH"
-  | "MK"
-  | "ML"
-  | "MM"
-  | "MN"
-  | "MO"
-  | "MP"
-  | "MQ"
-  | "MR"
-  | "MS"
-  | "MT"
-  | "MU"
-  | "MV"
-  | "MW"
-  | "MX"
-  | "MY"
-  | "MZ"
-  | "NA"
-  | "NC"
-  | "NE"
-  | "NF"
-  | "NG"
-  | "NI"
-  | "NL"
-  | "NO"
-  | "NP"
-  | "NR"
-  | "NU"
-  | "NZ"
-  | "OM"
-  | "PA"
-  | "PE"
-  | "PF"
-  | "PG"
-  | "PH"
-  | "PK"
-  | "PL"
-  | "PM"
-  | "PN"
-  | "PR"
-  | "PS"
-  | "PT"
-  | "PW"
-  | "PY"
-  | "QA"
-  | "RE"
-  | "RO"
-  | "RS"
-  | "RU"
-  | "RW"
-  | "SA"
-  | "SB"
-  | "SC"
-  | "SD"
-  | "SE"
-  | "SG"
-  | "SH"
-  | "SI"
-  | "SJ"
-  | "SK"
-  | "SL"
-  | "SM"
-  | "SN"
-  | "SO"
-  | "SR"
-  | "SS"
-  | "ST"
-  | "SV"
-  | "SX"
-  | "SY"
-  | "SZ"
-  | "TC"
-  | "TD"
-  | "TF"
-  | "TG"
-  | "TH"
-  | "TJ"
-  | "TK"
-  | "TL"
-  | "TM"
-  | "TN"
-  | "TO"
-  | "TR"
-  | "TT"
-  | "TV"
-  | "TW"
-  | "TZ"
-  | "UA"
-  | "UG"
-  | "UM"
-  | "US"
-  | "UY"
-  | "UZ"
-  | "VA"
-  | "VC"
-  | "VE"
-  | "VG"
-  | "VI"
-  | "VN"
-  | "VU"
-  | "WF"
-  | "WS"
-  | "YE"
-  | "YT"
-  | "ZA"
-  | "ZM"
-  | "ZW";
+  | 'AD'
+  | 'AE'
+  | 'AF'
+  | 'AG'
+  | 'AI'
+  | 'AL'
+  | 'AM'
+  | 'AO'
+  | 'AQ'
+  | 'AR'
+  | 'AS'
+  | 'AT'
+  | 'AU'
+  | 'AW'
+  | 'AX'
+  | 'AZ'
+  | 'BA'
+  | 'BB'
+  | 'BD'
+  | 'BE'
+  | 'BF'
+  | 'BG'
+  | 'BH'
+  | 'BI'
+  | 'BJ'
+  | 'BL'
+  | 'BM'
+  | 'BN'
+  | 'BO'
+  | 'BQ'
+  | 'BR'
+  | 'BS'
+  | 'BT'
+  | 'BV'
+  | 'BW'
+  | 'BY'
+  | 'BZ'
+  | 'CA'
+  | 'CC'
+  | 'CD'
+  | 'CF'
+  | 'CG'
+  | 'CH'
+  | 'CI'
+  | 'CK'
+  | 'CL'
+  | 'CM'
+  | 'CN'
+  | 'CO'
+  | 'CR'
+  | 'CU'
+  | 'CV'
+  | 'CW'
+  | 'CX'
+  | 'CY'
+  | 'CZ'
+  | 'DE'
+  | 'DJ'
+  | 'DK'
+  | 'DM'
+  | 'DO'
+  | 'DZ'
+  | 'EC'
+  | 'EE'
+  | 'EG'
+  | 'EH'
+  | 'ER'
+  | 'ES'
+  | 'ET'
+  | 'FI'
+  | 'FJ'
+  | 'FK'
+  | 'FM'
+  | 'FO'
+  | 'FR'
+  | 'GA'
+  | 'GB'
+  | 'GD'
+  | 'GE'
+  | 'GF'
+  | 'GG'
+  | 'GH'
+  | 'GI'
+  | 'GL'
+  | 'GM'
+  | 'GN'
+  | 'GP'
+  | 'GQ'
+  | 'GR'
+  | 'GS'
+  | 'GT'
+  | 'GU'
+  | 'GW'
+  | 'GY'
+  | 'HK'
+  | 'HM'
+  | 'HN'
+  | 'HR'
+  | 'HT'
+  | 'HU'
+  | 'ID'
+  | 'IE'
+  | 'IL'
+  | 'IM'
+  | 'IN'
+  | 'IO'
+  | 'IQ'
+  | 'IR'
+  | 'IS'
+  | 'IT'
+  | 'JE'
+  | 'JM'
+  | 'JO'
+  | 'JP'
+  | 'KE'
+  | 'KG'
+  | 'KH'
+  | 'KI'
+  | 'KM'
+  | 'KN'
+  | 'KP'
+  | 'KR'
+  | 'KW'
+  | 'KY'
+  | 'KZ'
+  | 'LA'
+  | 'LB'
+  | 'LC'
+  | 'LI'
+  | 'LK'
+  | 'LR'
+  | 'LS'
+  | 'LT'
+  | 'LU'
+  | 'LV'
+  | 'LY'
+  | 'MA'
+  | 'MC'
+  | 'MD'
+  | 'ME'
+  | 'MF'
+  | 'MG'
+  | 'MH'
+  | 'MK'
+  | 'ML'
+  | 'MM'
+  | 'MN'
+  | 'MO'
+  | 'MP'
+  | 'MQ'
+  | 'MR'
+  | 'MS'
+  | 'MT'
+  | 'MU'
+  | 'MV'
+  | 'MW'
+  | 'MX'
+  | 'MY'
+  | 'MZ'
+  | 'NA'
+  | 'NC'
+  | 'NE'
+  | 'NF'
+  | 'NG'
+  | 'NI'
+  | 'NL'
+  | 'NO'
+  | 'NP'
+  | 'NR'
+  | 'NU'
+  | 'NZ'
+  | 'OM'
+  | 'PA'
+  | 'PE'
+  | 'PF'
+  | 'PG'
+  | 'PH'
+  | 'PK'
+  | 'PL'
+  | 'PM'
+  | 'PN'
+  | 'PR'
+  | 'PS'
+  | 'PT'
+  | 'PW'
+  | 'PY'
+  | 'QA'
+  | 'RE'
+  | 'RO'
+  | 'RS'
+  | 'RU'
+  | 'RW'
+  | 'SA'
+  | 'SB'
+  | 'SC'
+  | 'SD'
+  | 'SE'
+  | 'SG'
+  | 'SH'
+  | 'SI'
+  | 'SJ'
+  | 'SK'
+  | 'SL'
+  | 'SM'
+  | 'SN'
+  | 'SO'
+  | 'SR'
+  | 'SS'
+  | 'ST'
+  | 'SV'
+  | 'SX'
+  | 'SY'
+  | 'SZ'
+  | 'TC'
+  | 'TD'
+  | 'TF'
+  | 'TG'
+  | 'TH'
+  | 'TJ'
+  | 'TK'
+  | 'TL'
+  | 'TM'
+  | 'TN'
+  | 'TO'
+  | 'TR'
+  | 'TT'
+  | 'TV'
+  | 'TW'
+  | 'TZ'
+  | 'UA'
+  | 'UG'
+  | 'UM'
+  | 'US'
+  | 'UY'
+  | 'UZ'
+  | 'VA'
+  | 'VC'
+  | 'VE'
+  | 'VG'
+  | 'VI'
+  | 'VN'
+  | 'VU'
+  | 'WF'
+  | 'WS'
+  | 'YE'
+  | 'YT'
+  | 'ZA'
+  | 'ZM'
+  | 'ZW';
 /** The 2-letter continent codes Cloudflare uses */
 export declare type ContinentCode =
-  | "AF"
-  | "AN"
-  | "AS"
-  | "EU"
-  | "NA"
-  | "OC"
-  | "SA";
+  | 'AF'
+  | 'AN'
+  | 'AS'
+  | 'EU'
+  | 'NA'
+  | 'OC'
+  | 'SA';
 export type CfProperties<HostMetadata = unknown> =
   | IncomingRequestCfProperties<HostMetadata>
   | RequestInitCfProperties;
@@ -11579,11 +11568,11 @@ export type D1SessionConstraint =
   // Indicates that the first query should go to the primary, and the rest queries
   // using the same D1DatabaseSession will go to any replica that is consistent with
   // the bookmark maintained by the session (returned by the first query).
-  | "first-primary"
+  | 'first-primary'
   // Indicates that the first query can go anywhere (primary or replica), and the rest queries
   // using the same D1DatabaseSession will go to any replica that is consistent with
   // the bookmark maintained by the session (returned by the first query).
-  | "first-unconstrained";
+  | 'first-unconstrained';
 export type D1SessionBookmark = string;
 export declare abstract class D1Database {
   prepare(query: string): D1PreparedStatement;
@@ -11597,7 +11586,7 @@ export declare abstract class D1Database {
    * @param constraintOrBookmark Either the session constraint or the explicit bookmark to anchor the created session.
    */
   withSession(
-    constraintOrBookmark?: D1SessionBookmark | D1SessionConstraint,
+    constraintOrBookmark?: D1SessionBookmark | D1SessionConstraint
   ): D1DatabaseSession;
   /**
    * @deprecated dump() will be removed soon, only applies to deprecated alpha v1 databases.
@@ -11692,14 +11681,14 @@ export interface ForwardableEmailMessage extends EmailMessage {
 /** A file attachment for an email message */
 export type EmailAttachment =
   | {
-      disposition: "inline";
+      disposition: 'inline';
       contentId: string;
       filename: string;
       type: string;
       content: string | ArrayBuffer | ArrayBufferView;
     }
   | {
-      disposition: "attachment";
+      disposition: 'attachment';
       contentId?: undefined;
       filename: string;
       type: string;
@@ -11734,7 +11723,7 @@ export declare abstract class EmailEvent extends ExtendableEvent {
 export declare type EmailExportedHandler<Env = unknown, Props = unknown> = (
   message: ForwardableEmailMessage,
   env: Env,
-  ctx: ExecutionContext<Props>,
+  ctx: ExecutionContext<Props>
 ) => void | Promise<void>;
 /**
  * Hello World binding to serve as an explanatory example. DO NOT USE
@@ -11804,7 +11793,7 @@ export interface Hyperdrive {
 //     https://opensource.org/licenses/Apache-2.0
 export type ImageInfoResponse =
   | {
-      format: "image/svg+xml";
+      format: 'image/svg+xml';
     }
   | {
       format: string;
@@ -11830,29 +11819,29 @@ export type ImageTransform = {
       };
   brightness?: number;
   contrast?: number;
-  fit?: "scale-down" | "contain" | "pad" | "squeeze" | "cover" | "crop";
-  flip?: "h" | "v" | "hv";
+  fit?: 'scale-down' | 'contain' | 'pad' | 'squeeze' | 'cover' | 'crop';
+  flip?: 'h' | 'v' | 'hv';
   gamma?: number;
-  segment?: "foreground";
+  segment?: 'foreground';
   gravity?:
-    | "face"
-    | "left"
-    | "right"
-    | "top"
-    | "bottom"
-    | "center"
-    | "auto"
-    | "entropy"
+    | 'face'
+    | 'left'
+    | 'right'
+    | 'top'
+    | 'bottom'
+    | 'center'
+    | 'auto'
+    | 'entropy'
     | {
         x?: number;
         y?: number;
-        mode: "remainder" | "box-center";
+        mode: 'remainder' | 'box-center';
       };
   rotate?: 0 | 90 | 180 | 270;
   saturation?: number;
   sharpen?: number;
   trim?:
-    | "border"
+    | 'border'
     | {
         top?: number;
         bottom?: number;
@@ -11878,17 +11867,17 @@ export type ImageDrawOptions = {
   right?: number;
 };
 export type ImageInputOptions = {
-  encoding?: "base64";
+  encoding?: 'base64';
 };
 export type ImageOutputOptions = {
   format:
-    | "image/jpeg"
-    | "image/png"
-    | "image/gif"
-    | "image/webp"
-    | "image/avif"
-    | "rgb"
-    | "rgba";
+    | 'image/jpeg'
+    | 'image/png'
+    | 'image/gif'
+    | 'image/webp'
+    | 'image/avif'
+    | 'rgb'
+    | 'rgba';
   quality?: number;
   background?: string;
   anim?: boolean;
@@ -11909,7 +11898,7 @@ export interface ImageUploadOptions {
   requireSignedURLs?: boolean;
   metadata?: Record<string, unknown>;
   creator?: string;
-  encoding?: "base64";
+  encoding?: 'base64';
 }
 export interface ImageUpdateOptions {
   requireSignedURLs?: boolean;
@@ -11919,7 +11908,7 @@ export interface ImageUpdateOptions {
 export interface ImageListOptions {
   limit?: number;
   cursor?: string;
-  sortOrder?: "asc" | "desc";
+  sortOrder?: 'asc' | 'desc';
   creator?: string;
 }
 export interface ImageList {
@@ -11949,7 +11938,7 @@ export interface HostedImagesBinding {
    */
   upload(
     image: ReadableStream<Uint8Array> | ArrayBuffer,
-    options?: ImageUploadOptions,
+    options?: ImageUploadOptions
   ): Promise<ImageMetadata>;
   /**
    * Update hosted image metadata
@@ -11981,7 +11970,7 @@ export interface ImagesBinding {
    */
   info(
     stream: ReadableStream<Uint8Array>,
-    options?: ImageInputOptions,
+    options?: ImageInputOptions
   ): Promise<ImageInfoResponse>;
   /**
    * Begin applying a series of transformations to an image
@@ -11990,7 +11979,7 @@ export interface ImagesBinding {
    */
   input(
     stream: ReadableStream<Uint8Array>,
-    options?: ImageInputOptions,
+    options?: ImageInputOptions
   ): ImageTransformer;
   /**
    * Access hosted images CRUD operations
@@ -12012,7 +12001,7 @@ export interface ImageTransformer {
    */
   draw(
     image: ReadableStream<Uint8Array> | ImageTransformer,
-    options?: ImageDrawOptions,
+    options?: ImageDrawOptions
   ): ImageTransformer;
   /**
    * Retrieve the image that results from applying the transforms to the
@@ -12022,7 +12011,7 @@ export interface ImageTransformer {
   output(options: ImageOutputOptions): Promise<ImageTransformationResult>;
 }
 export type ImageTransformationOutputOptions = {
-  encoding?: "base64";
+  encoding?: 'base64';
 };
 export interface ImageTransformationResult {
   /**
@@ -12066,7 +12055,7 @@ export interface MediaTransformer {
    * @returns A generator for producing the transformed media output
    */
   transform(
-    transform?: MediaTransformationInputOptions,
+    transform?: MediaTransformationInputOptions
   ): MediaTransformationGenerator;
   /**
    * Generates the final media output with specified options.
@@ -12114,7 +12103,7 @@ export interface MediaTransformationResult {
  */
 export type MediaTransformationInputOptions = {
   /** How the media should be resized to fit the specified dimensions */
-  fit?: "contain" | "cover" | "scale-down";
+  fit?: 'contain' | 'cover' | 'scale-down';
   /** Target width in pixels */
   width?: number;
   /** Target height in pixels */
@@ -12128,7 +12117,7 @@ export type MediaTransformationOutputOptions = {
   /**
    * Output mode determining the type of media to generate
    */
-  mode?: "video" | "spritesheet" | "frame" | "audio";
+  mode?: 'video' | 'spritesheet' | 'frame' | 'audio';
   /** Whether to include audio in the output */
   audio?: boolean;
   /**
@@ -12146,7 +12135,7 @@ export type MediaTransformationOutputOptions = {
   /**
    * Output format for the generated media.
    */
-  format?: "jpg" | "png" | "m4a";
+  format?: 'jpg' | 'png' | 'm4a';
 };
 /**
  * Error object for media transformation operations.
@@ -12198,7 +12187,7 @@ export type PagesPluginFunction<
   Data extends Record<string, unknown> = Record<string, unknown>,
   PluginArgs = unknown,
 > = (
-  context: EventPluginContext<Env, Params, Data, PluginArgs>,
+  context: EventPluginContext<Env, Params, Data, PluginArgs>
 ) => Response | Promise<Response>;
 // PubSubMessage represents an incoming PubSub message.
 // The message includes metadata about the broker, the client, and the payload
@@ -12256,11 +12245,11 @@ export declare namespace Rpc {
   // TypeScript uses *structural* typing meaning anything with the same shape as type `T` is a `T`.
   // For the classes exported by `cloudflare:workers` we want *nominal* typing (i.e. we only want to
   // accept `WorkerEntrypoint` from `cloudflare:workers`, not any other class with the same shape)
-  export const __RPC_STUB_BRAND: "__RPC_STUB_BRAND";
-  export const __RPC_TARGET_BRAND: "__RPC_TARGET_BRAND";
-  export const __WORKER_ENTRYPOINT_BRAND: "__WORKER_ENTRYPOINT_BRAND";
-  export const __DURABLE_OBJECT_BRAND: "__DURABLE_OBJECT_BRAND";
-  export const __WORKFLOW_ENTRYPOINT_BRAND: "__WORKFLOW_ENTRYPOINT_BRAND";
+  export const __RPC_STUB_BRAND: '__RPC_STUB_BRAND';
+  export const __RPC_TARGET_BRAND: '__RPC_TARGET_BRAND';
+  export const __WORKER_ENTRYPOINT_BRAND: '__WORKER_ENTRYPOINT_BRAND';
+  export const __DURABLE_OBJECT_BRAND: '__DURABLE_OBJECT_BRAND';
+  export const __WORKFLOW_ENTRYPOINT_BRAND: '__WORKFLOW_ENTRYPOINT_BRAND';
   export interface RpcTargetBranded {
     [__RPC_TARGET_BRAND]: never;
   }
@@ -12450,13 +12439,13 @@ export declare namespace Cloudflare {
     : Default;
   // The type of the program's main module exports, if known. Requires `GlobalProps` to declare the
   // `mainModule` property.
-  type MainModule = GlobalProp<"mainModule", {}>;
+  type MainModule = GlobalProp<'mainModule', {}>;
   // The type of ctx.exports, which contains loopback bindings for all top-level exports.
   type Exports = {
     [K in keyof MainModule]: LoopbackForExport<MainModule[K]> &
       // If the export is listed in `durableNamespaces`, then it is also a
       // DurableObjectNamespace.
-      (K extends GlobalProp<"durableNamespaces", never>
+      (K extends GlobalProp<'durableNamespaces', never>
         ? MainModule[K] extends new (...args: any[]) => infer DoInstance
           ? DoInstance extends Rpc.DurableObjectBranded
             ? DurableObjectNamespace<DoInstance>
@@ -12487,7 +12476,7 @@ export declare namespace CloudflareWorkersModule {
     scheduled?(controller: ScheduledController): void | Promise<void>;
     tail?(events: TraceItem[]): void | Promise<void>;
     tailStream?(
-      event: TailStream.TailEvent<TailStream.Onset>,
+      event: TailStream.TailEvent<TailStream.Onset>
     ):
       | TailStream.TailEventHandlerType
       | Promise<TailStream.TailEventHandlerType>;
@@ -12505,31 +12494,31 @@ export declare namespace CloudflareWorkersModule {
     fetch?(request: Request): Response | Promise<Response>;
     webSocketMessage?(
       ws: WebSocket,
-      message: string | ArrayBuffer,
+      message: string | ArrayBuffer
     ): void | Promise<void>;
     webSocketClose?(
       ws: WebSocket,
       code: number,
       reason: string,
-      wasClean: boolean,
+      wasClean: boolean
     ): void | Promise<void>;
     webSocketError?(ws: WebSocket, error: unknown): void | Promise<void>;
   }
   export type WorkflowDurationLabel =
-    | "second"
-    | "minute"
-    | "hour"
-    | "day"
-    | "week"
-    | "month"
-    | "year";
+    | 'second'
+    | 'minute'
+    | 'hour'
+    | 'day'
+    | 'week'
+    | 'month'
+    | 'year';
   export type WorkflowSleepDuration =
-    | `${number} ${WorkflowDurationLabel}${"s" | ""}`
+    | `${number} ${WorkflowDurationLabel}${'s' | ''}`
     | number;
   export type WorkflowDelayDuration = WorkflowSleepDuration;
   export type WorkflowTimeoutDuration = WorkflowSleepDuration;
   export type WorkflowRetentionDuration = WorkflowSleepDuration;
-  export type WorkflowBackoff = "constant" | "linear" | "exponential";
+  export type WorkflowBackoff = 'constant' | 'linear' | 'exponential';
   export type WorkflowStepConfig = {
     retries?: {
       limit: number;
@@ -12554,12 +12543,12 @@ export declare namespace CloudflareWorkersModule {
   export abstract class WorkflowStep {
     do<T extends Rpc.Serializable<T>>(
       name: string,
-      callback: (ctx: WorkflowStepContext) => Promise<T>,
+      callback: (ctx: WorkflowStepContext) => Promise<T>
     ): Promise<T>;
     do<T extends Rpc.Serializable<T>>(
       name: string,
       config: WorkflowStepConfig,
-      callback: (ctx: WorkflowStepContext) => Promise<T>,
+      callback: (ctx: WorkflowStepContext) => Promise<T>
     ): Promise<T>;
     sleep: (name: string, duration: WorkflowSleepDuration) => Promise<void>;
     sleepUntil: (name: string, timestamp: Date | number) => Promise<void>;
@@ -12568,19 +12557,19 @@ export declare namespace CloudflareWorkersModule {
       options: {
         type: string;
         timeout?: WorkflowTimeoutDuration | number;
-      },
+      }
     ): Promise<WorkflowStepEvent<T>>;
   }
   export type WorkflowInstanceStatus =
-    | "queued"
-    | "running"
-    | "paused"
-    | "errored"
-    | "terminated"
-    | "complete"
-    | "waiting"
-    | "waitingForPause"
-    | "unknown";
+    | 'queued'
+    | 'running'
+    | 'paused'
+    | 'errored'
+    | 'terminated'
+    | 'complete'
+    | 'waiting'
+    | 'waitingForPause'
+    | 'unknown';
   export abstract class WorkflowEntrypoint<
     Env = unknown,
     T extends Rpc.Serializable<T> | unknown = unknown,
@@ -12593,7 +12582,7 @@ export declare namespace CloudflareWorkersModule {
     constructor(ctx: ExecutionContext, env: Env);
     run(
       event: Readonly<WorkflowEvent<T>>,
-      step: WorkflowStep,
+      step: WorkflowStep
     ): Promise<unknown>;
   }
   export function waitUntil(promise: Promise<unknown>): void;
@@ -12602,7 +12591,7 @@ export declare namespace CloudflareWorkersModule {
   export function withEnvAndExports(
     newEnv: unknown,
     newExports: unknown,
-    fn: () => unknown,
+    fn: () => unknown
   ): unknown;
   export const env: Cloudflare.Env;
   export const exports: Cloudflare.Exports;
@@ -12665,7 +12654,7 @@ export interface StreamBinding {
    * @throws {InternalError} if an unexpected error occurs
    */
   createDirectUpload(
-    params: StreamDirectUploadCreateParams,
+    params: StreamDirectUploadCreateParams
   ): Promise<StreamDirectUpload>;
   videos: StreamVideos;
   watermarks: StreamWatermarks;
@@ -13031,7 +13020,7 @@ export interface StreamScopedDownloads {
    * @throws {InternalError} if an unexpected error occurs
    */
   generate(
-    downloadType?: StreamDownloadType,
+    downloadType?: StreamDownloadType
   ): Promise<StreamDownloadGetResponse>;
   /**
    * Lists the downloads created for a video.
@@ -13073,7 +13062,7 @@ export interface StreamWatermarks {
    */
   generate(
     file: File,
-    params: StreamWatermarkCreateParams,
+    params: StreamWatermarkCreateParams
   ): Promise<StreamWatermark>;
   /**
    * Generate a new watermark profile
@@ -13088,7 +13077,7 @@ export interface StreamWatermarks {
    */
   generate(
     url: string,
-    params: StreamWatermarkCreateParams,
+    params: StreamWatermarkCreateParams
   ): Promise<StreamWatermark>;
   /**
    * Lists all watermark profiles for an account.
@@ -13174,10 +13163,10 @@ export type StreamCaption = {
   /**
    * The status of a generated caption.
    */
-  status?: "ready" | "inprogress" | "error";
+  status?: 'ready' | 'inprogress' | 'error';
 };
-export type StreamDownloadStatus = "ready" | "inprogress" | "error";
-export type StreamDownloadType = "default" | "audio";
+export type StreamDownloadStatus = 'ready' | 'inprogress' | 'error';
+export type StreamDownloadType = 'default' | 'audio';
 export type StreamDownload = {
   /**
    * Indicates the progress as a percentage between 0 and 100.
@@ -13207,11 +13196,11 @@ export type StreamDownloadGetResponse = {
   default?: StreamDownload;
 };
 export type StreamWatermarkPosition =
-  | "upperRight"
-  | "upperLeft"
-  | "lowerLeft"
-  | "lowerRight"
-  | "center";
+  | 'upperRight'
+  | 'upperLeft'
+  | 'lowerLeft'
+  | 'lowerRight'
+  | 'center';
 export type StreamWatermark = {
   /**
    * The unique identifier for a watermark profile.
@@ -13324,7 +13313,7 @@ export type StreamVideosListParams = {
    */
   afterComp?: StreamPaginationComparison;
 };
-export type StreamPaginationComparison = "eq" | "gt" | "gte" | "lt" | "lte";
+export type StreamPaginationComparison = 'eq' | 'gt' | 'gte' | 'lt' | 'lte';
 /**
  * Error object for Stream binding operations.
  */
@@ -13335,34 +13324,34 @@ export interface StreamError extends Error {
   readonly stack?: string;
 }
 export interface InternalError extends StreamError {
-  name: "InternalError";
+  name: 'InternalError';
 }
 export interface BadRequestError extends StreamError {
-  name: "BadRequestError";
+  name: 'BadRequestError';
 }
 export interface NotFoundError extends StreamError {
-  name: "NotFoundError";
+  name: 'NotFoundError';
 }
 export interface ForbiddenError extends StreamError {
-  name: "ForbiddenError";
+  name: 'ForbiddenError';
 }
 export interface RateLimitedError extends StreamError {
-  name: "RateLimitedError";
+  name: 'RateLimitedError';
 }
 export interface QuotaReachedError extends StreamError {
-  name: "QuotaReachedError";
+  name: 'QuotaReachedError';
 }
 export interface MaxFileSizeError extends StreamError {
-  name: "MaxFileSizeError";
+  name: 'MaxFileSizeError';
 }
 export interface InvalidURLError extends StreamError {
-  name: "InvalidURLError";
+  name: 'InvalidURLError';
 }
 export interface AlreadyUploadedError extends StreamError {
-  name: "AlreadyUploadedError";
+  name: 'AlreadyUploadedError';
 }
 export interface TooManyWatermarksError extends StreamError {
-  name: "TooManyWatermarksError";
+  name: 'TooManyWatermarksError';
 }
 export type MarkdownDocument = {
   name: string;
@@ -13373,7 +13362,7 @@ export type ConversionResponse =
       id: string;
       name: string;
       mimeType: string;
-      format: "markdown";
+      format: 'markdown';
       tokens: number;
       data: string;
     }
@@ -13381,11 +13370,11 @@ export type ConversionResponse =
       id: string;
       name: string;
       mimeType: string;
-      format: "error";
+      format: 'error';
       error: string;
     };
 export type ImageConversionOptions = {
-  descriptionLanguage?: "en" | "es" | "fr" | "it" | "pt" | "de";
+  descriptionLanguage?: 'en' | 'es' | 'fr' | 'it' | 'pt' | 'de';
 };
 export type EmbeddedImageConversionOptions = ImageConversionOptions & {
   convert?: boolean;
@@ -13420,11 +13409,11 @@ export type SupportedFileFormat = {
 export declare abstract class ToMarkdownService {
   transform(
     files: MarkdownDocument[],
-    options?: ConversionRequestOptions,
+    options?: ConversionRequestOptions
   ): Promise<ConversionResponse[]>;
   transform(
     files: MarkdownDocument,
-    options?: ConversionRequestOptions,
+    options?: ConversionRequestOptions
   ): Promise<ConversionResponse>;
   supported(): Promise<SupportedFileFormat[]>;
 }
@@ -13434,83 +13423,83 @@ export declare namespace TailStream {
     readonly value: string;
   }
   interface FetchEventInfo {
-    readonly type: "fetch";
+    readonly type: 'fetch';
     readonly method: string;
     readonly url: string;
     readonly cfJson?: object;
     readonly headers: Header[];
   }
   interface JsRpcEventInfo {
-    readonly type: "jsrpc";
+    readonly type: 'jsrpc';
   }
   interface ScheduledEventInfo {
-    readonly type: "scheduled";
+    readonly type: 'scheduled';
     readonly scheduledTime: Date;
     readonly cron: string;
   }
   interface AlarmEventInfo {
-    readonly type: "alarm";
+    readonly type: 'alarm';
     readonly scheduledTime: Date;
   }
   interface QueueEventInfo {
-    readonly type: "queue";
+    readonly type: 'queue';
     readonly queueName: string;
     readonly batchSize: number;
   }
   interface EmailEventInfo {
-    readonly type: "email";
+    readonly type: 'email';
     readonly mailFrom: string;
     readonly rcptTo: string;
     readonly rawSize: number;
   }
   interface TraceEventInfo {
-    readonly type: "trace";
+    readonly type: 'trace';
     readonly traces: (string | null)[];
   }
   interface HibernatableWebSocketEventInfoMessage {
-    readonly type: "message";
+    readonly type: 'message';
   }
   interface HibernatableWebSocketEventInfoError {
-    readonly type: "error";
+    readonly type: 'error';
   }
   interface HibernatableWebSocketEventInfoClose {
-    readonly type: "close";
+    readonly type: 'close';
     readonly code: number;
     readonly wasClean: boolean;
   }
   interface HibernatableWebSocketEventInfo {
-    readonly type: "hibernatableWebSocket";
+    readonly type: 'hibernatableWebSocket';
     readonly info:
       | HibernatableWebSocketEventInfoClose
       | HibernatableWebSocketEventInfoError
       | HibernatableWebSocketEventInfoMessage;
   }
   interface CustomEventInfo {
-    readonly type: "custom";
+    readonly type: 'custom';
   }
   interface FetchResponseInfo {
-    readonly type: "fetch";
+    readonly type: 'fetch';
     readonly statusCode: number;
   }
   type EventOutcome =
-    | "ok"
-    | "canceled"
-    | "exception"
-    | "unknown"
-    | "killSwitch"
-    | "daemonDown"
-    | "exceededCpu"
-    | "exceededMemory"
-    | "loadShed"
-    | "responseStreamDisconnected"
-    | "scriptNotFound";
+    | 'ok'
+    | 'canceled'
+    | 'exception'
+    | 'unknown'
+    | 'killSwitch'
+    | 'daemonDown'
+    | 'exceededCpu'
+    | 'exceededMemory'
+    | 'loadShed'
+    | 'responseStreamDisconnected'
+    | 'scriptNotFound';
   interface ScriptVersion {
     readonly id: string;
     readonly tag?: string;
     readonly message?: string;
   }
   interface Onset {
-    readonly type: "onset";
+    readonly type: 'onset';
     readonly attributes: Attribute[];
     // id for the span being opened by this Onset event.
     readonly spanId: string;
@@ -13532,44 +13521,44 @@ export declare namespace TailStream {
       | CustomEventInfo;
   }
   interface Outcome {
-    readonly type: "outcome";
+    readonly type: 'outcome';
     readonly outcome: EventOutcome;
     readonly cpuTime: number;
     readonly wallTime: number;
   }
   interface SpanOpen {
-    readonly type: "spanOpen";
+    readonly type: 'spanOpen';
     readonly name: string;
     // id for the span being opened by this SpanOpen event.
     readonly spanId: string;
     readonly info?: FetchEventInfo | JsRpcEventInfo | Attributes;
   }
   interface SpanClose {
-    readonly type: "spanClose";
+    readonly type: 'spanClose';
     readonly outcome: EventOutcome;
   }
   interface DiagnosticChannelEvent {
-    readonly type: "diagnosticChannel";
+    readonly type: 'diagnosticChannel';
     readonly channel: string;
     readonly message: any;
   }
   interface Exception {
-    readonly type: "exception";
+    readonly type: 'exception';
     readonly name: string;
     readonly message: string;
     readonly stack?: string;
   }
   interface Log {
-    readonly type: "log";
-    readonly level: "debug" | "error" | "info" | "log" | "warn";
+    readonly type: 'log';
+    readonly level: 'debug' | 'error' | 'info' | 'log' | 'warn';
     readonly message: object;
   }
   interface DroppedEventsDiagnostic {
-    readonly diagnosticsType: "droppedEvents";
+    readonly diagnosticsType: 'droppedEvents';
     readonly count: number;
   }
   interface StreamDiagnostic {
-    readonly type: "streamDiagnostic";
+    readonly type: 'streamDiagnostic';
     // To add new diagnostic types, define a new interface and add it to this union type.
     readonly diagnostic: DroppedEventsDiagnostic;
   }
@@ -13578,7 +13567,7 @@ export declare namespace TailStream {
   // returning. For example - Websockets that return an http upgrade response but then continue
   // streaming information or SSE http connections.
   interface Return {
-    readonly type: "return";
+    readonly type: 'return';
     readonly info?: FetchResponseInfo;
   }
   interface Attribute {
@@ -13594,7 +13583,7 @@ export declare namespace TailStream {
       | bigint[];
   }
   interface Attributes {
-    readonly type: "attributes";
+    readonly type: 'attributes';
     readonly info: Attribute[];
   }
   type EventType =
@@ -13635,7 +13624,7 @@ export declare namespace TailStream {
     readonly event: Event;
   }
   type TailEventHandler<Event extends EventType = EventType> = (
-    event: TailEvent<Event>,
+    event: TailEvent<Event>
   ) => void | Promise<void>;
   type TailEventHandlerObject = {
     outcome?: TailEventHandler<Outcome>;
@@ -13673,13 +13662,13 @@ export interface VectorizeError {
  * This list is expected to grow as support for more operations are released.
  */
 export type VectorizeVectorMetadataFilterOp =
-  | "$eq"
-  | "$ne"
-  | "$lt"
-  | "$lte"
-  | "$gt"
-  | "$gte";
-export type VectorizeVectorMetadataFilterCollectionOp = "$in" | "$nin";
+  | '$eq'
+  | '$ne'
+  | '$lt'
+  | '$lte'
+  | '$gt'
+  | '$gte';
+export type VectorizeVectorMetadataFilterCollectionOp = '$in' | '$nin';
 /**
  * Filter criteria for vector metadata used to limit the retrieved query result set.
  */
@@ -13704,7 +13693,7 @@ export type VectorizeVectorMetadataFilter = {
  * Supported distance metrics for an index.
  * Distance metrics determine how other "similar" vectors are determined.
  */
-export type VectorizeDistanceMetric = "euclidean" | "cosine" | "dot-product";
+export type VectorizeDistanceMetric = 'euclidean' | 'cosine' | 'dot-product';
 /**
  * Metadata return levels for a Vectorize query.
  *
@@ -13714,7 +13703,7 @@ export type VectorizeDistanceMetric = "euclidean" | "cosine" | "dot-product";
  * @property indexed  Return all metadata fields configured for indexing in the vector return set. This level of retrieval is "free" in that no additional overhead is incurred returning this data. However, note that indexed metadata is subject to truncation (especially for larger strings).
  * @property none     No indexed metadata will be returned.
  */
-export type VectorizeMetadataRetrievalLevel = "all" | "indexed" | "none";
+export type VectorizeMetadataRetrievalLevel = 'all' | 'indexed' | 'none';
 export interface VectorizeQueryOptions {
   topK?: number;
   namespace?: string;
@@ -13780,8 +13769,8 @@ export interface VectorizeVector {
 /**
  * Represents a matched vector for a query along with its score and (if specified) the matching vector information.
  */
-export type VectorizeMatch = Pick<Partial<VectorizeVector>, "values"> &
-  Omit<VectorizeVector, "values"> & {
+export type VectorizeMatch = Pick<Partial<VectorizeVector>, 'values'> &
+  Omit<VectorizeVector, 'values'> & {
     /** The score or rank for similarity, when returned as a result */
     score: number;
   };
@@ -13833,7 +13822,7 @@ export declare abstract class VectorizeIndex {
    */
   public query(
     vector: VectorFloatArray | number[],
-    options?: VectorizeQueryOptions,
+    options?: VectorizeQueryOptions
   ): Promise<VectorizeMatches>;
   /**
    * Insert a list of vectors into the index dataset. If a provided id exists, an error will be thrown.
@@ -13879,7 +13868,7 @@ export declare abstract class Vectorize {
    */
   public query(
     vector: VectorFloatArray | number[],
-    options?: VectorizeQueryOptions,
+    options?: VectorizeQueryOptions
   ): Promise<VectorizeMatches>;
   /**
    * Use the provided vector-id to perform a similarity search across the index.
@@ -13889,7 +13878,7 @@ export declare abstract class Vectorize {
    */
   public queryById(
     vectorId: string,
-    options?: VectorizeQueryOptions,
+    options?: VectorizeQueryOptions
   ): Promise<VectorizeMatches>;
   /**
    * Insert a list of vectors into the index dataset. If a provided id exists, an error will be thrown.
@@ -13963,7 +13952,7 @@ export interface DispatchNamespace {
     args?: {
       [key: string]: any;
     },
-    options?: DynamicDispatchOptions,
+    options?: DynamicDispatchOptions
   ): Fetcher;
 }
 export declare abstract class Workflow<PARAMS = unknown> {
@@ -13979,7 +13968,7 @@ export declare abstract class Workflow<PARAMS = unknown> {
    * @returns A promise that resolves with a handle for the Instance
    */
   public create(
-    options?: WorkflowInstanceCreateOptions<PARAMS>,
+    options?: WorkflowInstanceCreateOptions<PARAMS>
   ): Promise<WorkflowInstance>;
   /**
    * Create a batch of instances and return handle for all of them. If a provided id exists, an error will be thrown.
@@ -13988,19 +13977,19 @@ export declare abstract class Workflow<PARAMS = unknown> {
    * @returns A promise that resolves with a list of handles for the created instances.
    */
   public createBatch(
-    batch: WorkflowInstanceCreateOptions<PARAMS>[],
+    batch: WorkflowInstanceCreateOptions<PARAMS>[]
   ): Promise<WorkflowInstance[]>;
 }
 export type WorkflowDurationLabel =
-  | "second"
-  | "minute"
-  | "hour"
-  | "day"
-  | "week"
-  | "month"
-  | "year";
+  | 'second'
+  | 'minute'
+  | 'hour'
+  | 'day'
+  | 'week'
+  | 'month'
+  | 'year';
 export type WorkflowSleepDuration =
-  | `${number} ${WorkflowDurationLabel}${"s" | ""}`
+  | `${number} ${WorkflowDurationLabel}${'s' | ''}`
   | number;
 export type WorkflowRetentionDuration = WorkflowSleepDuration;
 export interface WorkflowInstanceCreateOptions<PARAMS = unknown> {
@@ -14023,15 +14012,15 @@ export interface WorkflowInstanceCreateOptions<PARAMS = unknown> {
 }
 export type InstanceStatus = {
   status:
-    | "queued" // means that instance is waiting to be started (see concurrency limits)
-    | "running"
-    | "paused"
-    | "errored"
-    | "terminated" // user terminated the instance while it was running
-    | "complete"
-    | "waiting" // instance is hibernating and waiting for sleep or event to finish
-    | "waitingForPause" // instance is finishing the current work to pause
-    | "unknown";
+    | 'queued' // means that instance is waiting to be started (see concurrency limits)
+    | 'running'
+    | 'paused'
+    | 'errored'
+    | 'terminated' // user terminated the instance while it was running
+    | 'complete'
+    | 'waiting' // instance is hibernating and waiting for sleep or event to finish
+    | 'waitingForPause' // instance is finishing the current work to pause
+    | 'unknown';
   error?: {
     name: string;
     message: string;
