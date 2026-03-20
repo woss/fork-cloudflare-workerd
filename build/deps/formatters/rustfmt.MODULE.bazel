@@ -2,8 +2,9 @@
 # This avoids going through `bazel run @rules_rust//:rustfmt` which would trigger
 # full Rust toolchain resolution (and, in edgeworker, the V8 build cache download).
 #
-# When updating the iso_date, leave sha256 fields empty and run a bazel build to
-# get the correct values from the download error messages.
+# To get sha256 values when adding a platform or updating the version:
+#   curl -sL "https://static.rust-lang.org/dist/<DATE>/rustfmt-nightly-<TRIPLE>.tar.xz" | sha256sum
+#   curl -sL "https://static.rust-lang.org/dist/<DATE>/rustc-nightly-<TRIPLE>.tar.xz" | sha256sum
 
 rustfmt_standalone = use_extension("//build/deps/formatters:rustfmt_repository.bzl", "rustfmt_standalone")
 rustfmt_standalone.repo(

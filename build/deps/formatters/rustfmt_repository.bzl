@@ -7,7 +7,7 @@ resolution and (in edgeworker) the V8 build cache download — a multi-GB fetch 
 is unnecessary for code formatting.
 """
 
-load("//:build/http_proxy_config.bzl", "PROXY_URL")
+load("@@//:build/http_proxy_config.bzl", "PROXY_URL")
 
 _URL_TEMPLATE = "https://static.rust-lang.org/dist/{iso_date}/{component}-nightly-{triple}.tar.xz"
 
@@ -68,8 +68,8 @@ rustfmt_standalone_repository = repository_rule(
     attrs = {
         "triple": attr.string(mandatory = True, doc = "Rust target triple, e.g. x86_64-unknown-linux-gnu"),
         "iso_date": attr.string(mandatory = True, doc = "Nightly date, e.g. 2026-02-12"),
-        "rustfmt_sha256": attr.string(default = "", doc = "SHA-256 of the rustfmt component tarball"),
-        "rustc_sha256": attr.string(default = "", doc = "SHA-256 of the rustc component tarball"),
+        "rustfmt_sha256": attr.string(mandatory = True, doc = "SHA-256 of the rustfmt component tarball"),
+        "rustc_sha256": attr.string(mandatory = True, doc = "SHA-256 of the rustc component tarball"),
     },
     implementation = _rustfmt_standalone_repository_impl,
 )
@@ -95,8 +95,8 @@ _repo_tag = tag_class(attrs = {
     "name": attr.string(mandatory = True),
     "triple": attr.string(mandatory = True),
     "iso_date": attr.string(mandatory = True),
-    "rustfmt_sha256": attr.string(default = ""),
-    "rustc_sha256": attr.string(default = ""),
+    "rustfmt_sha256": attr.string(mandatory = True),
+    "rustc_sha256": attr.string(mandatory = True),
 })
 
 rustfmt_standalone = module_extension(
