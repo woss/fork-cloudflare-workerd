@@ -772,19 +772,8 @@ void TraceItem::visitForMemoryInfo(jsg::MemoryTracker& tracker) const {
     for (const auto& tag: tags) {
       tracker.trackFieldWithSize("tailAttributeName", tag.name.size());
       for (const auto& value: tag.value) {
-        KJ_SWITCH_ONEOF(value) {
-          KJ_CASE_ONEOF(boolean, bool) {
-            tracker.trackFieldWithSize("tailAttributeValue", sizeof(boolean));
-          }
-          KJ_CASE_ONEOF(number, double) {
-            tracker.trackFieldWithSize("tailAttributeValue", sizeof(number));
-          }
-          KJ_CASE_ONEOF(integer, int64_t) {
-            tracker.trackFieldWithSize("tailAttributeValue", sizeof(integer));
-          }
-          KJ_CASE_ONEOF(string, kj::ConstString) {
-            tracker.trackFieldWithSize("tailAttributeValue", string.size());
-          }
+        KJ_IF_SOME(string, value.tryGet<kj::ConstString>()) {
+          tracker.trackFieldWithSize("tailAttributeValue", string.size());
         }
       }
     }
