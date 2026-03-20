@@ -45,7 +45,7 @@ interface Container @0x9aaceefc06523bca {
     compatibilityFlags @4 :CompatibilityFlags;
     # Compatibility flags for this worker
 
-    labels @6 :List(Label);
+    labels @5 :List(Label);
     # Optional key-value metadata labels for metrics/observability.
   }
 
