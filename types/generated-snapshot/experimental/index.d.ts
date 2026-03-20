@@ -3894,6 +3894,7 @@ interface ContainerStartupOptions {
   enableInternet: boolean;
   env?: Record<string, string>;
   hardTimeout?: number | bigint;
+  labels?: Record<string, string>;
 }
 /**
  * The **`FileSystemHandle`** interface of the File System API is an object which represents a file or directory entry.

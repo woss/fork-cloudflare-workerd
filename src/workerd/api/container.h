@@ -29,10 +29,11 @@ class Container: public jsg::Object {
     bool enableInternet = false;
     jsg::Optional<jsg::Dict<kj::String>> env;
     jsg::Optional<int64_t> hardTimeout;
+    jsg::Optional<jsg::Dict<kj::String>> labels;
 
     // TODO(containers): Allow intercepting stdin/stdout/stderr by specifying streams here.
 
-    JSG_STRUCT(entrypoint, enableInternet, env, hardTimeout);
+    JSG_STRUCT(entrypoint, enableInternet, env, hardTimeout, labels);
     JSG_STRUCT_TS_OVERRIDE_DYNAMIC(CompatibilityFlags::Reader flags) {
       if (flags.getWorkerdExperimental()) {
         JSG_TS_OVERRIDE(ContainerStartupOptions {
@@ -40,12 +41,14 @@ class Container: public jsg::Object {
           enableInternet: boolean;
           env?: Record<string, string>;
           hardTimeout?: number | bigint;
+          labels?: Record<string, string>;
         });
       } else {
         JSG_TS_OVERRIDE(ContainerStartupOptions {
           entrypoint?: string[];
           enableInternet: boolean;
           env?: Record<string, string>;
+          labels?: Record<string, string>;
         });
       }
     }

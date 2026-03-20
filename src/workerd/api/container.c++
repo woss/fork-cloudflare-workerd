@@ -56,6 +56,24 @@ void Container::start(jsg::Lock& js, jsg::Optional<StartupOptions> maybeOptions)
     }
   }
 
+  KJ_IF_SOME(labels, options.labels) {
+    auto list = req.initLabels(labels.fields.size());
+    for (auto i: kj::indices(labels.fields)) {
+      auto& field = labels.fields[i];
+      JSG_REQUIRE(field.name.size() > 0, Error, "Label names cannot be empty");
+      for (auto c: field.name) {
+        JSG_REQUIRE(static_cast<kj::byte>(c) >= 0x20, Error,
+            "Label names cannot contain control characters (index ", i, ")");
+      }
+      for (auto c: field.value) {
+        JSG_REQUIRE(static_cast<kj::byte>(c) >= 0x20, Error,
+            "Label values cannot contain control characters (index ", i, ")");
+      }
+      list[i].setName(field.name);
+      list[i].setValue(field.value);
+    }
+  }
+
   req.setCompatibilityFlags(flags);
 
   IoContext::current().addTask(req.sendIgnoringResult());

@@ -311,6 +311,58 @@ export class DurableObjectExample extends DurableObject {
     await monitor;
   }
 
+  async testLabels() {
+    const container = this.ctx.container;
+    if (container.running) {
+      let monitor = container.monitor().catch((_err) => {});
+      await container.destroy();
+      await monitor;
+    }
+
+    assert.strictEqual(container.running, false);
+
+    container.start({
+      enableInternet: true,
+      labels: { team: 'workers', environment: 'testing' },
+    });
+
+    const monitor = container.monitor().catch((_err) => {});
+    await this.waitUntilContainerIsHealthy();
+
+    assert.strictEqual(container.running, true);
+
+    await container.destroy();
+    await monitor;
+    assert.strictEqual(container.running, false);
+  }
+
+  async testLabelValidation() {
+    const container = this.ctx.container;
+    if (container.running) {
+      let monitor = container.monitor().catch((_err) => {});
+      await container.destroy();
+      await monitor;
+    }
+
+    assert.strictEqual(container.running, false);
+
+    // Empty label name
+    assert.throws(() => container.start({ labels: { '': 'value' } }), {
+      message: /Label names cannot be empty/,
+    });
+
+    // Label name with control character
+    assert.throws(
+      () => container.start({ labels: { 'bad\x01name': 'value' } }),
+      { message: /Label names cannot contain control characters \(index 0\)/ }
+    );
+
+    // Label value with control character
+    assert.throws(() => container.start({ labels: { name: 'bad\x01value' } }), {
+      message: /Label values cannot contain control characters \(index 0\)/,
+    });
+  }
+
   async testPidNamespace() {
     const container = this.ctx.container;
     if (container.running) {
@@ -896,6 +948,28 @@ export const testSetInactivityTimeout = {
       // Container should still be running after DO exited
       await stub.expectRunning(true);
     }
+  },
+};
+
+// Test that custom labels are passed through to the container
+export const testLabels = {
+  async test(_ctrl, env) {
+    const id = env.MY_CONTAINER.idFromName(
+      getRandomDurableObjectName('testLabels')
+    );
+    const stub = env.MY_CONTAINER.get(id);
+    await stub.testLabels();
+  },
+};
+
+// Test that invalid labels are rejected with clear error messages
+export const testLabelValidation = {
+  async test(_ctrl, env) {
+    const id = env.MY_CONTAINER.idFromName(
+      getRandomDurableObjectName('testLabelValidation')
+    );
+    const stub = env.MY_CONTAINER.get(id);
+    await stub.testLabelValidation();
   },
 };
 

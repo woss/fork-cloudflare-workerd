@@ -790,6 +790,16 @@ kj::Promise<void> ContainerClient::createContainer(
     jsonEnv.set(envSize + i, defaultEnv[i]);
   }
 
+  // Pass user-supplied labels as Docker object labels, visible via `docker inspect`.
+  if (params.hasLabels()) {
+    auto lbls = params.getLabels();
+    auto labelsObj = jsonRoot.initLabels().initObject(lbls.size());
+    for (auto i: kj::zeroTo(lbls.size())) {
+      labelsObj[i].setName(lbls[i].getName());
+      labelsObj[i].initValue().setString(lbls[i].getValue());
+    }
+  }
+
   auto hostConfig = jsonRoot.initHostConfig();
   // We need to set a restart policy to avoid having ambiguous states
   // where the container we're managing is stuck at "exited" state.
