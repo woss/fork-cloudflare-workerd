@@ -73,8 +73,9 @@ void AlarmScheduler::loadAlarmsFromDb() {
 
     auto ownActorId = kj::str(query.getText(0));
     auto actor = kj::attachVal(ActorKey{.actorId = ownActorId}, kj::mv(ownActorId));
+    auto& actorRef = *actor;
 
-    alarms.insert(*actor, scheduleAlarm(now, kj::mv(actor), date));
+    alarms.insert(actorRef, scheduleAlarm(now, kj::mv(actor), date));
 
     query.nextRow();
   }
