@@ -268,6 +268,20 @@ def main() -> None:
     with (Path(__file__).parent / "format.json").open() as fp:
         configs = json.load(fp, object_hook=lambda o: FormatConfig(**o))
 
+    # Ensure all required tools are downloaded before running formatters in
+    # parallel.  Otherwise a slow `bazel build` for a missing tool races with
+    # the other formatters and its output gets interleaved.
+    needed_formatters = set()
+    for config in configs:
+        matched = filter_files_by_globs(
+            files, Path(config.directory), config.globs, config.excludes
+        )
+        if matched:
+            needed_formatters.add(config.formatter)
+    for name in needed_formatters:
+        if name in ("clang-format", "buildifier", "ruff", "rustfmt"):
+            _ensure_bazel_tool(name)
+
     all_ok = True
 
     with ThreadPoolExecutor() as executor:
