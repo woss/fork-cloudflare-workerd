@@ -93,11 +93,11 @@ void Container::start(jsg::Lock& js, jsg::Optional<StartupOptions> maybeOptions)
       JSG_REQUIRE(field.name.size() > 0, Error, "Label names cannot be empty");
       for (auto c: field.name) {
         JSG_REQUIRE(static_cast<kj::byte>(c) >= 0x20, Error,
-            "Label names cannot contain control characters: ", field.name);
+            "Label names cannot contain control characters (index ", i, ")");
       }
       for (auto c: field.value) {
         JSG_REQUIRE(static_cast<kj::byte>(c) >= 0x20, Error,
-            "Label values cannot contain control characters: ", field.name);
+            "Label values cannot contain control characters (index ", i, ")");
       }
       list[i].setName(field.name);
       list[i].setValue(field.value);
