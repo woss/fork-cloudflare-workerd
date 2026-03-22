@@ -860,9 +860,7 @@ export function globSync(
     validateString(p, 'pattern');
   }
 
-  if (typeof options === 'object' && options !== null) {
-    // Options validation
-  } else {
+  if (typeof options !== 'object' || options === null) {
     validateObject(options, 'options');
   }
 

@@ -372,17 +372,12 @@ export function walkGlob(
   // All segments consumed: this path is a match
   if (segIdx >= segments.length) {
     if (!results.has(relativePath)) {
-      // Resolve handle for the matched path
-      const entries = getDirectoryEntries(
-        relativePath
-          ? currentAbsPath.slice(
-              0,
-              currentAbsPath.length - relativePath.split('/').pop()!.length
-            )
-          : currentAbsPath,
-        cache
-      );
+      // Resolve handle for the matched path by reading the parent directory
+      const lastSlash = currentAbsPath.lastIndexOf('/');
+      const parentDir =
+        lastSlash > 0 ? currentAbsPath.slice(0, lastSlash) : currentAbsPath;
       const basename = relativePath.split('/').pop() || '';
+      const entries = getDirectoryEntries(parentDir, cache);
       const handle = entries.find((e) => e.name === basename) ?? null;
       results.set(relativePath, { relativePath, handle });
     }
@@ -406,11 +401,14 @@ export function walkGlob(
     return;
   }
 
-  // Handle '..' — go up one directory
+  // Handle '..' — go up one directory (but don't escape cwd)
   if (seg === '..') {
-    const absParts = currentAbsPath.split('/');
-    absParts.pop();
-    const newAbs = absParts.join('/') || '/';
+    if (currentAbsPath === cwd || currentAbsPath.length <= cwd.length) {
+      return;
+    }
+
+    const lastSlash = currentAbsPath.lastIndexOf('/');
+    const newAbs = lastSlash > 0 ? currentAbsPath.slice(0, lastSlash) : '/';
 
     const relParts = relativePath.split('/').filter(Boolean);
     relParts.pop();
