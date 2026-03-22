@@ -56,6 +56,7 @@ import {
 import {
   parseFileMode,
   validateBoolean,
+  validateFunction,
   validateObject,
   validateOneOf,
   validateString,
@@ -87,6 +88,8 @@ import { Dir, Dirent } from 'node-internal:internal_fs';
 import { default as cffs } from 'cloudflare-internal:filesystem';
 
 import { Buffer } from 'node-internal:internal_buffer';
+import { expandBraces, globToRegex } from 'node-internal:internal_fs_glob';
+import processImpl from 'node-internal:process';
 import type {
   BigIntStatsFs,
   CopySyncOptions,
@@ -839,17 +842,104 @@ export function writevSync(
 }
 
 export function globSync(
-  _pattern: string | readonly string[],
-  _options:
+  pattern: string | readonly string[],
+  options:
     | GlobOptions
     | GlobOptionsWithFileTypes
     | GlobOptionsWithoutFileTypes = {}
-): string[] {
-  // We do not yet implement the globSync function. In Node.js, this
-  // function depends heavily on the third party minimatch library
-  // which is not yet available in the workers runtime. This will be
-  // explored for implementation separately in the future.
-  throw new ERR_UNSUPPORTED_OPERATION();
+): string[] | Dirent[] {
+  // Normalize pattern to array
+  const patterns: string[] =
+    typeof pattern === 'string' ? [pattern] : [...pattern];
+  for (const p of patterns) {
+    validateString(p, 'pattern');
+  }
+
+  if (typeof options === 'object' && options !== null) {
+    // Options validation
+  } else {
+    validateObject(options, 'options');
+  }
+
+  const cwdOption = (options as GlobOptions).cwd;
+  const cwd: string =
+    cwdOption instanceof URL
+      ? cwdOption.pathname
+      : ((cwdOption as string | undefined) ?? processImpl.getCwd());
+  validateString(cwd, 'options.cwd');
+
+  const withFileTypes: boolean =
+    (options as GlobOptionsWithFileTypes).withFileTypes ?? false;
+  const excludeFn = (options as GlobOptions).exclude as
+    | ((path: string | Dirent) => boolean)
+    | undefined;
+  if (excludeFn !== undefined) {
+    validateFunction(excludeFn, 'options.exclude');
+  }
+
+  // Compile all patterns to regexes
+  const regexes: RegExp[] = [];
+  for (const p of patterns) {
+    for (const expanded of expandBraces(p)) {
+      regexes.push(globToRegex(expanded));
+    }
+  }
+
+  if (regexes.length === 0) {
+    return [];
+  }
+
+  // Get all entries recursively from cwd
+  const cwdUrl = normalizePath(cwd);
+  const handles = cffs.readdir(cwdUrl, { recursive: true });
+
+  // The C++ readdir returns entry names as full paths from the VFS root
+  // (e.g., "tmp/globtest/a.js" for readdir on "/tmp/globtest").
+  // We need to strip the cwd prefix so names are relative to cwd.
+  const cwdPathname = cwdUrl.pathname;
+  const prefix =
+    cwdPathname === '/'
+      ? ''
+      : cwdPathname.startsWith('/')
+        ? cwdPathname.slice(1) + '/'
+        : cwdPathname + '/';
+
+  // Match entries against patterns
+  const seen = new Set<string>();
+  const stringResults: string[] = [];
+  const direntResults: Dirent[] = [];
+
+  for (const handle of handles) {
+    // Strip cwd prefix to get the path relative to cwd
+    const relativeName = prefix
+      ? handle.name.slice(prefix.length)
+      : handle.name;
+
+    // Check if relative name matches any pattern
+    let matched = false;
+    for (const re of regexes) {
+      if (re.test(relativeName)) {
+        matched = true;
+        break;
+      }
+    }
+    if (!matched) continue;
+
+    // Deduplicate across multiple patterns
+    if (seen.has(relativeName)) continue;
+    seen.add(relativeName);
+
+    if (withFileTypes) {
+      const dirent = new Dirent(relativeName, handle.type, handle.parentPath);
+      if (excludeFn && excludeFn(dirent)) continue;
+      direntResults.push(dirent);
+    } else {
+      if (excludeFn && excludeFn(relativeName)) continue;
+      stringResults.push(relativeName);
+    }
+  }
+
+  return withFileTypes ? direntResults : stringResults;
 }
 
 export interface OpenAsBlobOptions {
@@ -930,4 +1020,4 @@ export function openAsBlob(
 // [x][x][2][x][x] fs.copyFileSync(src, dest[, mode])
 // [x][x][2][x][x] fs.opendirSync(path[, options])
 // [x][x][2][x][x] fs.cpSync(src, dest[, options])
-// [ ][ ][ ][ ][ ] fs.globSync(pattern[, options])
+// [x][x][1][ ][ ] fs.globSync(pattern[, options])
