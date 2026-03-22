@@ -2,8 +2,20 @@
 // Licensed under the Apache 2.0 license found in the LICENSE file or at:
 //     https://opensource.org/licenses/Apache-2.0
 
+import { default as cffs } from 'cloudflare-internal:filesystem';
+import type { DirEntryHandle } from 'cloudflare-internal:filesystem';
+import { normalizePath } from 'node-internal:internal_fs_utils';
+import { Dirent } from 'node-internal:internal_fs';
+
+// UV_DIRENT_DIR constant from internal_fs_constants
+const UV_DIRENT_DIR = 2;
+
+// ============================================================================
+// Brace Expansion
+// ============================================================================
+
 // Splits a string by top-level occurrences of a separator character,
-// respecting nested braces and backslash escapes.
+// respecting nested braces/parens and backslash escapes.
 function splitTopLevel(str: string, sep: string): string[] {
   const parts: string[] = [];
   let depth = 0;
@@ -16,10 +28,10 @@ function splitTopLevel(str: string, sep: string): string[] {
       i++;
       continue;
     }
-    if (c === '{') {
+    if (c === '{' || c === '(') {
       depth++;
       current += c;
-    } else if (c === '}') {
+    } else if (c === '}' || c === ')') {
       depth--;
       current += c;
     } else if (c === sep && depth === 0) {
@@ -35,10 +47,7 @@ function splitTopLevel(str: string, sep: string): string[] {
 }
 
 // Expands brace expressions in a glob pattern into multiple patterns.
-// e.g. "*.{js,ts}" -> ["*.js", "*.ts"]
-// e.g. "{a,b}/{c,d}" -> ["a/c", "a/d", "b/c", "b/d"]
 export function expandBraces(pattern: string): string[] {
-  // Find the first top-level { } pair
   let depth = 0;
   let braceStart = -1;
 
@@ -60,7 +69,6 @@ export function expandBraces(pattern: string): string[] {
 
         const alternatives = splitTopLevel(body, ',');
 
-        // If there's only one alternative (no comma found), treat braces as literal
         if (alternatives.length === 1) {
           return [pattern];
         }
@@ -79,26 +87,46 @@ export function expandBraces(pattern: string): string[] {
   return [pattern];
 }
 
-// Converts a single glob pattern into a RegExp.
-//
-// Supported syntax:
-//   *      - matches any characters except /
-//   **     - matches zero or more path segments
-//   ?      - matches a single character except /
-//   [abc]  - character class
-//   [!abc] - negated character class
-//   \x     - escape (literal match of x)
-export function globToRegex(pattern: string): RegExp {
+// ============================================================================
+// Pattern Normalization
+// ============================================================================
+
+export function normalizePattern(pattern: string): string {
+  // Strip leading ./
+  if (pattern.startsWith('./')) {
+    pattern = pattern.slice(2);
+  }
+  // Collapse multiple slashes to single
+  pattern = pattern.replace(/\/\/+/g, '/');
+  // Strip trailing slash
+  if (pattern.endsWith('/') && pattern.length > 1) {
+    pattern = pattern.slice(0, -1);
+  }
+  return pattern;
+}
+
+// ============================================================================
+// Segment-Level Regex (with extglob support)
+// ============================================================================
+
+// Converts a single path segment pattern to a RegExp.
+// Supports: *, ?, [...], [!...], @(...), *(...), +(...), ?(...), !(...)
+export function segmentToRegex(segment: string): RegExp {
+  const regex = segmentToRegexStr(segment);
+  return new RegExp('^' + regex + '$');
+}
+
+function segmentToRegexStr(segment: string): string {
   let regex = '';
   let i = 0;
   let inCharClass = false;
 
-  while (i < pattern.length) {
-    const c = pattern[i]!;
+  while (i < segment.length) {
+    const c = segment[i]!;
 
     // Handle escape sequences
-    if (c === '\\' && i + 1 < pattern.length) {
-      regex += '\\' + escapeRegexChar(pattern[i + 1]!);
+    if (c === '\\' && i + 1 < segment.length) {
+      regex += '\\' + escapeRegexChar(segment[i + 1]!);
       i += 2;
       continue;
     }
@@ -115,45 +143,55 @@ export function globToRegex(pattern: string): RegExp {
       continue;
     }
 
+    // Check for extglob: @(...), *(...), +(...), ?(...), !(...)
+    if (
+      (c === '@' || c === '*' || c === '+' || c === '?' || c === '!') &&
+      i + 1 < segment.length &&
+      segment[i + 1] === '('
+    ) {
+      const closeIdx = findMatchingParen(segment, i + 1);
+      if (closeIdx !== -1) {
+        const inner = segment.slice(i + 2, closeIdx);
+        // Convert pipe-separated alternatives, each may contain glob chars
+        const alts = splitTopLevel(inner, '|');
+        const altRegexes = alts.map((a) => segmentToRegexStr(a));
+        const group = altRegexes.join('|');
+
+        switch (c) {
+          case '@': // exactly one
+            regex += '(?:' + group + ')';
+            break;
+          case '*': // zero or more
+            regex += '(?:' + group + ')*';
+            break;
+          case '+': // one or more
+            regex += '(?:' + group + ')+';
+            break;
+          case '?': // zero or one
+            regex += '(?:' + group + ')?';
+            break;
+          case '!': // none of (negative lookahead)
+            regex += '(?!(?:' + group + ')$)[^/]*';
+            break;
+        }
+
+        i = closeIdx + 1;
+        continue;
+      }
+    }
+
     switch (c) {
       case '[':
         inCharClass = true;
         regex += '[';
-        // Handle [! as [^ (glob negation syntax)
-        if (i + 1 < pattern.length && pattern[i + 1] === '!') {
+        if (i + 1 < segment.length && segment[i + 1] === '!') {
           regex += '^';
           i++;
         }
         break;
 
       case '*':
-        if (i + 1 < pattern.length && pattern[i + 1] === '*') {
-          // ** (globstar)
-          i++; // consume second *
-          const atStart = i === 1; // pattern started with **
-          const atEnd = i + 1 >= pattern.length;
-          const followedBySlash =
-            i + 1 < pattern.length && pattern[i + 1] === '/';
-          const precededBySlash = i >= 2 && pattern[i - 2] === '/';
-
-          if (atEnd) {
-            // ** at end: match everything remaining
-            regex += '.*';
-          } else if ((atStart || precededBySlash) && followedBySlash) {
-            // **/ at start or /**/  in middle: zero or more directory segments
-            regex += '(?:[^/]+/)*';
-            i++; // consume the /
-          } else if (atStart && !followedBySlash) {
-            // **foo at start (no slash after): match any prefix path then continue
-            regex += '(?:.*/)?';
-          } else {
-            // Treat as two * wildcards
-            regex += '[^/]*[^/]*';
-          }
-        } else {
-          // Single *: match within a single path segment
-          regex += '[^/]*';
-        }
+        regex += '[^/]*';
         break;
 
       case '?':
@@ -177,7 +215,23 @@ export function globToRegex(pattern: string): RegExp {
     i++;
   }
 
-  return new RegExp('^' + regex + '$');
+  return regex;
+}
+
+function findMatchingParen(str: string, openIdx: number): number {
+  let depth = 0;
+  for (let i = openIdx; i < str.length; i++) {
+    if (str[i] === '\\' && i + 1 < str.length) {
+      i++;
+      continue;
+    }
+    if (str[i] === '(') depth++;
+    else if (str[i] === ')') {
+      depth--;
+      if (depth === 0) return i;
+    }
+  }
+  return -1;
 }
 
 function escapeRegexChar(c: string): string {
@@ -185,4 +239,283 @@ function escapeRegexChar(c: string): string {
     return '\\' + c;
   }
   return c;
+}
+
+// ============================================================================
+// Full-Path Regex (used for exclude pattern matching)
+// ============================================================================
+
+// Converts a full glob pattern (with /) to a single RegExp for exclude matching.
+export function globToRegex(pattern: string): RegExp {
+  const normalized = normalizePattern(pattern);
+  const segments = normalized.split('/').filter((s) => s !== '');
+  const parts: string[] = [];
+
+  for (let i = 0; i < segments.length; i++) {
+    const seg = segments[i]!;
+    if (seg === '**') {
+      // ** matches zero or more path segments
+      // We handle this by inserting a special marker
+      parts.push('**');
+    } else if (seg === '.') {
+      // skip
+    } else if (seg === '..') {
+      parts.pop();
+    } else {
+      parts.push(segmentToRegexStr(seg));
+    }
+  }
+
+  // Now build regex from parts, handling ** markers
+  let regex = '';
+  for (let i = 0; i < parts.length; i++) {
+    const part = parts[i]!;
+    if (part === '**') {
+      if (parts.length === 1) {
+        // ** alone: match everything
+        regex = '.*';
+      } else if (i === 0) {
+        // ** at start: match zero or more leading segments
+        regex += '(?:.*\\/)?';
+      } else if (i === parts.length - 1) {
+        // ** at end: match zero or more trailing segments
+        regex += '(?:\\/.*)?';
+      } else {
+        // ** in middle: match zero or more middle segments
+        regex += '(?:\\/[^/]+)*\\/';
+      }
+    } else {
+      if (i > 0 && parts[i - 1] !== '**') {
+        regex += '\\/';
+      }
+      regex += part;
+    }
+  }
+
+  return new RegExp('^' + regex + '$');
+}
+
+// ============================================================================
+// Exclude Compiler
+// ============================================================================
+
+export function compileExclude(
+  exclude: readonly string[] | ((path: string | Dirent) => boolean) | undefined
+): ((path: string) => boolean) | undefined {
+  if (exclude === undefined) return undefined;
+  if (typeof exclude === 'function')
+    return exclude as (path: string) => boolean;
+
+  // Array of glob patterns: compile to regexes
+  const regexes: RegExp[] = [];
+  for (const pat of exclude) {
+    for (const expanded of expandBraces(pat)) {
+      regexes.push(globToRegex(expanded));
+    }
+  }
+
+  return (path: string): boolean => {
+    for (const re of regexes) {
+      if (re.test(path)) return true;
+    }
+    return false;
+  };
+}
+
+// ============================================================================
+// Directory Entry Cache
+// ============================================================================
+
+type EntryCache = Map<string, DirEntryHandle[]>;
+
+function getDirectoryEntries(
+  absPath: string,
+  cache: EntryCache
+): DirEntryHandle[] {
+  const cached = cache.get(absPath);
+  if (cached !== undefined) return cached;
+
+  try {
+    const entries = cffs.readdir(normalizePath(absPath), { recursive: false });
+    cache.set(absPath, entries);
+    return entries;
+  } catch {
+    const empty: DirEntryHandle[] = [];
+    cache.set(absPath, empty);
+    return empty;
+  }
+}
+
+function isDirectory(entry: DirEntryHandle): boolean {
+  return entry.type === UV_DIRENT_DIR;
+}
+
+// ============================================================================
+// Pattern-Driven Directory Walk
+// ============================================================================
+
+export interface GlobResult {
+  relativePath: string;
+  handle: DirEntryHandle | null;
+}
+
+export function walkGlob(
+  cwd: string,
+  segments: string[],
+  segIdx: number,
+  currentAbsPath: string,
+  relativePath: string,
+  results: Map<string, GlobResult>,
+  cache: EntryCache,
+  visitedGlobstar?: Set<string>
+): void {
+  // All segments consumed: this path is a match
+  if (segIdx >= segments.length) {
+    if (!results.has(relativePath)) {
+      // Resolve handle for the matched path
+      const entries = getDirectoryEntries(
+        relativePath
+          ? currentAbsPath.slice(
+              0,
+              currentAbsPath.length - relativePath.split('/').pop()!.length
+            )
+          : currentAbsPath,
+        cache
+      );
+      const basename = relativePath.split('/').pop() || '';
+      const handle = entries.find((e) => e.name === basename) ?? null;
+      results.set(relativePath, { relativePath, handle });
+    }
+    return;
+  }
+
+  const seg = segments[segIdx]!;
+
+  // Handle '.' — stay in current directory
+  if (seg === '.') {
+    walkGlob(
+      cwd,
+      segments,
+      segIdx + 1,
+      currentAbsPath,
+      relativePath,
+      results,
+      cache,
+      visitedGlobstar
+    );
+    return;
+  }
+
+  // Handle '..' — go up one directory
+  if (seg === '..') {
+    const absParts = currentAbsPath.split('/');
+    absParts.pop();
+    const newAbs = absParts.join('/') || '/';
+
+    const relParts = relativePath.split('/').filter(Boolean);
+    relParts.pop();
+    const newRel = relParts.join('/');
+
+    walkGlob(
+      cwd,
+      segments,
+      segIdx + 1,
+      newAbs,
+      newRel,
+      results,
+      cache,
+      visitedGlobstar
+    );
+    return;
+  }
+
+  // Handle '**' — match zero or more directory levels
+  if (seg === '**') {
+    const gsKey = currentAbsPath + ':' + segIdx;
+    if (visitedGlobstar === undefined) {
+      visitedGlobstar = new Set();
+    }
+    if (visitedGlobstar.has(gsKey)) return;
+    visitedGlobstar.add(gsKey);
+
+    // Zero levels: advance to next segment at current path
+    walkGlob(
+      cwd,
+      segments,
+      segIdx + 1,
+      currentAbsPath,
+      relativePath,
+      results,
+      cache,
+      visitedGlobstar
+    );
+
+    // One or more levels: enumerate children
+    const entries = getDirectoryEntries(currentAbsPath, cache);
+    for (const entry of entries) {
+      const childAbs = currentAbsPath + '/' + entry.name;
+      const childRel = relativePath
+        ? relativePath + '/' + entry.name
+        : entry.name;
+
+      // Try matching next segment against this child
+      walkGlob(
+        cwd,
+        segments,
+        segIdx + 1,
+        childAbs,
+        childRel,
+        results,
+        cache,
+        visitedGlobstar
+      );
+
+      // If directory, recurse ** deeper
+      if (isDirectory(entry)) {
+        walkGlob(
+          cwd,
+          segments,
+          segIdx,
+          childAbs,
+          childRel,
+          results,
+          cache,
+          visitedGlobstar
+        );
+      }
+    }
+    return;
+  }
+
+  // Regular segment: match against directory entries
+  const segRegex = segmentToRegex(seg);
+  const entries = getDirectoryEntries(currentAbsPath, cache);
+
+  for (const entry of entries) {
+    if (segRegex.test(entry.name)) {
+      const childAbs = currentAbsPath + '/' + entry.name;
+      const childRel = relativePath
+        ? relativePath + '/' + entry.name
+        : entry.name;
+
+      if (segIdx + 1 >= segments.length) {
+        // This is the last segment — record match
+        if (!results.has(childRel)) {
+          results.set(childRel, { relativePath: childRel, handle: entry });
+        }
+      } else {
+        // More segments to match — recurse
+        walkGlob(
+          cwd,
+          segments,
+          segIdx + 1,
+          childAbs,
+          childRel,
+          results,
+          cache,
+          visitedGlobstar
+        );
+      }
+    }
+  }
 }

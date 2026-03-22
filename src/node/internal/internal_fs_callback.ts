@@ -1504,5 +1504,5 @@ export function glob(
 // [ ][ ][ ][ ] fs.createReadStream(path[, options])
 // [ ][ ][ ][ ] fs.createWriteStream(path[, options])
 //
-// [x][x][1][ ] fs.glob(pattern[, options], callback)
+// [x][x][x][x] fs.glob(pattern[, options], callback)
 // [ ][ ][ ][ ] fs.openAsBlob(path[, options])
