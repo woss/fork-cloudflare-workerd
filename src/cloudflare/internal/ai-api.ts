@@ -47,6 +47,7 @@ export type AiOptions = {
    * @deprecated this option is deprecated, do not use this
    */
   sessionOptions?: SessionOptions;
+  signal?: AbortSignal;
 };
 
 export type AiInputReadableStream = {
@@ -165,7 +166,7 @@ export class Ai {
       options,
     });
 
-    const fetchOptions = {
+    const fetchOptions: RequestInit = {
       method: 'POST',
       body: body,
       headers: {
@@ -176,6 +177,9 @@ export class Ai {
         'cf-consn-model-id': `${this.#options.prefix ? `${this.#options.prefix}:` : ''}${model}`,
       },
     };
+    if (this.#options.signal) {
+      fetchOptions.signal = this.#options.signal;
+    }
 
     let endpointUrl = `${this.#endpointURL}/run?version=3`;
     if (options.gateway?.id) {
@@ -213,8 +217,11 @@ export class Ai {
       );
     }
 
+    // Separate signal for fetch; remaining options become query params
+    const { signal, ...optionsForQuery } = options;
+
     // Pass single ReadableStream in request body
-    const fetchOptions = {
+    const fetchOptions: RequestInit = {
       method: 'POST',
       body: body,
       headers: {
@@ -225,6 +232,9 @@ export class Ai {
         'cf-consn-model-id': `${this.#options.prefix ? `${this.#options.prefix}:` : ''}${model}`,
       },
     };
+    if (signal) {
+      fetchOptions.signal = signal;
+    }
 
     // Fetch the additional input params
     const { [streamKey]: streamInput, ...userInputs } = inputs;
@@ -232,7 +242,7 @@ export class Ai {
     // Construct query params
     // Append inputs with ai.run options that are passed to the inference request
     const query = {
-      ...options,
+      ...optionsForQuery,
       version: '3',
       userInputs: JSON.stringify({ ...userInputs }),
     };
@@ -252,13 +262,16 @@ export class Ai {
     options: AiOptions,
     model: string
   ): Promise<Response> {
+    // Separate signal for fetch; keep remaining options for the body
+    const { signal, ...optionsForBody } = options;
+
     // Treat inputs as regular JS objects
     const body = JSON.stringify({
       inputs,
-      options,
+      options: optionsForBody,
     });
 
-    const fetchOptions = {
+    const fetchOptions: RequestInit = {
       headers: {
         ...this.#options.sessionOptions?.extraHeaders,
         ...this.#options.extraHeaders,
@@ -267,6 +280,9 @@ export class Ai {
         Upgrade: 'websocket',
       },
     };
+    if (signal) {
+      fetchOptions.signal = signal;
+    }
 
     const aiEndpoint = new URL(`${this.#endpointURL}/run`);
     aiEndpoint.searchParams.set('version', '3');
@@ -288,6 +304,7 @@ export class Ai {
       prefix,
       extraHeaders,
       sessionOptions,
+      signal,
       ...object
     }): object => object)(this.#options);
 
