@@ -288,6 +288,21 @@ export class DurableObjectExample extends DurableObject {
     assert.equal(await response.text(), expectedBody);
   }
 
+  fetchHttpsIntercept(host) {
+    return this.ctx.container
+      .getTcpPort(8080)
+      .fetch('http://foo/intercept-https', {
+        headers: { 'x-host': host },
+        signal: AbortSignal.timeout(DEFAULT_TIMEOUT_DURATION),
+      });
+  }
+
+  async expectHttpsIntercept(host, expectedStatus, expectedBody) {
+    const response = await this.fetchHttpsIntercept(host);
+    assert.equal(response.status, expectedStatus);
+    assert.equal(await response.text(), expectedBody);
+  }
+
   async testPortNotListening() {
     const container = this.ctx.container;
     if (container.running) {
@@ -677,6 +692,80 @@ export class DurableObjectExample extends DurableObject {
     }
   }
 
+  async testSetEgressHttps() {
+    const container = this.ctx.container;
+    if (container.running) {
+      const monitor = container.monitor().catch((_err) => {});
+      await container.destroy();
+      await monitor;
+    }
+
+    assert.strictEqual(container.running, false);
+
+    await container.interceptOutboundHttps(
+      'example.com:443',
+      this.ctx.exports.TestService({ props: { id: 1000 } })
+    );
+
+    container.start({
+      env: {
+        NODE_EXTRA_CA_CERTS:
+          '/etc/cloudflare/certs/cloudflare-containers-ca.crt',
+      },
+    });
+
+    container.monitor().catch((err) => {
+      console.error('Container exited with an error:', err.message);
+    });
+
+    await this.waitUntilContainerIsHealthy();
+
+    await container.interceptOutboundHttps(
+      '*.cloudflare.com:443',
+      this.ctx.exports.TestService({ props: { id: 2000 } })
+    );
+
+    await container.interceptOutboundHttps(
+      '*',
+      this.ctx.exports.TestService({ props: { id: 3000 } })
+    );
+
+    await this.expectHttpsIntercept(
+      'example.com',
+      200,
+      'hello binding: 1000 https://example.com/'
+    );
+
+    await this.expectHttpsIntercept(
+      'www.cloudflare.com',
+      200,
+      'hello binding: 2000 https://www.cloudflare.com/'
+    );
+
+    await this.expectHttpsIntercept(
+      'google.com',
+      200,
+      'hello binding: 3000 https://google.com/'
+    );
+
+    await container.interceptOutboundHttps(
+      '*',
+      this.ctx.exports.TestService({ props: { id: 4000 } })
+    );
+
+    await this.expectHttpsIntercept(
+      'example.com',
+      200,
+      'hello binding: 1000 https://example.com/'
+    );
+
+    await this.expectHttpsIntercept(
+      'github.com',
+      200,
+      'hello binding: 4000 https://github.com/'
+    );
+  }
+
   async testInterceptWebSocket() {
     const container = this.ctx.container;
     if (container.running) {
@@ -748,6 +837,81 @@ export class DurableObjectExample extends DurableObject {
     const response = new TextDecoder().decode(await promise);
     clearTimeout(timeout);
     assert.strictEqual(response, 'Binding 42: Hello through intercept!');
+
+    ws.close();
+    await container.destroy();
+  }
+
+  async testInterceptWebSocketHttps() {
+    const container = this.ctx.container;
+    if (container.running) {
+      const monitor = container.monitor().catch((_err) => {});
+      await container.destroy();
+      await monitor;
+    }
+
+    assert.strictEqual(container.running, false);
+
+    await container.interceptOutboundHttps(
+      'example.com:443',
+      this.ctx.exports.TestService({ props: { id: 99 } })
+    );
+
+    container.start({
+      env: {
+        WS_ENABLED: 'true',
+        WS_PROXY_TARGET: 'example.com',
+        WS_PROXY_SECURE: 'true',
+        NODE_EXTRA_CA_CERTS:
+          '/etc/cloudflare/certs/cloudflare-containers-ca.crt',
+      },
+    });
+
+    container.monitor().finally(() => {
+      console.log('Container exited');
+    });
+
+    await this.waitUntilContainerIsHealthy();
+
+    assert.strictEqual(container.running, true);
+
+    const res = await container.getTcpPort(8080).fetch('http://foo/ws', {
+      headers: {
+        Upgrade: 'websocket',
+        Connection: 'Upgrade',
+        'Sec-WebSocket-Key': 'x3JJHMbDL1EzLkh9GBhXDw==',
+        'Sec-WebSocket-Version': '13',
+      },
+      signal: AbortSignal.timeout(DEFAULT_TIMEOUT_DURATION),
+    });
+
+    assert.strictEqual(res.status, 101);
+    assert.strictEqual(res.headers.get('upgrade'), 'websocket');
+    assert.strictEqual(!!res.webSocket, true);
+
+    const ws = res.webSocket;
+    ws.binaryType = 'arraybuffer';
+    ws.accept();
+
+    const { promise, resolve, reject } = Promise.withResolvers();
+
+    ws.addEventListener(
+      'message',
+      (event) => {
+        resolve(event.data);
+      },
+      { once: true }
+    );
+
+    const timeout = setTimeout(() => {
+      reject(new Error('Websocket message not received within 5 seconds'));
+    }, 5_000);
+
+    ws.send('Hello through WSS intercept!');
+
+    const response = new TextDecoder().decode(await promise);
+    clearTimeout(timeout);
+    assert.strictEqual(response, 'Binding 99: Hello through WSS intercept!');
 
     ws.close();
     await container.destroy();
@@ -1037,6 +1201,22 @@ export const testSetEgressHttp = {
   },
 };
 
+export const testSetEgressHttps = {
+  async test(_ctrl, env) {
+    const id = env.MY_CONTAINER.idFromName(
+      getRandomDurableObjectName('testSetEgressHttps')
+    );
+    let stub = env.MY_CONTAINER.get(id);
+    await stub.testSetEgressHttps();
+    try {
+      await stub.abort();
+    } catch {}
+
+    stub = env.MY_CONTAINER.get(id);
+    await stub.testSetEgressHttps();
+  },
+};
+
 // Test WebSocket through interceptOutboundHttp - DO -> container -> worker binding via WebSocket
 export const testInterceptWebSocket = {
   async test(_ctrl, env) {
@@ -1046,5 +1226,16 @@ export const testInterceptWebSocket = {
 
     const stub = env.MY_CONTAINER.get(id);
     await stub.testInterceptWebSocket();
+  },
+};
+
+export const testInterceptWebSocketHttps = {
+  async test(_ctrl, env) {
+    const id = env.MY_CONTAINER.idFromName(
+      getRandomDurableObjectName('testInterceptWebSocketHttps')
+    );
+
+    const stub = env.MY_CONTAINER.get(id);
+    await stub.testInterceptWebSocketHttps();
   },
 };

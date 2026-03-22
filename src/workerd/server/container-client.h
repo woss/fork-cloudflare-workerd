@@ -75,6 +75,7 @@ class ContainerClient final: public rpc::Container::Server, public kj::Refcounte
   kj::Promise<void> listenTcp(ListenTcpContext context) override;
   kj::Promise<void> setInactivityTimeout(SetInactivityTimeoutContext context) override;
   kj::Promise<void> setEgressHttp(SetEgressHttpContext context) override;
+  kj::Promise<void> setEgressHttps(SetEgressHttpsContext context) override;
 
   kj::Own<ContainerClient> addRef();
 
@@ -160,28 +161,36 @@ class ContainerClient final: public rpc::Container::Server, public kj::Refcounte
   // to await, and add a branch to waitUntilTasks to keep the cleanup tasks alive.
   kj::Function<void(kj::Promise<void>)> cleanupCallback;
 
-  // For redeeming channel tokens received via setEgressHttp
+  // For redeeming channel tokens received via setEgressHttp / setEgressHttps.
   ChannelTokenHandler& channelTokenHandler;
 
-  // Represents a parsed egress mapping. IP/CIDR mappings match all hostnames,
-  // while hostnameGlob mappings only match requests carrying a matching hostname.
+  // Represents a parsed egress mapping. IP/CIDR mappings match destination IPs,
+  // while hostnameGlob mappings match either HTTP hostnames or TLS SNI depending on `tls`.
   struct EgressMapping {
     kj::OneOf<kj::CidrRange, kj::String> destination;
     uint16_t port;  // 0 means match all ports
+    bool tls;
     kj::Own<workerd::IoChannelFactory::SubrequestChannel> channel;
   };
 
   kj::Vector<EgressMapping> egressMappings;
 
-  // Insert or replace an egress mapping. If a mapping with the same destination and port
-  // already exists, its channel is replaced; otherwise a new mapping is added.
+  // Insert or replace an egress mapping. If a mapping with the same destination, port, and TLS
+  // mode already exists, its channel is replaced; otherwise a new mapping is added.
   void upsertEgressMapping(EgressMapping mapping);
   kj::Vector<kj::String> getDnsAllowHostnames() const;
 
   // Find a matching egress mapping for the given destination address (host:port format).
   // Returns an addRef'd Own so the channel stays alive even if the mapping is later replaced.
   kj::Maybe<kj::Own<workerd::IoChannelFactory::SubrequestChannel>> findEgressMapping(
-      kj::StringPtr destAddr, uint16_t defaultPort, kj::Maybe<kj::StringPtr> hostname);
+      kj::StringPtr destAddr, uint16_t defaultPort, kj::Maybe<kj::StringPtr> hostname, bool tls);
+
+  kj::Promise<void> writeFileToContainer(kj::StringPtr container,
+      kj::StringPtr dir,
+      kj::StringPtr filename,
+      kj::ArrayPtr<const kj::byte> content);
+  kj::Promise<void> readCACert();
+  kj::Promise<void> injectCACert();
 
   // Whether general internet access is enabled for this container, when known.
   kj::Maybe<bool> internetEnabled = kj::none;
@@ -189,6 +198,10 @@ class ContainerClient final: public rpc::Container::Server, public kj::Refcounte
   std::atomic_bool containerStarted = false;
   std::atomic_bool containerSidecarStarted = false;
   std::atomic_bool egressListenerStarted = false;
+  std::atomic_bool caCertInjected = false;
+
+  // CA cert read from the sidecar after it starts.
+  kj::Maybe<kj::String> caCert;
 
   kj::Maybe<kj::Own<kj::HttpServer>> egressHttpServer;
   kj::Maybe<kj::Promise<void>> egressListenerTask;
