@@ -7,11 +7,9 @@ TypeScript and JavaScript layer implementing Node.js compatible built-in modules
 It is split across multiple layers:
 
 1. An **internal layer** consisting of:
-
-- Non-user-importable TypeScript and JavaScript files in `internal/` that implement core logic, utilities, and C++ JSG module declarations.
-- C++ JSG modules (`src/workerd/api/node/`) expose native ops via `node-internal:*` specifiers
-- Some native internal modules may be implemented in Rust
-
+    - Non-user-importable TypeScript and JavaScript files in `internal/` that implement core logic, utilities, and C++ JSG module declarations.
+    - C++ JSG modules (`src/workerd/api/node/`) expose native ops via `node-internal:*` specifiers
+    - Some native internal modules may be implemented in Rust
 2. A **public layer** of TypeScript files at the top-level that are user-importable.
 
 It is common, but not required, for top-level `.ts` files to re-export from `internal/` via `node-internal:` specifiers. This allows for a clean separation between public API surface and internal implementation details.
