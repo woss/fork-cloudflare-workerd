@@ -231,7 +231,7 @@ When reviewing JS/TS code in workerd, check for each of these items.
 - **Never** use the `public` keyword on class members.
 - **Never** use the non-null assertion (`!`). Prefer proper narrowing or `?? defaultValue`.
   Flag any `eslint-disable` for `@typescript-eslint/no-non-null-assertion`.
-- **Never** use TypeScript enum or namespace\*\*. We only use `erasableSyntaxOnly`. Use `as const`
+- **Never** use TypeScript enum or namespace. We only use `erasableSyntaxOnly`. Use `as const`
   objects for enum-like patterns.
 - **Always** use compat flag gating. Behavioral changes that could break existing workers must be
   gated behind a compat flag. Check that the flag exists in `compatibility-date.capnp` and is
