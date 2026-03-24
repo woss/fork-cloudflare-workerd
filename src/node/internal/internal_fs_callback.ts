@@ -1434,6 +1434,7 @@ export function glob(
   } else {
     options = optionsOrCallback;
   }
+  if (callback === undefined) return;
   callWithSingleArgCallback(() => fssync.globSync(pattern, options), callback);
 }
 

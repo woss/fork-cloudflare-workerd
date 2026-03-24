@@ -91,7 +91,7 @@ import {
   expandBraces,
   normalizePattern,
   walkGlob,
-  compileExclude,
+  compileExcludePatterns,
   type GlobResult,
 } from 'node-internal:internal_fs_glob';
 import processImpl from 'node-internal:process';
@@ -874,16 +874,16 @@ export function globSync(
   const withFileTypes: boolean =
     (options as GlobOptionsWithFileTypes).withFileTypes ?? false;
 
+  // Exclude can be a user function or an array of glob patterns.
+  // Keep them as separate variables to preserve proper type signatures.
   const excludeOption = (options as GlobOptions).exclude;
-  // When exclude is a user function, it receives string or Dirent depending on withFileTypes.
-  // When exclude is an array, we compile it to a string-matching function.
-  const isExcludeFunction = typeof excludeOption === 'function';
-  const excludeFn = compileExclude(
-    excludeOption as
-      | readonly string[]
-      | ((path: string | Dirent) => boolean)
-      | undefined
-  );
+  let excludeUserFn: ((path: string | Dirent) => boolean) | undefined;
+  let excludePatternFn: ((path: string) => boolean) | undefined;
+  if (typeof excludeOption === 'function') {
+    excludeUserFn = excludeOption as (path: string | Dirent) => boolean;
+  } else if (Array.isArray(excludeOption)) {
+    excludePatternFn = compileExcludePatterns(excludeOption as string[]);
+  }
 
   // Pattern-driven directory walk
   const results = new Map<string, GlobResult>();
@@ -908,22 +908,18 @@ export function globSync(
   for (const [relPath, entry] of results) {
     if (!relPath) continue; // skip empty paths
 
+    if (excludePatternFn && excludePatternFn(relPath)) continue;
+
     if (withFileTypes) {
       const parts = relPath.split('/');
-      const name = parts.pop()!;
+      const name = parts.pop() ?? '';
       const parentPath = cwd + (parts.length ? '/' + parts.join('/') : '');
       const type = entry.handle?.type ?? 0;
       const dirent = new Dirent(name, type, parentPath);
-      if (excludeFn) {
-        if (isExcludeFunction) {
-          if ((excludeFn as (p: string | Dirent) => boolean)(dirent)) continue;
-        } else {
-          if (excludeFn(relPath)) continue;
-        }
-      }
+      if (excludeUserFn && excludeUserFn(dirent)) continue;
       direntResults.push(dirent);
     } else {
-      if (excludeFn && excludeFn(relPath)) continue;
+      if (excludeUserFn && excludeUserFn(relPath)) continue;
       stringResults.push(relPath);
     }
   }

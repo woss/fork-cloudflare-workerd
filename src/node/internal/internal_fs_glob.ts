@@ -1,14 +1,16 @@
-// Copyright (c) 2017-2022 Cloudflare, Inc.
+// Copyright (c) 2026 Cloudflare, Inc.
 // Licensed under the Apache 2.0 license found in the LICENSE file or at:
 //     https://opensource.org/licenses/Apache-2.0
 
 import { default as cffs } from 'cloudflare-internal:filesystem';
 import type { DirEntryHandle } from 'cloudflare-internal:filesystem';
 import { normalizePath } from 'node-internal:internal_fs_utils';
-import { Dirent } from 'node-internal:internal_fs';
 
 // UV_DIRENT_DIR constant from internal_fs_constants
 const UV_DIRENT_DIR = 2;
+
+// Maximum recursion depth to prevent stack overflow on deeply nested VFS
+const MAX_WALK_DEPTH = 256;
 
 // ============================================================================
 // Brace Expansion
@@ -21,13 +23,7 @@ function splitTopLevel(str: string, sep: string): string[] {
   let depth = 0;
   let current = '';
 
-  for (let i = 0; i < str.length; i++) {
-    const c = str[i]!;
-    if (c === '\\' && i + 1 < str.length) {
-      current += c + str[i + 1]!;
-      i++;
-      continue;
-    }
+  for (const c of str) {
     if (c === '{' || c === '(') {
       depth++;
       current += c;
@@ -52,7 +48,7 @@ export function expandBraces(pattern: string): string[] {
   let braceStart = -1;
 
   for (let i = 0; i < pattern.length; i++) {
-    const c = pattern[i]!;
+    const c = pattern[i];
     if (c === '\\' && i + 1 < pattern.length) {
       i++;
       continue;
@@ -122,11 +118,11 @@ function segmentToRegexStr(segment: string): string {
   let inCharClass = false;
 
   while (i < segment.length) {
-    const c = segment[i]!;
+    const c = segment[i] ?? '';
 
     // Handle escape sequences
     if (c === '\\' && i + 1 < segment.length) {
-      regex += '\\' + escapeRegexChar(segment[i + 1]!);
+      regex += '\\' + escapeRegexChar(segment[i + 1] ?? '');
       i += 2;
       continue;
     }
@@ -251,8 +247,7 @@ export function globToRegex(pattern: string): RegExp {
   const segments = normalized.split('/').filter((s) => s !== '');
   const parts: string[] = [];
 
-  for (let i = 0; i < segments.length; i++) {
-    const seg = segments[i]!;
+  for (const seg of segments) {
     if (seg === '**') {
       // ** matches zero or more path segments
       // We handle this by inserting a special marker
@@ -269,7 +264,8 @@ export function globToRegex(pattern: string): RegExp {
   // Now build regex from parts, handling ** markers
   let regex = '';
   for (let i = 0; i < parts.length; i++) {
-    const part = parts[i]!;
+    const part = parts[i] ?? '';
+    const prevPart = i > 0 ? (parts[i - 1] ?? '') : '';
     if (part === '**') {
       if (parts.length === 1) {
         // ** alone: match everything
@@ -282,10 +278,10 @@ export function globToRegex(pattern: string): RegExp {
         regex += '(?:\\/.*)?';
       } else {
         // ** in middle: match zero or more middle segments
-        regex += '(?:\\/[^/]+)*\\/';
+        regex += '(?:\\/[^/]+)*(?:\\/)?';
       }
     } else {
-      if (i > 0 && parts[i - 1] !== '**') {
+      if (i > 0 && prevPart !== '**') {
         regex += '\\/';
       }
       regex += part;
@@ -299,14 +295,12 @@ export function globToRegex(pattern: string): RegExp {
 // Exclude Compiler
 // ============================================================================
 
-export function compileExclude(
-  exclude: readonly string[] | ((path: string | Dirent) => boolean) | undefined
-): ((path: string) => boolean) | undefined {
-  if (exclude === undefined) return undefined;
-  if (typeof exclude === 'function')
-    return exclude as (path: string) => boolean;
-
-  // Array of glob patterns: compile to regexes
+// Compiles an array of glob patterns into an exclude function.
+// Only accepts string arrays — user-provided functions are handled
+// separately in globSync to preserve their (string | Dirent) signature.
+export function compileExcludePatterns(
+  exclude: readonly string[]
+): (path: string) => boolean {
   const regexes: RegExp[] = [];
   for (const pat of exclude) {
     for (const expanded of expandBraces(pat)) {
@@ -367,8 +361,12 @@ export function walkGlob(
   relativePath: string,
   results: Map<string, GlobResult>,
   cache: EntryCache,
-  visitedGlobstar?: Set<string>
+  visitedGlobstar?: Set<string>,
+  depth: number = 0
 ): void {
+  // Guard against excessive recursion depth
+  if (depth >= MAX_WALK_DEPTH) return;
+
   // All segments consumed: this path is a match
   if (segIdx >= segments.length) {
     if (!results.has(relativePath)) {
@@ -376,7 +374,7 @@ export function walkGlob(
       const lastSlash = currentAbsPath.lastIndexOf('/');
       const parentDir =
         lastSlash > 0 ? currentAbsPath.slice(0, lastSlash) : currentAbsPath;
-      const basename = relativePath.split('/').pop() || '';
+      const basename = relativePath.split('/').pop() ?? '';
       const entries = getDirectoryEntries(parentDir, cache);
       const handle = entries.find((e) => e.name === basename) ?? null;
       results.set(relativePath, { relativePath, handle });
@@ -384,7 +382,7 @@ export function walkGlob(
     return;
   }
 
-  const seg = segments[segIdx]!;
+  const seg = segments[segIdx] ?? '';
 
   // Handle '.' — stay in current directory
   if (seg === '.') {
@@ -396,7 +394,8 @@ export function walkGlob(
       relativePath,
       results,
       cache,
-      visitedGlobstar
+      visitedGlobstar,
+      depth
     );
     return;
   }
@@ -422,7 +421,8 @@ export function walkGlob(
       newRel,
       results,
       cache,
-      visitedGlobstar
+      visitedGlobstar,
+      depth
     );
     return;
   }
@@ -445,7 +445,8 @@ export function walkGlob(
       relativePath,
       results,
       cache,
-      visitedGlobstar
+      visitedGlobstar,
+      depth
     );
 
     // One or more levels: enumerate children
@@ -465,7 +466,8 @@ export function walkGlob(
         childRel,
         results,
         cache,
-        visitedGlobstar
+        visitedGlobstar,
+        depth + 1
       );
 
       // If directory, recurse ** deeper
@@ -478,7 +480,8 @@ export function walkGlob(
           childRel,
           results,
           cache,
-          visitedGlobstar
+          visitedGlobstar,
+          depth + 1
         );
       }
     }
@@ -511,7 +514,8 @@ export function walkGlob(
           childRel,
           results,
           cache,
-          visitedGlobstar
+          visitedGlobstar,
+          depth + 1
         );
       }
     }
