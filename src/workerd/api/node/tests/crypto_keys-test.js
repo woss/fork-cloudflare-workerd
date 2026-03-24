@@ -2162,10 +2162,7 @@ export const export_encrypted_private_key = {
     });
 
     // The re-imported key must produce the same unencrypted export.
-    strictEqual(
-      reimported.export({ format: 'pem', type: 'pkcs8' }),
-      plainPem
-    );
+    strictEqual(reimported.export({ format: 'pem', type: 'pkcs8' }), plainPem);
   },
 };
 
