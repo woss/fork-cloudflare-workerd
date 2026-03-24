@@ -429,7 +429,7 @@ export function walkGlob(
 
   // Handle '**' — match zero or more directory levels
   if (seg === '**') {
-    const gsKey = currentAbsPath + ':' + segIdx;
+    const gsKey = `${currentAbsPath}:${String(segIdx)}`;
     if (visitedGlobstar === undefined) {
       visitedGlobstar = new Set();
     }

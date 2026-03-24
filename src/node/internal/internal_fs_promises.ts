@@ -661,16 +661,16 @@ export function writeFile(
   });
 }
 
-export async function* glob(
+export function* glob(
   pattern: string | readonly string[],
   options:
     | GlobOptions
     | GlobOptionsWithFileTypes
     | GlobOptionsWithoutFileTypes = {}
-): AsyncGenerator<string | Dirent> {
+): Generator<string | Dirent> {
   const results = fssync.globSync(pattern, options);
   for (const result of results) {
-    yield result as string | Dirent;
+    yield result;
   }
 }
 
