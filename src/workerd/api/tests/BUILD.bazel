@@ -2,6 +2,18 @@ load("@aspect_rules_js//js:defs.bzl", "js_binary")
 load("//:build/wd_test.bzl", "wd_test")
 
 wd_test(
+    src = "structuredclone-error-serialize-test.wd-test",
+    args = ["--experimental"],
+    data = ["structuredclone-error-serialize-test.js"],
+)
+
+wd_test(
+    src = "deserialize-hardening-test.wd-test",
+    args = ["--experimental"],
+    data = ["deserialize-hardening-test.js"],
+)
+
+wd_test(
     src = "settimeout-test.wd-test",
     args = ["--experimental"],
     data = ["settimeout-test.js"],

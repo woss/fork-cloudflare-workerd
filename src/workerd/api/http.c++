@@ -888,7 +888,10 @@ jsg::Ref<Request> Request::deserialize(jsg::Lock& js,
     jsg::Deserializer& deserializer,
     const jsg::TypeHandler<RequestInitializerDict>& initDictHandler) {
   auto url = deserializer.readLengthDelimitedString();
-  auto init = KJ_ASSERT_NONNULL(initDictHandler.tryUnwrap(js, deserializer.readValue(js)));
+  auto init = KJ_UNWRAP_OR(initDictHandler.tryUnwrap(js, deserializer.readValue(js)), {
+    JSG_FAIL_REQUIRE(DOMDataCloneError,
+        "Deserialization failed: could not deserialize Request initializer");
+  });
   return Request::constructor(js, kj::mv(url), kj::mv(init));
 }
 
@@ -1435,8 +1438,14 @@ jsg::Ref<Response> Response::deserialize(jsg::Lock& js,
     jsg::Deserializer& deserializer,
     const jsg::TypeHandler<InitializerDict>& initDictHandler,
     const jsg::TypeHandler<kj::Maybe<jsg::Ref<ReadableStream>>>& streamHandler) {
-  auto body = KJ_ASSERT_NONNULL(streamHandler.tryUnwrap(js, deserializer.readValue(js)));
-  auto init = KJ_ASSERT_NONNULL(initDictHandler.tryUnwrap(js, deserializer.readValue(js)));
+  auto body = KJ_UNWRAP_OR(streamHandler.tryUnwrap(js, deserializer.readValue(js)), {
+    JSG_FAIL_REQUIRE(DOMDataCloneError,
+        "Deserialization failed: could not deserialize Response body");
+  });
+  auto init = KJ_UNWRAP_OR(initDictHandler.tryUnwrap(js, deserializer.readValue(js)), {
+    JSG_FAIL_REQUIRE(DOMDataCloneError,
+        "Deserialization failed: could not deserialize Response initializer");
+  });
 
   // If the status code is zero, then it was an error response. We cannot
   // use the Response::constructor.
