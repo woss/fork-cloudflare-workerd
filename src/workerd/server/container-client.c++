@@ -1524,6 +1524,9 @@ kj::Promise<void> ContainerClient::start(StartContext context) {
 
   internetEnabled = params.getEnableInternet();
 
+  JSG_REQUIRE(!params.hasContainerSnapshotId(), Error,
+      "container.start({ containerSnapshot }) is not implemented for local Docker containers yet.");
+
   // If startup fails after we clone any snapshot volumes, tear down the app container first and
   // then delete those clone volumes so we don't leave mounted Docker volumes behind.
   KJ_DEFER(if (!containerStarted.load(std::memory_order_acquire)) {
@@ -1531,14 +1534,12 @@ kj::Promise<void> ContainerClient::start(StartContext context) {
   });
 
   kj::Vector<SnapshotRestoreMount> restoreMounts;
-  if (params.hasSnapshots()) {
-    auto snapshotList = params.getSnapshots();
+  if (params.hasDirectorySnapshots()) {
+    auto snapshotList = params.getDirectorySnapshots();
     restoreMounts.reserve(snapshotList.size());
     for (auto i: kj::zeroTo(snapshotList.size())) {
       auto entry = snapshotList[i];
-      auto snapshot = entry.getSnapshot();
-      auto snapshotId = kj::str(snapshot.getId());
-      auto dir = kj::str(snapshot.getDir());
+      auto snapshotId = kj::str(entry.getSnapshotId());
 
       JSG_REQUIRE(
           snapshotId.size() > 0 && snapshotId.size() <= 64, Error, "Invalid snapshot ID length");
@@ -1547,9 +1548,9 @@ kj::Promise<void> ContainerClient::start(StartContext context) {
             "Invalid snapshot ID: must contain only hex digits and hyphens");
       }
 
-      const auto mountPointText = entry.getMountPoint();
-      auto restorePath =
-          parseAbsolutePath(mountPointText.size() > 0 ? mountPointText : snapshot.getDir());
+      auto restorePath = parseAbsolutePath(entry.getRestorePath());
+      JSG_REQUIRE(restorePath.toString(true) != "/", Error,
+          "Directory snapshot cannot be restored to root directory.");
 
       auto sourceVolume = kj::str(SNAPSHOT_VOLUME_PREFIX, snapshotId);
 
@@ -1722,6 +1723,17 @@ kj::Promise<void> ContainerClient::snapshotDirectory(SnapshotDirectoryContext co
   KJ_IF_SOME(n, name) {
     result.setName(n);
   }
+}
+
+kj::Promise<void> ContainerClient::snapshotContainer(SnapshotContainerContext context) {
+  auto [ready, done] = getRpcTurn();
+  co_await ready;
+  KJ_DEFER(done->fulfill());
+
+  JSG_REQUIRE(containerStarted.load(std::memory_order_acquire), Error,
+      "snapshotContainer() requires a running container.");
+  JSG_FAIL_REQUIRE(
+      Error, "snapshotContainer() is not implemented for local Docker containers yet.");
 }
 
 kj::Promise<void> ContainerClient::getTcpPort(GetTcpPortContext context) {
