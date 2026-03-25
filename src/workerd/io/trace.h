@@ -290,7 +290,9 @@ struct SpanContext {
 
   static SpanContext fromCapnp(rpc::SpanContext::Reader reader);
   void toCapnp(rpc::SpanContext::Builder writer) const;
-  SpanContext clone() const;
+  static SpanContext clone(const SpanContext& ctx) {
+    return SpanContext(ctx.traceId, ctx.spanId);
+  }
 
   // Parse a W3C traceparent string into a SpanContext.
   // Format: "{version}-{trace-id}-{parent-id}-{flags}"
@@ -1046,6 +1048,9 @@ class SpanParent {
     return observer;
   }
 
+  // Return the serializable identity of this span for cross-boundary propagation.
+  kj::Maybe<tracing::SpanContext> toSpanContext();
+
  private:
   kj::Maybe<kj::Own<SpanObserver>> observer;
 };
@@ -1175,7 +1180,20 @@ class SpanObserver: public kj::Refcounted {
   virtual kj::Date getTime() {
     return kj::systemPreciseCalendarClock().now();
   }
+
+  // Return the serializable identity of this span for cross-boundary propagation.
+  // Returns kj::none if this observer doesn't carry identity.
+  virtual kj::Maybe<tracing::SpanContext> toSpanContext() {
+    return kj::none;
+  }
 };
+
+inline kj::Maybe<tracing::SpanContext> SpanParent::toSpanContext() {
+  KJ_IF_SOME(obs, observer) {
+    return obs->toSpanContext();
+  }
+  return kj::none;
+}
 
 inline SpanParent::SpanParent(SpanBuilder& builder): observer(mapAddRef(builder.observer)) {}
 
@@ -1213,6 +1231,10 @@ class TraceContext {
   }
   SpanParent getInternalSpanParent() {
     return SpanParent(span);
+  }
+
+  SpanParent getUserSpanParent() {
+    return SpanParent(userSpan);
   }
 
  private:

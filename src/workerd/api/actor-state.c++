@@ -994,8 +994,9 @@ class FacetOutgoingFactory final: public Fetcher::OutgoingFactory {
       }
 
       return KJ_REQUIRE_NONNULL(actorChannel)
-          ->startRequest(
-              {.cfBlobJson = kj::mv(cfStr), .parentSpan = tracing.getInternalSpanParent()});
+          ->startRequest({.cfBlobJson = kj::mv(cfStr),
+            .parentSpan = tracing.getInternalSpanParent(),
+            .userSpanParent = tracing.getUserSpanParent()});
     },
         {.inHouse = true,
           .wrapMetrics = true,

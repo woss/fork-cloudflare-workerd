@@ -362,13 +362,17 @@ void WorkerTracer::setEventInfoInternal(
       .entrypoint = mapCopyString(trace->entrypoint),
     };
 
+    tracing::SpanId parentSpanId = tracing::SpanId::nullId;
+    KJ_IF_SOME(trigger, context.getParent()) {
+      parentSpanId = trigger.getSpanId();
+    }
     // Onset needs special handling for spanId: The top-level spanId is zero unless a trigger
-    // context is available (not yet implemented). The inner spanId is taken from the invocation
+    // context is available. The inner spanId is taken from the invocation
     // span context, that span is being "opened" with the onset event. All other tail events have it
     // as its parent span ID, except for recursive SpanOpens (which have the parent span instead)
     // and Attribute/SpanClose events (which have the spanId opened in the corresponding SpanOpen).
     auto onsetContext = tracing::InvocationSpanContext(
-        context.getTraceId(), context.getInvocationId(), tracing::SpanId::nullId);
+        context.getTraceId(), context.getInvocationId(), parentSpanId);
 
     // Not applying size accounting for Onset since it is sent separately
     writer->report(onsetContext,
@@ -520,9 +524,9 @@ void WorkerTracer::setWorkerAttribute(kj::ConstString key, Span::TagValue value)
   attributes.add(tracing::Attribute{kj::mv(key), kj::mv(value)});
 }
 
-SpanParent BaseTracer::makeUserRequestSpan() {
+SpanParent BaseTracer::makeUserRequestSpan(tracing::TraceId traceId) {
   KJ_IF_SOME(func, makeUserRequestSpanFunc) {
-    return func();
+    return func(kj::mv(traceId));
   } else {
     return SpanParent(nullptr);
   }
@@ -552,7 +556,14 @@ void WorkerTracer::setJsRpcInfo(const tracing::InvocationSpanContext& context,
 }
 
 kj::Own<SpanObserver> UserSpanObserver::newChild() {
-  return kj::refcounted<UserSpanObserver>(kj::addRef(*submitter), spanId);
+  return kj::refcounted<UserSpanObserver>(kj::addRef(*submitter), spanId, traceId);
+}
+
+kj::Maybe<tracing::SpanContext> UserSpanObserver::toSpanContext() {
+  if (traceId == nullptr) {
+    return kj::none;
+  }
+  return tracing::SpanContext(traceId, spanId);
 }
 
 void UserSpanObserver::onClose(
@@ -572,6 +583,10 @@ void UserSpanObserver::onOpen(kj::ConstString operationName, kj::Date startTime)
 // Provide I/O time to the tracing system for user spans.
 kj::Date UserSpanObserver::getTime() {
   return IoContext::current().now();
+}
+
+tracing::SpanId UserSpanObserver::getSpanId() {
+  return spanId;
 }
 
 }  // namespace workerd

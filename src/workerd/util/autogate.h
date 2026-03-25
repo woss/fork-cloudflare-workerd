@@ -46,6 +46,8 @@ enum class AutogateKey {
   SQL_RESTRICT_RESERVED_NAMES,
   // Increase the SQLite hard heap limit from 512 MiB to 8 GiB.
   INCREASE_SQLITE_HARD_HEAP_LIMIT,
+  // Enable user span context propagation across worker-to-worker subrequests.
+  USER_SPAN_CONTEXT_PROPAGATION,
   NumOfKeys  // Reserved for iteration.
 };
 
