@@ -1,3 +1,6 @@
+// Copyright (c) 2026 Cloudflare, Inc.
+// Licensed under the Apache 2.0 license found in the LICENSE file or at:
+//     https://opensource.org/licenses/Apache-2.0
 // Regression tests for deserialization hardening. These tests verify that
 // crafted V8 structured clone payloads targeting various host object
 // deserializers produce graceful DataCloneError exceptions rather than

@@ -1,3 +1,6 @@
+// Copyright (c) 2025 Cloudflare, Inc.
+// Licensed under the Apache 2.0 license found in the LICENSE file or at:
+//     https://opensource.org/licenses/Apache-2.0
 import { DurableObject, WorkerEntrypoint } from 'cloudflare:workers';
 import assert from 'node:assert';
 import { scheduler } from 'node:timers/promises';
@@ -1290,7 +1293,7 @@ export class DurableObjectExample extends DurableObject {
           } catch (err) {
             return reject(err);
           }
-          const monitor = container.monitor().then(resolve).catch(reject);
+          container.monitor().then(resolve).catch(reject);
         }),
       (err) => {
         assert.ok(err.message.length > 0, 'error should have a message');
@@ -1599,7 +1602,9 @@ export const testSetEgressHttp = {
     try {
       // test we recover from aborts
       await stub.abort();
-    } catch {}
+    } catch {
+      // intentionally empty
+    }
 
     stub = env.MY_CONTAINER.get(id);
     // should work idempotent
@@ -1616,7 +1621,9 @@ export const testSetEgressHttps = {
     await stub.testSetEgressHttps();
     try {
       await stub.abort();
-    } catch {}
+    } catch {
+      // intentionally empty — abort may throw if container already stopped
+    }
 
     stub = env.MY_CONTAINER.get(id);
     await stub.testSetEgressHttps();
