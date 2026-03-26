@@ -454,12 +454,15 @@ class IsolateModuleRegistry final {
       kj::StringPtr rawSpecifier,
       SourcePhase sourcePhase,
       kj::Maybe<kj::StringPtr> importType = kj::none) {
-    static constexpr auto evaluate = [](Lock& js, Entry& entry, const CompilationObserver& observer,
-                                         const Module::Evaluator& maybeEvaluate) {
-      auto module = entry.key.getHandle(js);
+    // Note: Takes v8::Local<v8::Module> and const Module& directly rather than
+    // Entry& for the same reason as require()'s evaluate lambda — the lookupCache
+    // table may rehash during evaluate(), invalidating Entry& references.
+    static constexpr auto evaluate =
+        [](Lock& js, v8::Local<v8::Module> module, const Module& moduleDef,
+            const CompilationObserver& observer, const Module::Evaluator& maybeEvaluate) {
       return js
           .toPromise(
-              check(entry.module.evaluate(js, module, observer, maybeEvaluate)).As<v8::Promise>())
+              check(moduleDef.evaluate(js, module, observer, maybeEvaluate)).As<v8::Promise>())
           .then(js, [module = js.v8Ref(module)](Lock& js, Value) mutable -> Promise<Value> {
         return js.resolvedPromise(js.v8Ref(module.getHandle(js)->GetModuleNamespace()));
       });
@@ -483,16 +486,21 @@ class IsolateModuleRegistry final {
       };
 
       auto handleFoundModule = [&](Entry& found) -> Promise<Value> {
-        // Validate import type attribute against the resolved module's content type.
-        validateImportType(js, importType, found.module, rawSpecifier);
-
+        // Extract module handle and Module& before calling evaluate, since
+        // evaluate may trigger table rehashing that invalidates the Entry&.
         auto v8Module = found.key.getHandle(js);
+        auto& moduleDef = found.module;
+
+        // Validate import type attribute against the resolved module's content type.
+        validateImportType(js, importType, moduleDef, rawSpecifier);
+
         if (v8Module->GetStatus() == v8::Module::kErrored) {
           return js.rejectedPromise<Value>(v8Module->GetException());
         }
 
-        auto evaluatePromise = evaluate(js, found, getObserver(), inner.getEvaluator());
-        auto isWasm = found.module.isWasm();
+        auto evaluatePromise =
+            evaluate(js, v8Module, moduleDef, getObserver(), inner.getEvaluator());
+        auto isWasm = moduleDef.isWasm();
 
         if (!sourcePhase) {
           return evaluatePromise;
@@ -607,11 +615,15 @@ class IsolateModuleRegistry final {
       return ns;
     };
 
-    static constexpr auto evaluate = [](Lock& js, Entry& entry, const Url& id,
-                                         const CompilationObserver& observer,
-                                         const Module::Evaluator& maybeEvaluate,
-                                         RequireOption option) -> v8::MaybeLocal<v8::Object> {
-      auto module = entry.key.getHandle(js);
+    // Note: This lambda takes v8::Local<v8::Module> and const Module& directly
+    // rather than Entry& because the lookupCache table may rehash during
+    // ensureInstantiated() or evaluate() (when V8 resolves static import
+    // dependencies via resolveModuleCallback -> resolveWithCaching -> upsert),
+    // which would invalidate any Entry& reference into the table.
+    static constexpr auto evaluate =
+        [](Lock& js, v8::Local<v8::Module> module, const Module& moduleDef, const Url& id,
+            const CompilationObserver& observer, const Module::Evaluator& maybeEvaluate,
+            RequireOption option) -> v8::MaybeLocal<v8::Object> {
       auto status = module->GetStatus();
 
       // If status is kErrored, that means a prior attempt to evaluate the module
@@ -625,7 +637,7 @@ class IsolateModuleRegistry final {
       // because v8 will not allow us to grab the default export while the module
       // is still evaluating.
 
-      if (entry.module.isEsm() && status == v8::Module::kEvaluating) {
+      if (moduleDef.isEsm() && status == v8::Module::kEvaluating) {
         JSG_FAIL_REQUIRE(Error, "Circular dependency when resolving module: ", id);
       }
 
@@ -637,14 +649,14 @@ class IsolateModuleRegistry final {
       // to a degree. Just like in Node.js, however, such circular dependencies
       // can still be problematic depending on how they are used.
       if (status == v8::Module::kEvaluated || status == v8::Module::kEvaluating) {
-        return maybeUnwrapDefault(js, module, entry.module, option);
+        return maybeUnwrapDefault(js, module, moduleDef, option);
       }
 
       // Matches the require(esm) behavior implemented in Node.js, which is to
       // throw if the module being imported uses top-level await.
       if ((option & RequireOption::NO_TOP_LEVEL_AWAIT) == RequireOption::NO_TOP_LEVEL_AWAIT) {
         // We have to ensure the module is instantiated before we can check for top-level await.
-        JSG_REQUIRE(ensureInstantiated(js, module, observer, entry.module), Error,
+        JSG_REQUIRE(ensureInstantiated(js, module, observer, moduleDef), Error,
             "Failed to instantiate module: ", id);
         JSG_REQUIRE(!module->IsGraphAsync(), Error,
             "Top-level await is not supported in this context for module: ", id);
@@ -652,7 +664,7 @@ class IsolateModuleRegistry final {
 
       // Evaluate the module and grab the default export from the module namespace.
       auto promise =
-          check(entry.module.evaluate(js, module, observer, maybeEvaluate)).As<v8::Promise>();
+          check(moduleDef.evaluate(js, module, observer, maybeEvaluate)).As<v8::Promise>();
 
       // Run the microtasks to ensure that any promises that happen to be scheduled
       // during the evaluation of the top-level scope have a chance to be settled.
@@ -669,7 +681,7 @@ class IsolateModuleRegistry final {
           case v8::Promise::kFulfilled: {
             // This is what we want. The module namespace should be fully populated
             // and evaluated at this point.
-            return maybeUnwrapDefault(js, module, entry.module, option);
+            return maybeUnwrapDefault(js, module, moduleDef, option);
           }
           case v8::Promise::kRejected: {
             // Oops, there was an error. We should throw it.
@@ -691,7 +703,7 @@ class IsolateModuleRegistry final {
         if (promise->State() == v8::Promise::kRejected) {
           js.throwException(JsValue(promise->Result()));
         }
-        return maybeUnwrapDefault(js, module, entry.module, option);
+        return maybeUnwrapDefault(js, module, moduleDef, option);
       }
       KJ_UNREACHABLE;
     };
@@ -710,13 +722,19 @@ class IsolateModuleRegistry final {
 
       // Do we already have a cached module for this context?
       KJ_IF_SOME(found, lookupCache.find<kj::HashIndex<ContextCallbacks>>(context)) {
-        return evaluate(
-            js, found, context.normalizedSpecifier, getObserver(), inner.getEvaluator(), option);
+        // Extract module handle and Module& before calling evaluate, since
+        // evaluate may trigger table rehashing that invalidates the Entry&.
+        auto foundModule = found.key.getHandle(js);
+        auto& foundModuleDef = found.module;
+        return evaluate(js, foundModule, foundModuleDef, context.normalizedSpecifier, getObserver(),
+            inner.getEvaluator(), option);
       }
 
       KJ_IF_SOME(found, resolveWithCaching(js, context)) {
-        return evaluate(
-            js, found, context.normalizedSpecifier, getObserver(), inner.getEvaluator(), option);
+        auto foundModule = found.key.getHandle(js);
+        auto& foundModuleDef = found.module;
+        return evaluate(js, foundModule, foundModuleDef, context.normalizedSpecifier, getObserver(),
+            inner.getEvaluator(), option);
       }
 
       if ((option & RequireOption::RETURN_EMPTY) == RequireOption::RETURN_EMPTY) {
@@ -1045,11 +1063,15 @@ v8::MaybeLocal<std::conditional_t<IsSourcePhase, v8::Object, v8::Module>> resolv
 
     ResolveContext::Type type = ResolveContext::Type::BUNDLE;
 
-    auto& referrerUrl = registry.lookup(js, referrer)
-                            .map([&](IsolateModuleRegistry::Entry& entry) -> const Url& {
+    // Clone the referrer URL out of the lookup cache entry rather than holding
+    // a reference into it. The lookupCache table may rehash during resolve()
+    // (via resolveWithCaching -> upsert), which would invalidate any reference
+    // into the table's storage.
+    Url referrerUrl = registry.lookup(js, referrer)
+                          .map([&](IsolateModuleRegistry::Entry& entry) -> Url {
       type = moduleTypeToResolveContextType(entry.module.type());
-      return entry.context.id;
-    }).orDefault(registry.getBundleBase());
+      return entry.context.id.clone();
+    }).orDefault(registry.getBundleBase().clone());
 
     // If Node.js Compat v2 mode is enable, we have to check to see if the specifier
     // is a bare node specifier and resolve it to a full node: URL.
