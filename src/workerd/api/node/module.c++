@@ -32,12 +32,12 @@ jsg::JsValue ModuleUtil::createRequire(jsg::Lock& js, kj::String path) {
           specifier = kj::mv(nodeSpec);
         }
       }
-      KJ_IF_SOME(ns,
+      KJ_IF_SOME(val,
           jsg::modules::ModuleRegistry::tryResolveModuleNamespace(js, specifier,
               jsg::modules::ResolveContext::Type::BUNDLE,
               jsg::modules::ResolveContext::Source::REQUIRE, referrer,
               jsg::modules::UnwrapDefault::YES)) {
-        return ns;
+        return val;
       }
       JSG_FAIL_REQUIRE(Error, kj::str("Module not found: ", specifier));
     }));

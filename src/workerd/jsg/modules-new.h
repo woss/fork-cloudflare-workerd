@@ -731,7 +731,7 @@ class ModuleRegistry final: public kj::AtomicRefcounted, public ModuleRegistryBa
   // JsExceptionThrown exception if an error occurs while the module is being evaluated.
   // Modules resolved with this method must be capable of fully evaluating within one
   // drain of the microtask queue.
-  static kj::Maybe<JsObject> tryResolveModuleNamespace(Lock& js,
+  static kj::Maybe<JsValue> tryResolveModuleNamespace(Lock& js,
       kj::StringPtr specifier,
       ResolveContext::Type type = ResolveContext::Type::BUNDLE,
       ResolveContext::Source source = ResolveContext::Source::INTERNAL,

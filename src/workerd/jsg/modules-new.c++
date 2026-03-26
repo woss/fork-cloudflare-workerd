@@ -575,7 +575,7 @@ class IsolateModuleRegistry final {
   // like the CommonJS require. Returns the instantiated/evaluated module namespace.
   // If an empty v8::MaybeLocal is returned and the default option is given, then an
   // exception has been scheduled.
-  v8::MaybeLocal<v8::Object> require(
+  v8::MaybeLocal<v8::Value> require(
       Lock& js, const ResolveContext& context, RequireOption option = RequireOption::DEFAULT) {
     // Returns either the module namespace or, when UNWRAP_DEFAULT is set and
     // the module is not ESM, the default export from the namespace. This matches
@@ -588,7 +588,7 @@ class IsolateModuleRegistry final {
     // because that's where their value lives.
     static constexpr auto maybeUnwrapDefault =
         [](Lock& js, v8::Local<v8::Module> module, const Module& moduleDef,
-            RequireOption option) -> v8::MaybeLocal<v8::Object> {
+            RequireOption option) -> v8::MaybeLocal<v8::Value> {
       auto ns = module->GetModuleNamespace().As<v8::Object>();
       if ((option & RequireOption::UNWRAP_DEFAULT) == RequireOption::UNWRAP_DEFAULT) {
         // User bundle ESM returns the full namespace, matching Node.js require(esm),
@@ -599,8 +599,7 @@ class IsolateModuleRegistry final {
           auto unwrap = ns->Get(js.v8Context(), js.strIntern("__cjsUnwrapDefault"_kj));
           v8::Local<v8::Value> unwrapValue;
           if (unwrap.ToLocal(&unwrapValue) && unwrapValue->BooleanValue(js.v8Isolate)) {
-            auto defaultValue = check(ns->Get(js.v8Context(), js.strIntern("default"_kj)));
-            return defaultValue.As<v8::Object>();
+            return check(ns->Get(js.v8Context(), js.strIntern("default"_kj)));
           }
           return ns;
         }
@@ -609,8 +608,7 @@ class IsolateModuleRegistry final {
         // We cast to v8::Object here because require() returns MaybeLocal<Object>, but
         // callers immediately convert to JsValue. The cast is safe because v8::Local is
         // just a pointer wrapper.
-        auto defaultValue = check(ns->Get(js.v8Context(), js.strIntern("default"_kj)));
-        return defaultValue.As<v8::Object>();
+        return check(ns->Get(js.v8Context(), js.strIntern("default"_kj)));
       }
       return ns;
     };
@@ -623,7 +621,7 @@ class IsolateModuleRegistry final {
     static constexpr auto evaluate =
         [](Lock& js, v8::Local<v8::Module> module, const Module& moduleDef, const Url& id,
             const CompilationObserver& observer, const Module::Evaluator& maybeEvaluate,
-            RequireOption option) -> v8::MaybeLocal<v8::Object> {
+            RequireOption option) -> v8::MaybeLocal<v8::Value> {
       auto status = module->GetStatus();
 
       // If status is kErrored, that means a prior attempt to evaluate the module
@@ -708,7 +706,7 @@ class IsolateModuleRegistry final {
       KJ_UNREACHABLE;
     };
 
-    return js.tryCatch([&]() -> v8::MaybeLocal<v8::Object> {
+    return js.tryCatch([&]() -> v8::MaybeLocal<v8::Value> {
       KJ_IF_SOME(processUrl, maybeRedirectNodeProcess(js, context.normalizedSpecifier.getHref())) {
         ResolveContext newContext{
           .type = ResolveContext::Type::BUILTIN_ONLY,
@@ -1161,12 +1159,13 @@ v8::MaybeLocal<std::conditional_t<IsSourcePhase, v8::Object, v8::Module>> resolv
           // with the compiled record, so that we can just directly read `sourceObject_` off of
           // entry.module instead.
           if (entry.module.isWasm()) {
-            v8::Local<v8::Object> moduleNamespace;
+            v8::Local<v8::Value> moduleNamespace;
             if (registry
                     .require(js, resolveContext, IsolateModuleRegistry::RequireOption::RETURN_EMPTY)
                     .ToLocal(&moduleNamespace)) {
               v8::Local<v8::Value> defaultExport;
-              if (moduleNamespace->Get(js.v8Context(), js.strIntern("default"_kj))
+              if (moduleNamespace.As<v8::Object>()
+                      ->Get(js.v8Context(), js.strIntern("default"_kj))
                       .ToLocal(&defaultExport)) {
                 if (defaultExport->IsWasmModuleObject()) {
                   return defaultExport.As<v8::Object>();
@@ -1801,7 +1800,7 @@ kj::Maybe<const Module&> ModuleRegistry::lookup(const ResolveContext& context) c
   return kj::none;
 }
 
-kj::Maybe<JsObject> ModuleRegistry::tryResolveModuleNamespace(Lock& js,
+kj::Maybe<JsValue> ModuleRegistry::tryResolveModuleNamespace(Lock& js,
     kj::StringPtr specifier,
     ResolveContext::Type type,
     ResolveContext::Source source,
@@ -1839,7 +1838,7 @@ kj::Maybe<JsObject> ModuleRegistry::tryResolveModuleNamespace(Lock& js,
     throw JsExceptionThrown();
   }
   if (ns.IsEmpty()) return kj::none;
-  return JsObject(check(ns));
+  return JsValue(check(ns));
 }
 
 JsValue ModuleRegistry::resolve(Lock& js,
@@ -1848,7 +1847,8 @@ JsValue ModuleRegistry::resolve(Lock& js,
     ResolveContext::Type type,
     ResolveContext::Source source,
     kj::Maybe<const Url&> maybeReferrer) {
-  KJ_IF_SOME(ns, tryResolveModuleNamespace(js, specifier, type, source, maybeReferrer)) {
+  KJ_IF_SOME(val, tryResolveModuleNamespace(js, specifier, type, source, maybeReferrer)) {
+    auto ns = KJ_ASSERT_NONNULL(val.tryCast<JsObject>());
     return ns.get(js, exportName);
   }
   JSG_FAIL_REQUIRE(Error, kj::str("Module not found: ", specifier));

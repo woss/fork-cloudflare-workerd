@@ -1480,9 +1480,10 @@ KJ_TEST("UNWRAP_DEFAULT returns namespace for bundle ESM, default for others") {
     // Bundle ESM without __cjsUnwrapDefault: tryResolveModuleNamespace with UnwrapDefault::YES
     // returns the full namespace (has "default", "name" properties).
     js.tryCatch([&] {
-      auto ns = KJ_ASSERT_NONNULL(ModuleRegistry::tryResolveModuleNamespace(js, "file:///esm-mod",
+      auto val = KJ_ASSERT_NONNULL(ModuleRegistry::tryResolveModuleNamespace(js, "file:///esm-mod",
           ResolveContext::Type::BUNDLE, ResolveContext::Source::REQUIRE, kj::none,
           modules::UnwrapDefault::YES));
+      auto ns = KJ_ASSERT_NONNULL(val.tryCast<JsObject>());
       // The namespace should have both "default" and "name" properties.
       auto nameVal = ns.get(js, "name");
       KJ_ASSERT(!nameVal.isUndefined());
@@ -1496,10 +1497,7 @@ KJ_TEST("UNWRAP_DEFAULT returns namespace for bundle ESM, default for others") {
       auto result = KJ_ASSERT_NONNULL(ModuleRegistry::tryResolveModuleNamespace(js,
           "file:///esm-cjs", ResolveContext::Type::BUNDLE, ResolveContext::Source::REQUIRE,
           kj::none, modules::UnwrapDefault::YES));
-      // Should be the unwrapped default, not the namespace.
-      // The default is a string, so ToObject wraps it. Check via valueOf().
-      auto val = JsValue(result);
-      KJ_ASSERT(kj::str(val) == "unwrapped");
+      KJ_ASSERT(kj::str(result) == "unwrapped");
     }, [&](Value exception) { js.throwException(kj::mv(exception)); });
 
     // JSON synthetic module: returns the parsed value (the default export).
@@ -1508,7 +1506,8 @@ KJ_TEST("UNWRAP_DEFAULT returns namespace for bundle ESM, default for others") {
           "file:///data.json", ResolveContext::Type::BUNDLE, ResolveContext::Source::REQUIRE,
           kj::none, modules::UnwrapDefault::YES));
       // Should be the parsed JSON object, not the namespace.
-      KJ_ASSERT(kj::str(result.get(js, "key")) == "value");
+      auto obj = KJ_ASSERT_NONNULL(result.tryCast<JsObject>());
+      KJ_ASSERT(kj::str(obj.get(js, "key")) == "value");
     }, [&](Value exception) { js.throwException(kj::mv(exception)); });
 
     // Text synthetic module: returns the string value (the default export).
@@ -1516,15 +1515,15 @@ KJ_TEST("UNWRAP_DEFAULT returns namespace for bundle ESM, default for others") {
       auto result = KJ_ASSERT_NONNULL(ModuleRegistry::tryResolveModuleNamespace(js,
           "file:///data.txt", ResolveContext::Type::BUNDLE, ResolveContext::Source::REQUIRE,
           kj::none, modules::UnwrapDefault::YES));
-      // The default is a string, wrapped in a String object by ToObject.
-      auto val = JsValue(result);
-      KJ_ASSERT(kj::str(val) == "hello world");
+      // The default is a string — JsValue directly.
+      KJ_ASSERT(kj::str(result) == "hello world");
     }, [&](Value exception) { js.throwException(kj::mv(exception)); });
 
     // Without UnwrapDefault, all modules return the namespace.
     js.tryCatch([&] {
-      auto ns = KJ_ASSERT_NONNULL(ModuleRegistry::tryResolveModuleNamespace(
+      auto val = KJ_ASSERT_NONNULL(ModuleRegistry::tryResolveModuleNamespace(
           js, "file:///data.json", ResolveContext::Type::BUNDLE, ResolveContext::Source::REQUIRE));
+      auto ns = KJ_ASSERT_NONNULL(val.tryCast<JsObject>());
       // Should have a "default" property (it's the namespace).
       KJ_ASSERT(!ns.get(js, "default").isUndefined());
     }, [&](Value exception) { js.throwException(kj::mv(exception)); });
