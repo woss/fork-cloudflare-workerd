@@ -210,6 +210,14 @@ bool local_is_biguint64_array(const Local& val) {
   return local_as_ref_from_ffi<v8::Value>(val)->IsBigUint64Array();
 }
 
+bool local_is_float16_array(const Local& val) {
+  return local_as_ref_from_ffi<v8::Value>(val)->IsFloat16Array();
+}
+
+bool local_is_uint8clamped_array(const Local& val) {
+  return local_as_ref_from_ffi<v8::Value>(val)->IsUint8ClampedArray();
+}
+
 bool local_is_array_buffer(const Local& val) {
   return local_as_ref_from_ffi<v8::Value>(val)->IsArrayBuffer();
 }
@@ -577,6 +585,19 @@ size_t local_typed_array_length(Isolate* isolate, const Local& array) {
   return local_as_ref_from_ffi<v8::TypedArray>(array)->Length();
 }
 
+uintptr_t local_typed_array_buffer_data(Isolate* isolate, const Local& array) {
+  return reinterpret_cast<uintptr_t>(
+      local_as_ref_from_ffi<v8::TypedArray>(array)->Buffer()->Data());
+}
+
+size_t local_typed_array_byte_offset(Isolate* isolate, const Local& array) {
+  return local_as_ref_from_ffi<v8::TypedArray>(array)->ByteOffset();
+}
+
+size_t local_typed_array_byte_length(Isolate* isolate, const Local& array) {
+  return local_as_ref_from_ffi<v8::TypedArray>(array)->ByteLength();
+}
+
 // TypedArray element getter functions
 DEFINE_TYPED_ARRAY_GET(uint8_array, Uint8Array, uint8_t)
 DEFINE_TYPED_ARRAY_GET(uint16_array, Uint16Array, uint16_t)
@@ -588,6 +609,7 @@ DEFINE_TYPED_ARRAY_GET(float32_array, Float32Array, float)
 DEFINE_TYPED_ARRAY_GET(float64_array, Float64Array, double)
 DEFINE_TYPED_ARRAY_GET(bigint64_array, BigInt64Array, int64_t)
 DEFINE_TYPED_ARRAY_GET(biguint64_array, BigUint64Array, uint64_t)
+DEFINE_TYPED_ARRAY_GET(uint8clamped_array, Uint8ClampedArray, uint8_t)
 
 // Global<T>
 void global_reset(Global& value) {

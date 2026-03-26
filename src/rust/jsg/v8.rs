@@ -27,6 +27,7 @@
 //! drop, `wrappable_remove_strong_ref()` handles GC cleanup via `maybeDeferDestruction()`,
 //! then the `WrappableRc` drop decrements the `kj::Rc` refcount.
 
+use std::any::TypeId;
 use std::cell::UnsafeCell;
 use std::fmt::Display;
 use std::marker::PhantomData;
@@ -208,6 +209,8 @@ pub mod ffi {
         pub unsafe fn local_is_float64_array(value: &Local) -> bool;
         pub unsafe fn local_is_bigint64_array(value: &Local) -> bool;
         pub unsafe fn local_is_biguint64_array(value: &Local) -> bool;
+        pub unsafe fn local_is_float16_array(value: &Local) -> bool;
+        pub unsafe fn local_is_uint8clamped_array(value: &Local) -> bool;
         pub unsafe fn local_is_array_buffer(value: &Local) -> bool;
         pub unsafe fn local_is_array_buffer_view(value: &Local) -> bool;
         pub unsafe fn local_is_function(value: &Local) -> bool;
@@ -322,6 +325,9 @@ pub mod ffi {
 
         // Local<TypedArray>
         pub unsafe fn local_typed_array_length(isolate: *mut Isolate, array: &Local) -> usize;
+        pub unsafe fn local_typed_array_buffer_data(isolate: *mut Isolate, array: &Local) -> usize;
+        pub unsafe fn local_typed_array_byte_offset(isolate: *mut Isolate, array: &Local) -> usize;
+        pub unsafe fn local_typed_array_byte_length(isolate: *mut Isolate, array: &Local) -> usize;
         pub unsafe fn local_uint8_array_get(
             isolate: *mut Isolate,
             array: &Local,
@@ -372,6 +378,11 @@ pub mod ffi {
             array: &Local,
             index: usize,
         ) -> u64;
+        pub unsafe fn local_uint8clamped_array_get(
+            isolate: *mut Isolate,
+            array: &Local,
+            index: usize,
+        ) -> u8;
 
         // Global<T>
         pub unsafe fn global_reset(value: Pin<&mut Global>);
@@ -811,6 +822,7 @@ pub struct Float32Array;
 pub struct Float64Array;
 pub struct BigInt64Array;
 pub struct BigUint64Array;
+pub struct Uint8ClampedArray;
 
 // Generic Local<'a, T> handle with lifetime
 #[derive(Debug)]
@@ -1004,6 +1016,18 @@ impl<'a, T> Local<'a, T> {
     pub fn is_biguint64_array(&self) -> bool {
         // SAFETY: handle is valid within the current HandleScope.
         unsafe { ffi::local_is_biguint64_array(&self.handle) }
+    }
+
+    /// Returns true if the value is a `Float16Array`.
+    pub fn is_float16_array(&self) -> bool {
+        // SAFETY: handle is valid within the current HandleScope.
+        unsafe { ffi::local_is_float16_array(&self.handle) }
+    }
+
+    /// Returns true if the value is a `Uint8ClampedArray`.
+    pub fn is_uint8clamped_array(&self) -> bool {
+        // SAFETY: handle is valid within the current HandleScope.
+        unsafe { ffi::local_is_uint8clamped_array(&self.handle) }
     }
 
     /// Returns true if the value is an `ArrayBuffer`.
@@ -1225,6 +1249,7 @@ impl_local_cast!(Float32Array -> Value, is_float32_array);
 impl_local_cast!(Float64Array -> Value, is_float64_array);
 impl_local_cast!(BigInt64Array -> Value, is_bigint64_array);
 impl_local_cast!(BigUint64Array -> Value, is_biguint64_array);
+impl_local_cast!(Uint8ClampedArray -> Value, is_uint8clamped_array);
 
 // TypedArray base type to Value. Uses `is_array_buffer_view` which also matches
 // `DataView`, but this is acceptable because `TypedArray` is only constructed from
@@ -1242,6 +1267,7 @@ impl_local_cast!(Float32Array -> TypedArray, is_float32_array);
 impl_local_cast!(Float64Array -> TypedArray, is_float64_array);
 impl_local_cast!(BigInt64Array -> TypedArray, is_bigint64_array);
 impl_local_cast!(BigUint64Array -> TypedArray, is_biguint64_array);
+impl_local_cast!(Uint8ClampedArray -> TypedArray, is_uint8clamped_array);
 
 // Upcasts to Object (Function, Array, TypedArray are all Object subtypes in V8)
 impl_local_cast!(Function -> Object, is_function);
@@ -1371,6 +1397,99 @@ macro_rules! impl_typed_array {
                 debug_assert!(index < self.len(), "index out of bounds");
                 // SAFETY: handle is valid within the current HandleScope.
                 unsafe { ffi::$get_fn(self.isolate.as_ffi(), &self.handle, index) }
+            }
+
+            /// Returns the byte offset of this view within its backing `ArrayBuffer`.
+            #[inline]
+            pub fn byte_offset(&self) -> usize {
+                // SAFETY: handle is valid within the current HandleScope.
+                unsafe { ffi::local_typed_array_byte_offset(self.isolate.as_ffi(), &self.handle) }
+            }
+
+            /// Returns the byte length of this view.
+            #[inline]
+            pub fn byte_length(&self) -> usize {
+                // SAFETY: handle is valid within the current HandleScope.
+                unsafe { ffi::local_typed_array_byte_length(self.isolate.as_ffi(), &self.handle) }
+            }
+
+            /// Returns the size in bytes of a single element.
+            ///
+            /// For example, `1` for `Uint8Array`, `4` for `Uint32Array` and
+            /// `Float32Array`, `8` for `Float64Array`.
+            #[inline]
+            pub fn element_size(&self) -> usize {
+                std::mem::size_of::<$elem>()
+            }
+
+            /// Returns `true` if the element type is an integer type.
+            ///
+            /// Returns `false` for `Float32Array` and `Float64Array`.
+            #[inline]
+            pub fn is_integer_type(&self) -> bool {
+                let id = TypeId::of::<$elem>();
+                id != TypeId::of::<f32>() && id != TypeId::of::<f64>()
+            }
+
+            /// Returns a raw pointer to the backing `ArrayBuffer`'s data.
+            ///
+            /// This does **not** account for `byte_offset()` — the caller must
+            /// add it manually when accessing this view's region of the buffer.
+            ///
+            /// # Safety
+            /// The pointer is valid only while the backing `ArrayBuffer` is alive
+            /// and the `Local` handle is in scope.
+            #[inline]
+            pub unsafe fn data(&self) -> *mut $elem {
+                // SAFETY: handle is valid within the current HandleScope.
+                unsafe {
+                    ffi::local_typed_array_buffer_data(self.isolate.as_ffi(), &self.handle)
+                        as *mut $elem
+                }
+            }
+
+            /// Returns a shared slice view of the typed array's data.
+            ///
+            /// Zero-copy: points directly into the V8 `ArrayBuffer`'s backing store.
+            /// The slice is valid for the lifetime of this `Local` handle.
+            #[inline]
+            pub fn as_slice(&self) -> &[$elem] {
+                if self.is_empty() {
+                    return &[];
+                }
+                // SAFETY: handle is valid; non-empty guarantees non-null data pointer.
+                // data() returns the ArrayBuffer base; byte_offset() gives this view's start.
+                unsafe {
+                    let ptr = self.data().byte_add(self.byte_offset());
+                    std::slice::from_raw_parts(ptr.cast_const(), self.len())
+                }
+            }
+
+            /// Returns a mutable slice view of the typed array's data.
+            ///
+            /// Zero-copy: points directly into the V8 `ArrayBuffer`'s backing store.
+            /// The slice is valid for the lifetime of this `Local` handle.
+            ///
+            /// # Safety
+            ///
+            /// The caller must ensure that no other live reference (shared or mutable)
+            /// into the same `ArrayBuffer` region exists for the duration of the returned
+            /// slice. `&mut self` prevents aliasing through *this* `Local` handle, but
+            /// two distinct `Local` handles may back the same buffer — the caller is
+            /// responsible for ensuring exclusivity. Additionally, once V8 introduces
+            /// immutable `ArrayBuffer`s, writing to such a buffer via this method would
+            /// be undefined behaviour.
+            #[inline]
+            pub unsafe fn as_mut_slice(&mut self) -> &mut [$elem] {
+                if self.is_empty() {
+                    return &mut [];
+                }
+                // SAFETY: caller guarantees exclusive access to this buffer region;
+                // handle is valid and non-empty guarantees a non-null data pointer.
+                unsafe {
+                    let ptr = self.data().byte_add(self.byte_offset());
+                    std::slice::from_raw_parts_mut(ptr, self.len())
+                }
             }
 
             /// Returns an iterator over the elements.
@@ -1505,6 +1624,44 @@ macro_rules! impl_typed_array {
     };
 }
 
+/// Generates `FromJS` for `Local<'_, T>` typed array types.
+macro_rules! impl_typed_array_from_js {
+    ($marker:ident, $check:ident, $name:expr) => {
+        impl crate::FromJS for Local<'_, $marker> {
+            type ResultType = Self;
+
+            fn from_js(_lock: &mut crate::Lock, value: Local<Value>) -> Result<Self, crate::Error> {
+                if !value.$check() {
+                    return Err(crate::Error::new_type_error(format!(
+                        "expected {}, got {}",
+                        $name,
+                        value.type_of()
+                    )));
+                }
+                // SAFETY: type check passed; V8 handles share the same pointer
+                // representation across subtypes within the same HandleScope.
+                Ok(unsafe { Self::from_ffi(value.isolate, value.into_ffi()) })
+            }
+        }
+    };
+}
+
+impl_typed_array_from_js!(Uint8Array, is_uint8_array, "Uint8Array");
+impl_typed_array_from_js!(Uint16Array, is_uint16_array, "Uint16Array");
+impl_typed_array_from_js!(Uint32Array, is_uint32_array, "Uint32Array");
+impl_typed_array_from_js!(Int8Array, is_int8_array, "Int8Array");
+impl_typed_array_from_js!(Int16Array, is_int16_array, "Int16Array");
+impl_typed_array_from_js!(Int32Array, is_int32_array, "Int32Array");
+impl_typed_array_from_js!(Float32Array, is_float32_array, "Float32Array");
+impl_typed_array_from_js!(Float64Array, is_float64_array, "Float64Array");
+impl_typed_array_from_js!(BigInt64Array, is_bigint64_array, "BigInt64Array");
+impl_typed_array_from_js!(BigUint64Array, is_biguint64_array, "BigUint64Array");
+impl_typed_array_from_js!(
+    Uint8ClampedArray,
+    is_uint8clamped_array,
+    "Uint8ClampedArray"
+);
+
 impl_typed_array!(Uint8Array, u8, local_uint8_array_get);
 impl_typed_array!(Uint16Array, u16, local_uint16_array_get);
 impl_typed_array!(Uint32Array, u32, local_uint32_array_get);
@@ -1515,6 +1672,8 @@ impl_typed_array!(Float32Array, f32, local_float32_array_get);
 impl_typed_array!(Float64Array, f64, local_float64_array_get);
 impl_typed_array!(BigInt64Array, i64, local_bigint64_array_get);
 impl_typed_array!(BigUint64Array, u64, local_biguint64_array_get);
+// Uint8ClampedArray has the same element type as Uint8Array; clamping is a write-side JS concern.
+impl_typed_array!(Uint8ClampedArray, u8, local_uint8clamped_array_get);
 
 // =============================================================================
 // `String`-specific implementations
