@@ -373,6 +373,20 @@ struct QueueResponse @0x90e98932c0bfc0de {
   # List of retry options for messages that were explicitly marked for retry.
 }
 
+struct MessageBatchMetrics {
+  backlogCount @0 :Float64;
+  # Number of messages remaining in the queue backlog.
+  backlogBytes @1 :Float64;
+  # Total bytes of messages remaining in the queue backlog.
+  oldestMessageTimestamp @2 :Float64;
+  # Timestamp (ms since epoch) of the oldest message in the queue.
+}
+
+struct MessageBatchMetadata {
+  metrics @0 :MessageBatchMetrics;
+  # Best effort queue metrics at the time the batch was dispatched.
+}
+
 struct HibernatableWebSocketEventMessage {
   payload :union {
     text @0 :Text;
@@ -762,11 +776,13 @@ interface EventDispatcher @0xf20697475ec1752d {
   #   It would be cleaner to handle that inside the implementation so we could mark the entire
   #   interface (and file) with allowCancellation.
 
-  queue @8 (messages :List(QueueMessage), queueName :Text) -> (result :QueueResponse)
+  queue @8 (messages :List(QueueMessage), queueName :Text, metadata :MessageBatchMetadata)
+      -> (result :QueueResponse)
       $Cxx.allowCancellation;
   # Delivers a batch of queue messages to a worker's queue event handler. Returns information about
   # the success of the batch, including which messages should be considered acknowledged and which
-  # should be retried.
+  # should be retried. The optional metadata field carries queue metrics at the time the batch was
+  # dispatched; it is safe for the sender to omit this field (the consumer sees it as absent).
 
   jsRpcSession @9 () -> (topLevel :JsRpcTarget) $Cxx.allowCancellation;
   # Opens a JS rpc "session". The call does not return until the session is complete.

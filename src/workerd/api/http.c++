@@ -2323,8 +2323,10 @@ jsg::Promise<void> Fetcher::delete_(jsg::Lock& js, kj::String url) {
   return throwOnError(js, "DELETE", fetchImpl(js, JSG_THIS, kj::mv(url), kj::mv(subInit)));
 }
 
-jsg::Promise<Fetcher::QueueResult> Fetcher::queue(
-    jsg::Lock& js, kj::String queueName, kj::Array<ServiceBindingQueueMessage> messages) {
+jsg::Promise<Fetcher::QueueResult> Fetcher::queue(jsg::Lock& js,
+    kj::String queueName,
+    kj::Array<ServiceBindingQueueMessage> messages,
+    jsg::Optional<MessageBatchMetadata> metadata) {
   auto& ioContext = IoContext::current();
 
   auto encodedMessages = kj::heapArrayBuilder<IncomingQueueMessage>(messages.size());
@@ -2357,6 +2359,7 @@ jsg::Promise<Fetcher::QueueResult> Fetcher::queue(
   auto event = kj::refcounted<api::QueueCustomEvent>(QueueEvent::Params{
     .queueName = kj::mv(queueName),
     .messages = encodedMessages.finish(),
+    .metadata = kj::mv(metadata).orDefault({}),
   });
 
   auto eventRef =

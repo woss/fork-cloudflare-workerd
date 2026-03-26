@@ -116,6 +116,22 @@ class WorkerQueue: public jsg::Object {
 
 // Event handler types
 
+// Metadata delivered with a message batch in the queue() handler
+
+struct MessageBatchMetrics {
+  double backlogCount;
+  double backlogBytes;
+  double oldestMessageTimestamp;
+  JSG_STRUCT(backlogCount, backlogBytes, oldestMessageTimestamp);
+  JSG_STRUCT_TS_OVERRIDE(MessageBatchMetrics);
+};
+
+struct MessageBatchMetadata {
+  MessageBatchMetrics metrics;
+  JSG_STRUCT(metrics);
+  JSG_STRUCT_TS_OVERRIDE(MessageBatchMetadata);
+};
+
 // Types for other workers passing messages into and responses out of a queue handler.
 
 struct IncomingQueueMessage {
@@ -235,6 +251,7 @@ class QueueEvent final: public ExtendableEvent {
   struct Params {
     kj::String queueName;
     kj::Array<IncomingQueueMessage> messages;
+    MessageBatchMetadata metadata;
   };
 
   explicit QueueEvent(jsg::Lock& js,
@@ -250,23 +267,37 @@ class QueueEvent final: public ExtendableEvent {
   kj::StringPtr getQueueName() {
     return queueName;
   }
+  MessageBatchMetadata getMetadata() {
+    return metadata;
+  }
 
   void retryAll(jsg::Optional<QueueRetryOptions> options);
   void ackAll();
 
-  JSG_RESOURCE_TYPE(QueueEvent) {
+  JSG_RESOURCE_TYPE(QueueEvent, CompatibilityFlags::Reader flags) {
     JSG_INHERIT(ExtendableEvent);
 
     JSG_LAZY_READONLY_INSTANCE_PROPERTY(messages, getMessages);
     JSG_READONLY_INSTANCE_PROPERTY(queue, getQueueName);
 
+    if (flags.getWorkerdExperimental()) {
+      JSG_READONLY_INSTANCE_PROPERTY(metadata, getMetadata);
+    }
+
     JSG_METHOD(retryAll);
     JSG_METHOD(ackAll);
 
     JSG_TS_ROOT();
-    JSG_TS_OVERRIDE(QueueEvent<Body = unknown> {
-        readonly messages: readonly Message<Body>[];
-    });
+    if (flags.getWorkerdExperimental()) {
+      JSG_TS_OVERRIDE(QueueEvent<Body = unknown> {
+          readonly messages: readonly Message<Body>[];
+          readonly metadata: MessageBatchMetadata;
+      });
+    } else {
+      JSG_TS_OVERRIDE(QueueEvent<Body = unknown> {
+          readonly messages: readonly Message<Body>[];
+      });
+    }
   }
 
   void visitForMemoryInfo(jsg::MemoryTracker& tracker) const {
@@ -274,6 +305,7 @@ class QueueEvent final: public ExtendableEvent {
       tracker.trackField("message", message);
     }
     tracker.trackField("queueName", queueName);
+    tracker.trackFieldWithSize("metadata", sizeof(MessageBatchMetadata));
     tracker.trackFieldWithSize("IoPtr<QueueEventResult>", sizeof(IoPtr<QueueEventResult>));
   }
 
@@ -297,6 +329,7 @@ class QueueEvent final: public ExtendableEvent {
   // array to avoid one intermediate copy?
   kj::Array<jsg::Ref<QueueMessage>> messages;
   kj::String queueName;
+  MessageBatchMetadata metadata;
   IoPtr<QueueEventResult> result;
   CompletionStatus completionStatus = Incomplete{};
 
@@ -316,6 +349,9 @@ class QueueController final: public jsg::Object {
   kj::StringPtr getQueueName() {
     return event->getQueueName();
   }
+  MessageBatchMetadata getMetadata() {
+    return event->getMetadata();
+  }
   void retryAll(jsg::Optional<QueueRetryOptions> options) {
     event->retryAll(options);
   }
@@ -323,17 +359,28 @@ class QueueController final: public jsg::Object {
     event->ackAll();
   }
 
-  JSG_RESOURCE_TYPE(QueueController) {
+  JSG_RESOURCE_TYPE(QueueController, CompatibilityFlags::Reader flags) {
     JSG_READONLY_INSTANCE_PROPERTY(messages, getMessages);
     JSG_READONLY_INSTANCE_PROPERTY(queue, getQueueName);
+
+    if (flags.getWorkerdExperimental()) {
+      JSG_READONLY_INSTANCE_PROPERTY(metadata, getMetadata);
+    }
 
     JSG_METHOD(retryAll);
     JSG_METHOD(ackAll);
 
     JSG_TS_ROOT();
-    JSG_TS_OVERRIDE(MessageBatch<Body = unknown> {
-      readonly messages: readonly Message<Body>[];
-    });
+    if (flags.getWorkerdExperimental()) {
+      JSG_TS_OVERRIDE(MessageBatch<Body = unknown> {
+        readonly messages: readonly Message<Body>[];
+        readonly metadata: MessageBatchMetadata;
+      });
+    } else {
+      JSG_TS_OVERRIDE(MessageBatch<Body = unknown> {
+        readonly messages: readonly Message<Body>[];
+      });
+    }
   }
 
   void visitForMemoryInfo(jsg::MemoryTracker& tracker) const {
@@ -400,8 +447,9 @@ class QueueCustomEvent final: public WorkerInterface::CustomEvent, public kj::Re
 
 #define EW_QUEUE_ISOLATE_TYPES                                                                     \
   api::WorkerQueue, api::WorkerQueue::SendOptions, api::WorkerQueue::SendBatchOptions,             \
-      api::WorkerQueue::MessageSendRequest, api::WorkerQueue::Metrics, api::IncomingQueueMessage,  \
-      api::QueueRetryBatch, api::QueueRetryMessage, api::QueueResponse, api::QueueRetryOptions,    \
-      api::QueueMessage, api::QueueEvent, api::QueueController, api::QueueExportedHandler
+      api::WorkerQueue::MessageSendRequest, api::WorkerQueue::Metrics, api::MessageBatchMetrics,   \
+      api::MessageBatchMetadata, api::IncomingQueueMessage, api::QueueRetryBatch,                  \
+      api::QueueRetryMessage, api::QueueResponse, api::QueueRetryOptions, api::QueueMessage,       \
+      api::QueueEvent, api::QueueController, api::QueueExportedHandler
 
 }  // namespace workerd::api
