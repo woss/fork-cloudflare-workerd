@@ -656,7 +656,7 @@ class IsolateModuleRegistry final {
 
       // Run the microtasks to ensure that any promises that happen to be scheduled
       // during the evaluation of the top-level scope have a chance to be settled.
-      // We only pump the microtasks queue if NP_TOP_LEVEL_AWAIT is not set.
+      // We only pump the microtasks queue if NO_TOP_LEVEL_AWAIT is not set.
       if ((option & RequireOption::NO_TOP_LEVEL_AWAIT) != RequireOption::NO_TOP_LEVEL_AWAIT) {
         js.runMicrotasks();
 
@@ -688,6 +688,9 @@ class IsolateModuleRegistry final {
         KJ_ASSERT(promise->State() != v8::Promise::kPending,
             "Top-level await is not supported in this context, so the module promise "
             "should never be pending");
+        if (promise->State() == v8::Promise::kRejected) {
+          js.throwException(JsValue(promise->Result()));
+        }
         return maybeUnwrapDefault(js, module, entry.module, option);
       }
       KJ_UNREACHABLE;
@@ -1080,6 +1083,10 @@ v8::MaybeLocal<std::conditional_t<IsSourcePhase, v8::Object, v8::Module>> resolv
           js.throwException(
               js.typeError(kj::str("Circular dependency when resolving module: ", spec)));
           return {};
+        }
+        // Validate import type attribute against the resolved module's content type.
+        KJ_IF_SOME(entry, registry.lookup(js, resolved)) {
+          validateImportType(js, importType, entry.module, spec);
         }
         return resolved;
       }
