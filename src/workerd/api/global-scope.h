@@ -868,7 +868,10 @@ class ServiceWorkerGlobalScope: public WorkerGlobalScope {
     }
 
     JSG_TS_ROOT();
-    JSG_TS_DEFINE(
+    // JSG_TS_DEFINE_LITERAL is used here instead of JSG_TS_DEFINE because the TypeScript definition
+    // contains the `module` keyword, which Clang rejects as a C++20 module directive when it
+    // appears inside macro arguments.
+    JSG_TS_DEFINE_LITERAL(R"(
       interface Console {
         "assert"(condition?: boolean, ...data: any[]): void;
         clear(): void;
@@ -980,7 +983,7 @@ class ServiceWorkerGlobalScope: public WorkerGlobalScope {
         function instantiate(module: Module, imports?: Imports): Promise<Instance>;
         function validate(bytes: BufferSource): boolean;
       }
-    );
+    )");
     // workerd disables dynamic WebAssembly compilation, so `compile()`, `compileStreaming()`, the
     // `instantiate()` override taking a `BufferSource` and `instantiateStreaming()` are omitted.
     // `Module` is also declared `abstract` to disable its `BufferSource` constructor.

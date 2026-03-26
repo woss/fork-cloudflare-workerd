@@ -609,6 +609,15 @@ using HasGetTemplateOverload = decltype(kj::instance<T&>().getTemplate(
     registry.template registerTypeScriptDefine<DEFINE>();                                          \
   } while (false)
 
+// Like JSG_TS_DEFINE, but accepts a string literal (e.g. a raw string R"(...)") instead of bare tokens.
+// This avoids the preprocessor parsing the TypeScript content as C++ tokens, which is necessary when the
+// TypeScript definition contains C++20 keywords like `module` that Clang rejects inside macro arguments.
+#define JSG_TS_DEFINE_LITERAL(jsg_string_literal)                                                  \
+  do {                                                                                             \
+    static const char DEFINE[] = jsg_string_literal;                                               \
+    registry.template registerTypeScriptDefine<DEFINE>();                                          \
+  } while (false)
+
 // Like JSG_TS_ROOT but for use with JSG_STRUCT. Should be placed adjacent to the JSG_STRUCT declaration,
 // inside the same `struct` definition. See the `## TypeScript` section of the JSG README.md for more
 // details.
