@@ -825,6 +825,38 @@ export let noMixedJsPythonModules2 = {
   },
 };
 
+export let suggestWorkerBundlerForTypeScriptModules = {
+  async test(ctrl, env, ctx) {
+    for (let mainModule of ['main.ts', 'main.tsx', 'main.jsx']) {
+      let worker = env.loader.get(mainModule, () => {
+        return {
+          compatibilityDate: '2026-01-01',
+          mainModule,
+          modules: {
+            [mainModule]: `
+              export default {
+                fetch() {
+                  return new Response('ok');
+                }
+              }
+            `,
+          },
+        };
+      });
+
+      await assert.rejects(
+        worker.getEntrypoint().fetch('https://example.com'),
+        {
+          name: 'TypeError',
+          message:
+            `Module name must end with '.js' or '.py' (or the content must be an object indicating the type explicitly). Got: ${mainModule}. ` +
+            "If you're trying to load TypeScript, bundle it first with '@cloudflare/worker-bundler' and pass the generated JavaScript modules.",
+        }
+      );
+    }
+  },
+};
+
 // Test that startup exceptions show proper error messages, not internal errors.
 export let startupException = {
   async test(ctrl, env, ctx) {
