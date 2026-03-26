@@ -661,13 +661,13 @@ export function writeFile(
   });
 }
 
-export function* glob(
+export async function* glob(
   pattern: string | readonly string[],
   options:
     | GlobOptions
     | GlobOptionsWithFileTypes
     | GlobOptionsWithoutFileTypes = {}
-): Generator<string | Dirent> {
+): AsyncGenerator<string | Dirent> {
   const results = fssync.globSync(pattern, options);
   for (const result of results) {
     yield result;

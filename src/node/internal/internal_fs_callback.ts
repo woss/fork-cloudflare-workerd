@@ -1434,7 +1434,9 @@ export function glob(
   } else {
     options = optionsOrCallback;
   }
-  if (callback === undefined) return;
+  if (callback === undefined) {
+    throw new ERR_INVALID_ARG_TYPE('callback', ['function'], callback);
+  }
   callWithSingleArgCallback(() => fssync.globSync(pattern, options), callback);
 }
 

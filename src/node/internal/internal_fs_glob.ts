@@ -23,8 +23,12 @@ function splitTopLevel(str: string, sep: string): string[] {
   let depth = 0;
   let current = '';
 
-  for (const c of str) {
-    if (c === '{' || c === '(') {
+  for (let i = 0; i < str.length; i++) {
+    const c = str[i]!;
+    if (c === '\\' && i + 1 < str.length) {
+      current += c + str[i + 1]!;
+      i++;
+    } else if (c === '{' || c === '(') {
       depth++;
       current += c;
     } else if (c === '}' || c === ')') {
@@ -201,6 +205,8 @@ function segmentToRegexStr(segment: string): string {
       case '|':
       case '(':
       case ')':
+      case '{':
+      case '}':
         regex += '\\' + c;
         break;
 
@@ -353,6 +359,26 @@ export interface GlobResult {
   handle: DirEntryHandle | null;
 }
 
+// Collapses consecutive '**' segments to prevent exponential blowup.
+export function collapseGlobstars(segments: string[]): string[] {
+  const result: string[] = [];
+  for (const seg of segments) {
+    if (seg === '**' && result[result.length - 1] === '**') continue;
+    result.push(seg);
+  }
+  return result;
+}
+
+// Precompiles segment regexes for all non-special segments.
+export function precompileSegmentRegexes(
+  segments: string[]
+): (RegExp | null)[] {
+  return segments.map((seg) => {
+    if (seg === '**' || seg === '.' || seg === '..') return null;
+    return segmentToRegex(seg);
+  });
+}
+
 export function walkGlob(
   cwd: string,
   segments: string[],
@@ -361,6 +387,7 @@ export function walkGlob(
   relativePath: string,
   results: Map<string, GlobResult>,
   cache: EntryCache,
+  segmentRegexes: (RegExp | null)[],
   visitedGlobstar?: Set<string>,
   depth: number = 0
 ): void {
@@ -394,6 +421,7 @@ export function walkGlob(
       relativePath,
       results,
       cache,
+      segmentRegexes,
       visitedGlobstar,
       depth
     );
@@ -402,7 +430,7 @@ export function walkGlob(
 
   // Handle '..' — go up one directory (but don't escape cwd)
   if (seg === '..') {
-    if (currentAbsPath === cwd || currentAbsPath.length <= cwd.length) {
+    if (currentAbsPath === cwd || !currentAbsPath.startsWith(cwd + '/')) {
       return;
     }
 
@@ -421,6 +449,7 @@ export function walkGlob(
       newRel,
       results,
       cache,
+      segmentRegexes,
       visitedGlobstar,
       depth
     );
@@ -445,6 +474,7 @@ export function walkGlob(
       relativePath,
       results,
       cache,
+      segmentRegexes,
       visitedGlobstar,
       depth
     );
@@ -466,6 +496,7 @@ export function walkGlob(
         childRel,
         results,
         cache,
+        segmentRegexes,
         visitedGlobstar,
         depth + 1
       );
@@ -480,6 +511,7 @@ export function walkGlob(
           childRel,
           results,
           cache,
+          segmentRegexes,
           visitedGlobstar,
           depth + 1
         );
@@ -488,8 +520,8 @@ export function walkGlob(
     return;
   }
 
-  // Regular segment: match against directory entries
-  const segRegex = segmentToRegex(seg);
+  // Regular segment: match against precompiled regex
+  const segRegex = segmentRegexes[segIdx]!;
   const entries = getDirectoryEntries(currentAbsPath, cache);
 
   for (const entry of entries) {
@@ -514,6 +546,7 @@ export function walkGlob(
           childRel,
           results,
           cache,
+          segmentRegexes,
           visitedGlobstar,
           depth + 1
         );

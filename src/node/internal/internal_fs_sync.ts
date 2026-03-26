@@ -92,6 +92,8 @@ import {
   normalizePattern,
   walkGlob,
   compileExcludePatterns,
+  collapseGlobstars,
+  precompileSegmentRegexes,
   type GlobResult,
 } from 'node-internal:internal_fs_glob';
 import processImpl from 'node-internal:process';
@@ -895,9 +897,12 @@ export function globSync(
   for (const p of patterns) {
     for (const expanded of expandBraces(p)) {
       const normalized = normalizePattern(expanded);
-      const segments = normalized.split('/').filter((s) => s !== '');
+      const segments = collapseGlobstars(
+        normalized.split('/').filter((s) => s !== '')
+      );
       if (segments.length === 0) continue;
-      walkGlob(cwd, segments, 0, cwd, '', results, dirCache);
+      const segmentRegexes = precompileSegmentRegexes(segments);
+      walkGlob(cwd, segments, 0, cwd, '', results, dirCache, segmentRegexes);
     }
   }
 
