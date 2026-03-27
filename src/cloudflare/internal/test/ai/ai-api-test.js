@@ -383,6 +383,44 @@ export const tests = {
     }
 
     {
+      // Test already-aborted signal throws AbortError for websocket requests
+      await assert.rejects(
+        async () => {
+          await env.ai.run(
+            '@cf/test/websocket',
+            { encoding: 'utf8' },
+            { websocket: true, signal: AbortSignal.abort() }
+          );
+        },
+        { name: 'AbortError' }
+      );
+    }
+
+    {
+      // Test already-aborted signal throws AbortError for readable stream inputs
+      await assert.rejects(
+        async () => {
+          await env.ai.run(
+            'readableStreamIputs',
+            {
+              audio: {
+                body: new ReadableStream({
+                  start(controller) {
+                    controller.enqueue(new TextEncoder().encode('1'));
+                    controller.close();
+                  },
+                }),
+                contentType: 'audio/wav',
+              },
+            },
+            { signal: AbortSignal.abort() }
+          );
+        },
+        { name: 'AbortError' }
+      );
+    }
+
+    {
       // Test already-aborted signal throws AbortError
       await assert.rejects(
         async () => {

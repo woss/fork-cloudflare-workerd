@@ -50,6 +50,11 @@ export type AiOptions = {
   signal?: AbortSignal;
 };
 
+type CleanedAiOptions = Omit<
+  AiOptions,
+  'prefix' | 'extraHeaders' | 'sessionOptions' | 'signal'
+>;
+
 export type AiInputReadableStream = {
   body: ReadableStream | FormData;
   contentType: string;
@@ -157,13 +162,13 @@ export class Ai {
    * */
   async #generateFetch(
     inputs: object,
-    options: AiOptions,
+    cleanedOptions: CleanedAiOptions,
     model: string
   ): Promise<Response> {
     // Treat inputs as regular JS objects
     const body = JSON.stringify({
       inputs,
-      options,
+      options: cleanedOptions,
     });
 
     const fetchOptions: RequestInit = {
@@ -182,7 +187,7 @@ export class Ai {
     }
 
     let endpointUrl = `${this.#endpointURL}/run?version=3`;
-    if (options.gateway?.id) {
+    if (cleanedOptions.gateway?.id) {
       endpointUrl = `${this.#endpointURL}/ai-gateway/run?version=3`;
     }
 
@@ -194,7 +199,7 @@ export class Ai {
    * */
   async #generateStreamFetch(
     inputs: Record<string, string | AiInputReadableStream>,
-    options: AiOptions,
+    cleanedOptions: CleanedAiOptions,
     model: string,
     streamKeys: string[]
   ): Promise<Response> {
@@ -203,7 +208,7 @@ export class Ai {
     const body = (stream as AiInputReadableStream).body;
     const contentType = (stream as AiInputReadableStream).contentType;
 
-    if (options.gateway?.id) {
+    if (cleanedOptions.gateway?.id) {
       throw new AiInternalError(
         'AI Gateway does not support ReadableStreams yet.'
       );
@@ -217,9 +222,6 @@ export class Ai {
       );
     }
 
-    // Separate signal for fetch; remaining options become query params
-    const { signal, ...optionsForQuery } = options;
-
     // Pass single ReadableStream in request body
     const fetchOptions: RequestInit = {
       method: 'POST',
@@ -232,8 +234,8 @@ export class Ai {
         'cf-consn-model-id': `${this.#options.prefix ? `${this.#options.prefix}:` : ''}${model}`,
       },
     };
-    if (signal) {
-      fetchOptions.signal = signal;
+    if (this.#options.signal) {
+      fetchOptions.signal = this.#options.signal;
     }
 
     // Fetch the additional input params
@@ -242,7 +244,7 @@ export class Ai {
     // Construct query params
     // Append inputs with ai.run options that are passed to the inference request
     const query = {
-      ...optionsForQuery,
+      ...cleanedOptions,
       version: '3',
       userInputs: JSON.stringify({ ...userInputs }),
     };
@@ -259,16 +261,13 @@ export class Ai {
    * */
   async #generateWebsocketFetch(
     inputs: object,
-    options: AiOptions,
+    cleanedOptions: CleanedAiOptions,
     model: string
   ): Promise<Response> {
-    // Separate signal for fetch; keep remaining options for the body
-    const { signal, ...optionsForBody } = options;
-
     // Treat inputs as regular JS objects
     const body = JSON.stringify({
       inputs,
-      options: optionsForBody,
+      options: cleanedOptions,
     });
 
     const fetchOptions: RequestInit = {
@@ -280,8 +279,8 @@ export class Ai {
         Upgrade: 'websocket',
       },
     };
-    if (signal) {
-      fetchOptions.signal = signal;
+    if (this.#options.signal) {
+      fetchOptions.signal = this.#options.signal;
     }
 
     const aiEndpoint = new URL(`${this.#endpointURL}/run`);
@@ -306,12 +305,12 @@ export class Ai {
       sessionOptions,
       signal,
       ...object
-    }): object => object)(this.#options);
+    }): CleanedAiOptions => object)(this.#options);
 
     let res: Response;
 
     if (this.#options.websocket) {
-      res = await this.#generateWebsocketFetch(inputs, options, model);
+      res = await this.#generateWebsocketFetch(inputs, cleanedOptions, model);
     } else {
       /**
        * Inputs that contain a ReadableStream which will be sent directly to
@@ -328,7 +327,7 @@ export class Ai {
       } else {
         res = await this.#generateStreamFetch(
           inputs,
-          options,
+          cleanedOptions,
           model,
           streamKeys
         );
