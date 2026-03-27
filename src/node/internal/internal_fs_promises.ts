@@ -668,7 +668,7 @@ export async function* glob(
     | GlobOptionsWithFileTypes
     | GlobOptionsWithoutFileTypes = {}
 ): AsyncGenerator<string | Dirent> {
-  const results = fssync.globSync(pattern, options);
+  const results = await Promise.resolve(fssync.globSync(pattern, options));
   for (const result of results) {
     yield result;
   }

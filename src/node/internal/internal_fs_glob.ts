@@ -24,9 +24,9 @@ function splitTopLevel(str: string, sep: string): string[] {
   let current = '';
 
   for (let i = 0; i < str.length; i++) {
-    const c = str[i]!;
+    const c = str.charAt(i);
     if (c === '\\' && i + 1 < str.length) {
-      current += c + str[i + 1]!;
+      current += c + str.charAt(i + 1);
       i++;
     } else if (c === '{' || c === '(') {
       depth++;
@@ -521,7 +521,7 @@ export function walkGlob(
   }
 
   // Regular segment: match against precompiled regex
-  const segRegex = segmentRegexes[segIdx]!;
+  const segRegex = segmentRegexes[segIdx] ?? segmentToRegex(seg);
   const entries = getDirectoryEntries(currentAbsPath, cache);
 
   for (const entry of entries) {
