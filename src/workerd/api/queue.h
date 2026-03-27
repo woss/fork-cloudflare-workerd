@@ -35,6 +35,46 @@ class WorkerQueue: public jsg::Object {
     JSG_STRUCT_TS_OVERRIDE(QueueMetrics);
   };
 
+  struct SendMetrics {
+    double backlogCount;
+    double backlogBytes;
+    double oldestMessageTimestamp;
+    JSG_STRUCT(backlogCount, backlogBytes, oldestMessageTimestamp);
+    JSG_STRUCT_TS_OVERRIDE(QueueSendMetrics);
+  };
+
+  struct SendMetadata {
+    SendMetrics metrics;
+    JSG_STRUCT(metrics);
+    JSG_STRUCT_TS_OVERRIDE(QueueSendMetadata);
+  };
+
+  struct SendResponse {
+    SendMetadata metadata;
+    JSG_STRUCT(metadata);
+    JSG_STRUCT_TS_OVERRIDE(QueueSendResponse);
+  };
+
+  struct SendBatchMetrics {
+    double backlogCount;
+    double backlogBytes;
+    double oldestMessageTimestamp;
+    JSG_STRUCT(backlogCount, backlogBytes, oldestMessageTimestamp);
+    JSG_STRUCT_TS_OVERRIDE(QueueSendBatchMetrics);
+  };
+
+  struct SendBatchMetadata {
+    SendBatchMetrics metrics;
+    JSG_STRUCT(metrics);
+    JSG_STRUCT_TS_OVERRIDE(QueueSendBatchMetadata);
+  };
+
+  struct SendBatchResponse {
+    SendBatchMetadata metadata;
+    JSG_STRUCT(metadata);
+    JSG_STRUCT_TS_OVERRIDE(QueueSendBatchResponse);
+  };
+
   struct SendOptions {
     // TODO(soon): Support metadata.
 
@@ -77,26 +117,39 @@ class WorkerQueue: public jsg::Object {
 
   kj::Promise<void> send(jsg::Lock& js, jsg::JsValue body, jsg::Optional<SendOptions> options);
 
+  jsg::Promise<SendResponse> sendWithResponse(jsg::Lock& js,
+      jsg::JsValue body,
+      jsg::Optional<SendOptions> options,
+      const jsg::TypeHandler<SendResponse>& responseHandler);
+
   kj::Promise<void> sendBatch(jsg::Lock& js,
       jsg::Sequence<MessageSendRequest> batch,
       jsg::Optional<SendBatchOptions> options);
 
+  jsg::Promise<SendBatchResponse> sendBatchWithResponse(jsg::Lock& js,
+      jsg::Sequence<MessageSendRequest> batch,
+      jsg::Optional<SendBatchOptions> options,
+      const jsg::TypeHandler<SendBatchResponse>& responseHandler);
+
   jsg::Promise<Metrics> metrics(jsg::Lock& js, const jsg::TypeHandler<Metrics>& metricsHandler);
 
   JSG_RESOURCE_TYPE(WorkerQueue, CompatibilityFlags::Reader flags) {
-    JSG_METHOD(send);
-    JSG_METHOD(sendBatch);
     if (flags.getWorkerdExperimental()) {
+      JSG_METHOD_NAMED(send, sendWithResponse);
+      JSG_METHOD_NAMED(sendBatch, sendBatchWithResponse);
       JSG_METHOD(metrics);
+    } else {
+      JSG_METHOD(send);
+      JSG_METHOD(sendBatch);
     }
 
     JSG_TS_ROOT();
     if (flags.getWorkerdExperimental()) {
       JSG_TS_OVERRIDE(Queue<Body = unknown> {
-        send(message: Body, options?: QueueSendOptions): Promise<void>;
+        send(message: Body, options?: QueueSendOptions): Promise<QueueSendResponse>;
         sendBatch(messages
                   : Iterable<MessageSendRequest<Body>>, options ?: QueueSendBatchOptions)
-            : Promise<void>;
+            : Promise<QueueSendBatchResponse>;
         metrics(): Promise<QueueMetrics>;
       });
     } else {
@@ -446,7 +499,10 @@ class QueueCustomEvent final: public WorkerInterface::CustomEvent, public kj::Re
 };
 
 #define EW_QUEUE_ISOLATE_TYPES                                                                     \
-  api::WorkerQueue, api::WorkerQueue::SendOptions, api::WorkerQueue::SendBatchOptions,             \
+  api::WorkerQueue, api::WorkerQueue::SendMetrics, api::WorkerQueue::SendMetadata,                 \
+      api::WorkerQueue::SendResponse, api::WorkerQueue::SendBatchMetrics,                          \
+      api::WorkerQueue::SendBatchMetadata, api::WorkerQueue::SendBatchResponse,                    \
+      api::WorkerQueue::SendOptions, api::WorkerQueue::SendBatchOptions,                           \
       api::WorkerQueue::MessageSendRequest, api::WorkerQueue::Metrics, api::MessageBatchMetrics,   \
       api::MessageBatchMetadata, api::IncomingQueueMessage, api::QueueRetryBatch,                  \
       api::QueueRetryMessage, api::QueueResponse, api::QueueRetryOptions, api::QueueMessage,       \

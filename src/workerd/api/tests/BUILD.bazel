@@ -165,6 +165,14 @@ wd_test(
 )
 
 wd_test(
+    src = "queue-producer-metadata-test.wd-test",
+    args = ["--experimental"],
+    data = [
+        "queue-producer-metadata-test.js",
+    ],
+)
+
+wd_test(
     src = "r2-test.wd-test",
     args = ["--experimental"],
     data = [
