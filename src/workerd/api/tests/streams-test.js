@@ -722,8 +722,7 @@ export const cancelErrorTypePropagation = {
       },
       {
         cancelWith: new ExampleError(),
-        expectError: 'Error: ExampleError: foo bar',
-        errorType: Error,
+        expectError: 'ExampleError: foo bar',
       },
     ];
 
