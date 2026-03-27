@@ -1011,7 +1011,7 @@ struct CompatibilityFlags @0x8f8c1b68151b6cef {
   enhancedErrorSerialization @115 :Bool
       $compatEnableFlag("enhanced_error_serialization")
       $compatDisableFlag("legacy_error_serialization")
-      $experimental;
+      $compatEnableDate("2026-04-21");
   # Enables enhanced error serialization for errors serialized using structuredClone /
   # v8 serialization. More error types are supported, and own properties are included.
   # Note that when enabled, deserialization of the errors will not preserve the original
