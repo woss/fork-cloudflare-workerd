@@ -138,6 +138,12 @@ struct Trace @0x8e8d911203762d34 {
     rawSize @2 :UInt32;
   }
 
+  struct TracePreviewInfo {
+    id @0 :Text;
+    slug @1 :Text;
+    name @2 :Text;
+  }
+
   struct TraceEventInfo {
     struct TraceItem {
       scriptName @0 :Text;
@@ -171,6 +177,7 @@ struct Trace @0x8e8d911203762d34 {
   scriptTags @14 :List(Text);
 
   entrypoint @22 :Text;
+  preview @30 :TracePreviewInfo;
   durableObjectId @27 :Text;
   tailAttributes @28 :List(Attribute);
 

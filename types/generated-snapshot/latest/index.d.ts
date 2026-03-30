@@ -3115,6 +3115,11 @@ interface QueuingStrategyInit {
    */
   highWaterMark: number;
 }
+interface TracePreviewInfo {
+  id: string;
+  slug: string;
+  name: string;
+}
 interface ScriptVersion {
   id?: string;
   tag?: string;
@@ -3149,6 +3154,7 @@ interface TraceItem {
   readonly dispatchNamespace?: string;
   readonly scriptTags?: string[];
   readonly tailAttributes?: Record<string, boolean | number | string>;
+  readonly preview?: TracePreviewInfo;
   readonly durableObjectId?: string;
   readonly outcome: string;
   readonly executionModel: string;

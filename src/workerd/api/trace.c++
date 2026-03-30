@@ -216,6 +216,7 @@ TraceItem::TraceItem(jsg::Lock& js, const Trace& trace)
       scriptTags(getTraceScriptTags(trace)),
       tailAttributes(trace.tailAttributes.map(
           [](auto& tags) { return KJ_MAP(tag, tags) { return tag.clone(); }; })),
+      preview(trace.preview.map([](auto& p) { return TracePreviewInfo(p); })),
       durableObjectId(mapCopyString(trace.durableObjectId)),
       executionModel(kj::str(trace.executionModel)),
       outcome(kj::str(trace.outcome)),
@@ -310,6 +311,10 @@ jsg::Optional<jsg::Dict<TraceItem::TailAttributeValue>> TraceItem::getTailAttrib
     },
     };
   });
+}
+
+jsg::Optional<TracePreviewInfo> TraceItem::getPreview() {
+  return preview;
 }
 
 jsg::Optional<kj::StringPtr> TraceItem::getDurableObjectId() {
@@ -542,6 +547,16 @@ ScriptVersion::ScriptVersion(const ScriptVersion& other)
     : id{mapCopyString(other.id)},
       tag{mapCopyString(other.tag)},
       message{mapCopyString(other.message)} {}
+
+TracePreviewInfo::TracePreviewInfo(const tracing::TracePreview& preview)
+    : id(kj::str(preview.id)),
+      slug(kj::str(preview.slug)),
+      name(kj::str(preview.name)) {}
+
+TracePreviewInfo::TracePreviewInfo(const TracePreviewInfo& other)
+    : id(kj::str(other.id)),
+      slug(kj::str(other.slug)),
+      name(kj::str(other.name)) {}
 
 TraceItem::CustomEventInfo::CustomEventInfo(
     const Trace& trace, const tracing::CustomEventInfo& eventInfo)
@@ -787,6 +802,7 @@ void TraceItem::visitForMemoryInfo(jsg::MemoryTracker& tracker) const {
       }
     }
   }
+  tracker.trackField("preview", preview);
   tracker.trackField("outcome", outcome);
 }
 

@@ -3121,6 +3121,11 @@ export interface QueuingStrategyInit {
    */
   highWaterMark: number;
 }
+export interface TracePreviewInfo {
+  id: string;
+  slug: string;
+  name: string;
+}
 export interface ScriptVersion {
   id?: string;
   tag?: string;
@@ -3155,6 +3160,7 @@ export interface TraceItem {
   readonly dispatchNamespace?: string;
   readonly scriptTags?: string[];
   readonly tailAttributes?: Record<string, boolean | number | string>;
+  readonly preview?: TracePreviewInfo;
   readonly durableObjectId?: string;
   readonly outcome: string;
   readonly executionModel: string;
