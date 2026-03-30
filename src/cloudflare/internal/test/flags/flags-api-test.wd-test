@@ -7,7 +7,7 @@ const unitTests :Workerd.Config = (
         modules = [
           (name = "worker", esModule = embed "flags-api-test.js")
         ],
-        compatibilityFlags = ["nodejs_compat"],
+        compatibilityFlags = ["experimental", "nodejs_compat", "rpc"],
         bindings = [
         (
           name = "FLAGS",
@@ -15,7 +15,10 @@ const unitTests :Workerd.Config = (
             moduleName = "cloudflare-internal:flags-api",
             innerBindings = [(
               name = "fetcher",
-              service = "flags-mock"
+              service = (
+                name = "flags-mock",
+                entrypoint = "FlagshipBinding"
+              )
             )],
           )
         )
@@ -24,7 +27,7 @@ const unitTests :Workerd.Config = (
     ),
     ( name = "flags-mock",
       worker = (
-        compatibilityFlags = ["experimental", "nodejs_compat"],
+        compatibilityFlags = ["experimental", "nodejs_compat", "rpc"],
         modules = [
           (name = "worker", esModule = embed "flags-mock.js")
         ],

@@ -3,6 +3,7 @@
 //     https://opensource.org/licenses/Apache-2.0
 
 export {
+  type EvaluationContext,
   type EvaluationDetails,
   FlagEvaluationError,
   Flags,

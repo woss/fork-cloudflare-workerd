@@ -79,3 +79,24 @@ export const getDefaultValueOnErrorTest = {
     assert.strictEqual(details.errorCode, 'GENERAL');
   },
 };
+
+export const evaluationContextTest = {
+  async test(_, env) {
+    // Without context, should get the default value
+    const defaultValue = await env.FLAGS.getStringValue(
+      'context-flag',
+      'fallback'
+    );
+    assert.strictEqual(defaultValue, 'context-default');
+
+    // With context matching a targeting rule, should get the targeted value
+    const targeted = await env.FLAGS.getStringValue(
+      'context-flag',
+      'fallback',
+      {
+        region: 'eu',
+      }
+    );
+    assert.strictEqual(targeted, 'eu-variant');
+  },
+};

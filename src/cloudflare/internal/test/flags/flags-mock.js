@@ -2,7 +2,9 @@
 // Licensed under the Apache 2.0 license found in the LICENSE file or at:
 //     https://opensource.org/licenses/Apache-2.0
 
-// Mock flag store for testing. Simulates a backend flags service.
+import { WorkerEntrypoint } from 'cloudflare:workers';
+
+// Mock flag store for testing. Simulates the FlagshipBinding JSRPC entrypoint.
 const FLAGS = {
   'bool-flag': { value: true, variant: 'on', reason: 'TARGETING_MATCH' },
   'string-flag': {
@@ -21,28 +23,32 @@ const FLAGS = {
     variant: 'default',
     reason: 'DEFAULT',
   },
-};
-
-export default {
-  async fetch(request, _env, _ctx) {
-    const url = new URL(request.url);
-
-    // Expected path: /flags/<flagKey>
-    const match = url.pathname.match(/^\/flags\/(.+)$/);
-    if (!match) {
-      return new Response('Not found', { status: 404 });
-    }
-
-    const flagKey = decodeURIComponent(match[1]);
-    const flag = FLAGS[flagKey];
-
-    if (!flag) {
-      return Response.json(
-        { error: 'FLAG_NOT_FOUND', message: `Flag "${flagKey}" not found` },
-        { status: 404 }
-      );
-    }
-
-    return Response.json(flag);
+  'context-flag': {
+    value: 'context-default',
+    variant: 'default',
+    reason: 'DEFAULT',
   },
 };
+
+export class FlagshipBinding extends WorkerEntrypoint {
+  /**
+   * Evaluate a feature flag, optionally using evaluation context for targeting.
+   * Matches the contract of the real FlagshipBinding entrypoint.
+   * @param {string} flagKey
+   * @param {Record<string, string | number | boolean>} [context]
+   * @returns {Promise<{value: unknown, variant?: string, reason?: string}>}
+   */
+  async evaluate(flagKey, context) {
+    const flag = FLAGS[flagKey];
+    if (!flag) {
+      throw new Error(`Flag "${flagKey}" not found`);
+    }
+
+    // Simulate context-based targeting for the context-flag
+    if (flagKey === 'context-flag' && context?.region === 'eu') {
+      return { value: 'eu-variant', variant: 'eu', reason: 'TARGETING_MATCH' };
+    }
+
+    return flag;
+  }
+}
