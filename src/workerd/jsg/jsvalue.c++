@@ -514,6 +514,14 @@ JsPromise Lock::rejectedJsPromise(kj::Exception&& exception, ExceptionToJsOption
   return rejectedJsPromise(exceptionToJsValue(kj::mv(exception), options).getHandle(*this));
 }
 
+JsPromise Lock::resolvedJsPromise(jsg::JsValue value) {
+  v8::EscapableHandleScope handleScope(v8Isolate);
+  auto context = v8Context();
+  auto resolver = check(v8::Promise::Resolver::New(context));
+  check(resolver->Resolve(context, value));
+  return JsPromise(handleScope.Escape(resolver->GetPromise()));
+}
+
 PromiseState JsPromise::state() {
   switch (inner->State()) {
     case v8::Promise::PromiseState::kPending:
