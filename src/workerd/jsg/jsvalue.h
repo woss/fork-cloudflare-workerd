@@ -340,6 +340,7 @@ class JsBufferSource final: public JsBase<v8::Value, JsBufferSource> {
   bool isSharedArrayBuffer() const;
   bool isArrayBuffer() const;
   bool isArrayBufferView() const;
+  bool isResizable() const;
 
   // Return a copy of this buffer's data as a kj::Array.
   kj::Array<kj::byte> copy();

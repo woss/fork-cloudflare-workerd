@@ -818,6 +818,16 @@ kj::Array<kj::byte> JsBufferSource::copy() {
   return kj::heapArray(ptr);
 }
 
+bool JsBufferSource::isResizable() const {
+  v8::Local<v8::Value> inner = *this;
+  if (inner->IsArrayBuffer()) {
+    return inner.As<v8::ArrayBuffer>()->IsResizableByUserJavaScript();
+  } else if (inner->IsArrayBufferView()) {
+    return inner.As<v8::ArrayBufferView>()->Buffer()->IsResizableByUserJavaScript();
+  }
+  return false;
+}
+
 // ======================================================================================
 // JsUint8Array
 
