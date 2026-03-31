@@ -187,7 +187,6 @@ if lock.feature_flags().get_node_js_compat() {
 | Cap'n Proto schema | `src/workerd/io/compatibility-date.capnp` |
 | Generated Rust bindings | `//src/workerd/io:compatibility-date_capnp_rust` (Bazel target) |
 
-
 ## Constructors
 
 To allow JavaScript to create instances of a resource via `new MyResource(args)`, mark a static method with `#[jsg_constructor]`:
@@ -216,10 +215,50 @@ impl Greeting {
 ```
 
 **Rules:**
+
 - The method must be static (no `self` receiver) and must return `Self`.
 - Only one `#[jsg_constructor]` is allowed per impl block.
 - The first parameter may be `&mut Lock` (or `&mut jsg::Lock`) if the constructor needs isolate access; it is not exposed as a JS argument.
 - If no `#[jsg_constructor]` is present, `new MyResource()` throws an `Illegal constructor` error, matching C++ JSG behavior.
+
+## Properties
+
+Two macros expose accessor properties on resource types: `#[jsg_property]` for prototype and
+instance properties, and `#[jsg_inspect_property]` for debug-only symbol-keyed properties.
+
+Full reference documentation (arguments, naming rules, compat-flag behavior, examples) lives in
+**[`jsg-macros/README.md`](../jsg-macros/README.md#jsg_propertyrequired-placement--name---readonly)**.
+The summary below covers the most common patterns:
+
+```rust
+use std::cell::{Cell, RefCell};
+use jsg_macros::{jsg_resource, jsg_property, jsg_inspect_property};
+
+#[jsg_resource]
+impl Counter {
+    // Prototype property (on the proto chain; use this in almost all cases)
+    #[jsg_property(prototype)]
+    pub fn get_value(&self) -> jsg::Number { /* ... */ }
+
+    #[jsg_property(prototype)]
+    pub fn set_value(&self, v: jsg::Number) { /* ... */ }
+
+    // Read-only prototype property (no paired `set_value`)
+    #[jsg_property(prototype, readonly)]
+    pub fn get_label(&self) -> String { /* ... */ }
+
+    // Own-property accessor (use sparingly; inhibits minor-GC)
+    #[jsg_property(instance)]
+    pub fn get_id(&self) -> String { /* ... */ }
+
+    // Inspect-only: shown by util.inspect() / console.log, invisible to JS
+    #[jsg_inspect_property]
+    pub fn debug_info(&self) -> String { /* ... */ }
+}
+```
+
+Methods **must** start with `get_` (getter) or `set_` (setter). The prefix is stripped for the
+JS name. Omitting the setter (or adding `readonly`) makes the property read-only.
 
 ## Static Constants
 

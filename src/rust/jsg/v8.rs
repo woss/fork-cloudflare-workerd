@@ -496,10 +496,34 @@ pub mod ffi {
         pub value: f64, /* number */
     }
 
+    // Canonical definition of `jsg::PropertyKind` (re-exported from `jsg::lib` as
+    // `pub use v8::ffi::PropertyKind`).  jsg-macros uses its own compile-time copy
+    // because proc-macro crates cannot link against CXX-bridge runtime crates.
+    enum PropertyKind {
+        /// Accessor on the prototype chain; enumerable.
+        Prototype = 0,
+        /// Own accessor on every instance; enumerable.
+        Instance = 1,
+        /// Registered under a unique symbol on the prototype; invisible to normal
+        /// enumeration and string-key lookup; surfaced by `node:util` `inspect()`.
+        Inspect = 2,
+    }
+
+    /// Descriptor for a single accessor property. `setter_callback` is `None` for
+    /// read-only properties; ignored entirely for `Inspect`.
+    pub struct PropertyDescriptor {
+        pub name: String,
+        pub kind: PropertyKind,
+        pub getter_callback: usize,
+        /// `None` means read-only (no setter).
+        pub setter_callback: KjMaybe<usize>,
+    }
+
     pub struct ResourceDescriptor {
         pub name: String,
         pub constructor: KjMaybe<ConstructorDescriptor>,
         pub methods: Vec<MethodDescriptor>,
+        pub properties: Vec<PropertyDescriptor>,
         pub static_methods: Vec<MethodDescriptor>,
         pub static_constants: Vec<StaticConstantDescriptor>,
     }
