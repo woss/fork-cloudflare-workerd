@@ -3788,12 +3788,42 @@ export interface Container {
   setInactivityTimeout(durationMs: number | bigint): Promise<void>;
   interceptOutboundHttp(addr: string, binding: Fetcher): Promise<void>;
   interceptAllOutboundHttp(binding: Fetcher): Promise<void>;
+  snapshotDirectory(
+    options: ContainerDirectorySnapshotOptions,
+  ): Promise<ContainerDirectorySnapshot>;
+  snapshotContainer(
+    options: ContainerSnapshotOptions,
+  ): Promise<ContainerSnapshot>;
+}
+export interface ContainerDirectorySnapshot {
+  id: string;
+  size: number;
+  dir: string;
+  name?: string;
+}
+export interface ContainerDirectorySnapshotOptions {
+  dir: string;
+  name?: string;
+}
+export interface ContainerDirectorySnapshotRestoreParams {
+  snapshot: ContainerDirectorySnapshot;
+  mountPoint?: string;
+}
+export interface ContainerSnapshot {
+  id: string;
+  size: number;
+  name?: string;
+}
+export interface ContainerSnapshotOptions {
+  name?: string;
 }
 export interface ContainerStartupOptions {
   entrypoint?: string[];
   enableInternet: boolean;
   env?: Record<string, string>;
   labels?: Record<string, string>;
+  directorySnapshots?: ContainerDirectorySnapshotRestoreParams[];
+  containerSnapshot?: ContainerSnapshot;
 }
 /**
  * The **`MessagePort`** interface of the Channel Messaging API represents one of the two ports of a MessageChannel, allowing messages to be sent from one port and listening out for them arriving at the other.
