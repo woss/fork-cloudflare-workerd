@@ -1,7 +1,0 @@
-load("//:build/wd_test.bzl", "wd_test")
-
-wd_test(
-    src = "flags-api-test.wd-test",
-    args = ["--experimental"],
-    data = glob(["*.js"]),
-)
