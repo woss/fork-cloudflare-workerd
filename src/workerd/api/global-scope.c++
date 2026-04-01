@@ -516,6 +516,7 @@ kj::Promise<WorkerInterface::AlarmResult> ServiceWorkerGlobalScope::runAlarm(kj:
           // Report alarm handler failure and log it.
           auto e = KJ_EXCEPTION(OVERLOADED,
               "broken.dropped; worker_do_not_log; jsg.Error: Alarm exceeded its allowed execution time");
+          e.setDetail(jsg::EXCEPTION_IS_USER_ERROR, kj::heapArray<kj::byte>(0));
           context.getMetrics().reportFailure(e);
 
           // We don't want the handler to keep running after timeout.
@@ -672,9 +673,10 @@ kj::Promise<void> ServiceWorkerGlobalScope::eventTimeoutPromise(uint32_t timeout
   co_await IoContext::current().afterLimitTimeout(timeoutMs * kj::MILLISECONDS);
   // This is the ActorFlushReason for eviction in Cloudflare's internal implementation.
   auto evictionCode = 2;
-  actor.shutdown(evictionCode,
-      KJ_EXCEPTION(DISCONNECTED,
-          "broken.dropped; jsg.Error: Actor exceeded event execution time and was disconnected."));
+  auto e = KJ_EXCEPTION(DISCONNECTED,
+      "broken.dropped; jsg.Error: Actor exceeded event execution time and was disconnected.");
+  e.setDetail(jsg::EXCEPTION_IS_USER_ERROR, kj::heapArray<kj::byte>(0));
+  actor.shutdown(evictionCode, kj::mv(e));
 }
 
 kj::Promise<void> ServiceWorkerGlobalScope::setHibernatableEventTimeout(
