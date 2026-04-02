@@ -536,6 +536,21 @@ jsg::Promise<jsg::Ref<ExecProcess>> Container::exec(
   });
 }
 
+jsg::Promise<void> Container::interceptOutboundTcp(
+    jsg::Lock& js, kj::String addr, jsg::Ref<Fetcher> binding) {
+  auto& ioctx = IoContext::current();
+  auto channel = binding->getSubrequestChannel(ioctx);
+
+  // Get a channel token for RPC usage, the container runtime can use this
+  // token later to redeem a Fetcher whose connect() handler processes the TCP stream.
+  auto token = channel->getToken(IoChannelFactory::ChannelTokenUsage::RPC);
+
+  auto req = rpcClient->setEgressTcpRequest();
+  req.setHostPort(addr);
+  req.setChannelToken(token);
+  return ioctx.awaitIo(js, req.sendIgnoringResult());
+}
+
 jsg::Promise<void> Container::monitor(jsg::Lock& js) {
   JSG_REQUIRE(running, Error, "monitor() cannot be called on a container that is not running.");
 
