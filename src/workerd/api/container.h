@@ -19,8 +19,8 @@ class ExecOutput: public jsg::Object {
  public:
   ExecOutput(kj::Array<kj::byte> stdoutBytes, kj::Array<kj::byte> stderrBytes, int exitCode);
 
-  jsg::BufferSource getStdout(jsg::Lock& js);
-  jsg::BufferSource getStderr(jsg::Lock& js);
+  jsg::JsArrayBuffer getStdout(jsg::Lock& js);
+  jsg::JsArrayBuffer getStderr(jsg::Lock& js);
   int getExitCode() const {
     return exitCode;
   }
