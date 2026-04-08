@@ -1265,11 +1265,20 @@ kj::Maybe<kj::String> getEntrypointFromReader(const rpc::Trace::Onset::Reader& r
   }
   return kj::none;
 }
+
+kj::Maybe<tracing::TracePreview> getPreviewFromReader(const rpc::Trace::Onset::Reader& reader) {
+  if (reader.hasPreview()) {
+    return tracing::TracePreview(reader.getPreview());
+  }
+  return kj::none;
+}
+
 Onset::WorkerInfo getWorkerInfoFromReader(const rpc::Trace::Onset::Reader& reader) {
   return Onset::WorkerInfo{
     .executionModel = reader.getExecutionModel(),
     .scriptName = getScriptNameFromReader(reader),
     .scriptVersion = getScriptVersionFromReader(reader),
+    .preview = getPreviewFromReader(reader),
     .dispatchNamespace = getDispatchNamespaceFromReader(reader),
     .scriptId = getScriptIdFromReader(reader),
     .scriptTags = getScriptTagsFromReader(reader),
@@ -1315,6 +1324,9 @@ void Onset::copyTo(rpc::Trace::Onset::Builder builder) const {
   KJ_IF_SOME(e, workerInfo.entrypoint) {
     builder.setEntryPoint(e);
   }
+  KJ_IF_SOME(p, workerInfo.preview) {
+    p.copyTo(builder.initPreview());
+  }
   auto infoBuilder = builder.initInfo();
   writeOnsetInfo(info, infoBuilder);
 
@@ -1329,6 +1341,7 @@ Onset::WorkerInfo Onset::WorkerInfo::clone() const {
     .executionModel = executionModel,
     .scriptName = mapCopyString(scriptName),
     .scriptVersion = scriptVersion.map([](auto& version) { return capnp::clone(*version); }),
+    .preview = preview.map([](auto& preview) { return preview.clone(); }),
     .dispatchNamespace = mapCopyString(dispatchNamespace),
     .scriptId = mapCopyString(scriptId),
     .scriptTags =
