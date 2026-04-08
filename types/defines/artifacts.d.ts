@@ -128,7 +128,7 @@ interface ArtifactsRepo {
     name: string;
     namespace?: string;
     readOnly?: boolean;
-  }): Promise<ArtifactsCreateRepoResult & { objects: number }>;
+  }): Promise<ArtifactsCreateRepoResult & { repo: ArtifactsRepo }>;
 }
 
 /** Artifacts binding — namespace-level operations. */
