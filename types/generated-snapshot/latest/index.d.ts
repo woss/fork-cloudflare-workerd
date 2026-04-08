@@ -10653,6 +10653,7 @@ declare abstract class AiGateway {
     options?: {
       gateway?: UniversalGatewayOptions;
       extraHeaders?: object;
+      signal?: AbortSignal;
     },
   ): Promise<Response>;
   getUrl(provider?: AIGatewayProviders | string): Promise<string>; // eslint-disable-line
