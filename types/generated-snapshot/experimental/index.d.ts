@@ -11023,6 +11023,10 @@ declare abstract class Base_Ai_Cf_Nvidia_Nemotron_3_120B_A12B {
   inputs: ChatCompletionsInput;
   postProcessedOutputs: ChatCompletionsOutput;
 }
+declare abstract class Base_Ai_Cf_Google_Gemma_4_26B_A4B_IT {
+  inputs: ChatCompletionsInput;
+  postProcessedOutputs: ChatCompletionsOutput;
+}
 interface AiModels {
   "@cf/huggingface/distilbert-sst-2-int8": BaseAiTextClassification;
   "@cf/stabilityai/stable-diffusion-xl-base-1.0": BaseAiTextToImage;
@@ -11178,6 +11182,9 @@ type ChatCompletionsInput = XOR<
 interface InferenceUpstreamError extends Error {}
 interface AiInternalError extends Error {}
 type AiModelListType = Record<string, any>;
+type AsyncResponse = {
+  request_id: string;
+};
 declare abstract class Ai<AiModelList extends AiModelListType = AiModels> {
   aiGatewayLogId: string | null;
   gateway(gatewayId: string): AiGateway;
@@ -11194,29 +11201,52 @@ declare abstract class Ai<AiModelList extends AiModelListType = AiModels> {
    * @param autoragId Instance ID
    */
   autorag(autoragId: string): AutoRAG;
-  run<
-    Name extends keyof AiModelList,
-    Options extends AiOptions,
-    InputOptions extends AiModelList[Name]["inputs"],
-  >(
+  // Batch request
+  run<Name extends keyof AiModelList>(
     model: Name,
-    inputs: InputOptions,
-    options?: Options,
-  ): Promise<
-    Options extends
-      | {
-          returnRawResponse: true;
-        }
-      | {
-          websocket: true;
-        }
-      ? Response
-      : InputOptions extends {
-            stream: true;
-          }
-        ? ReadableStream
-        : AiModelList[Name]["postProcessedOutputs"]
-  >;
+    inputs: {
+      requests: AiModelList[Name]["inputs"][];
+    },
+    options: AiOptions & {
+      queueRequest: true;
+    },
+  ): Promise<AsyncResponse>;
+  // Raw response
+  run<Name extends keyof AiModelList>(
+    model: Name,
+    inputs: AiModelList[Name]["inputs"],
+    options: AiOptions & {
+      returnRawResponse: true;
+    },
+  ): Promise<Response>;
+  // WebSocket
+  run<Name extends keyof AiModelList>(
+    model: Name,
+    inputs: AiModelList[Name]["inputs"],
+    options: AiOptions & {
+      websocket: true;
+    },
+  ): Promise<Response>;
+  // Streaming
+  run<Name extends keyof AiModelList>(
+    model: Name,
+    inputs: AiModelList[Name]["inputs"] & {
+      stream: true;
+    },
+    options?: AiOptions,
+  ): Promise<ReadableStream>;
+  // Normal (default) - known model
+  run<Name extends keyof AiModelList>(
+    model: Name,
+    inputs: AiModelList[Name]["inputs"],
+    options?: AiOptions,
+  ): Promise<AiModelList[Name]["postProcessedOutputs"]>;
+  // Unknown model (gateway fallback)
+  run(
+    model: string & {},
+    inputs: Record<string, unknown>,
+    options?: AiOptions,
+  ): Promise<Record<string, unknown>>;
   models(params?: AiModelsSearchParams): Promise<AiModelsSearchObject[]>;
   toMarkdown(): ToMarkdownService;
   toMarkdown(
