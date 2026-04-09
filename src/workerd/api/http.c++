@@ -120,10 +120,7 @@ Body::ExtractedBody Body::extractBody(jsg::Lock& js, Initializer init) {
       // Per the Fetch spec we must copy the input buffer here. Previously we skipped the copy
       // for non-resizable buffers as an optimization, but the spec requires it for all buffer
       // types to ensure the body is an independent snapshot of the data at construction time.
-      auto bytes = bytesRef.getHandle(js);
-      auto buf = kj::heapArray<kj::byte>(bytes.size());
-      buf.asPtr().copyFrom(bytes.asArrayPtr());
-      buffer = kj::mv(buf);
+      buffer = kj::heapArray(bytesRef.getHandle(js).asArrayPtr());
     }
     KJ_CASE_ONEOF(blob, jsg::Ref<Blob>) {
       // Blobs always have a type, but it defaults to an empty string. We should NOT set
