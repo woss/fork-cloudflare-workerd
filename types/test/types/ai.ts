@@ -40,7 +40,7 @@ export const handler: ExportedHandler<{ AI: Ai }> = {
         { requests: [{ prompt: 'hello' }, { prompt: 'world' }] },
         { queueRequest: true as const }
       );
-      expectType<AsyncResponse>(result);
+      expectType<AiAsyncBatchResponse>(result);
     }
 
     // Gateway model -- unknown model name, permissive types

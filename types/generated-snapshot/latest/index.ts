@@ -10499,7 +10499,7 @@ export type ChatCompletionsInput = XOR<
 export interface InferenceUpstreamError extends Error {}
 export interface AiInternalError extends Error {}
 export type AiModelListType = Record<string, any>;
-export type AsyncResponse = {
+export type AiAsyncBatchResponse = {
   request_id: string;
 };
 export declare abstract class Ai<
@@ -10529,7 +10529,7 @@ export declare abstract class Ai<
     options: AiOptions & {
       queueRequest: true;
     },
-  ): Promise<AsyncResponse>;
+  ): Promise<AiAsyncBatchResponse>;
   // Raw response
   run<Name extends keyof AiModelList>(
     model: Name,
