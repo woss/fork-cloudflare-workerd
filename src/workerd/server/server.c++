@@ -3572,6 +3572,9 @@ class Server::WorkerService final: public Service,
   kj::Duration consumeTimeElapsedForPeriodicLogging() override {
     return 0 * kj::SECONDS;
   }
+  size_t getSqliteMemoryUsage() const override {
+    return 0;
+  }
 };
 
 struct FutureSubrequestChannel {
