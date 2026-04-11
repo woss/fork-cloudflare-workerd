@@ -253,7 +253,7 @@ class SqliteCallScope {
 #define SQLITE_REQUIRE(condition, sqliteErrorCode, errorMessage, ...)                              \
   if (!(condition)) {                                                                              \
     regulator.onError(sqliteErrorCode, errorMessage);                                              \
-    KJ_FAIL_REQUIRE("SQLite failed", errorMessage, ##__VA_ARGS__);                                 \
+    KJ_FAIL_REQUIRE("SENTRY_DO SQLite failed", errorMessage, ##__VA_ARGS__);                       \
   }
 
 // Make a SQLite call and check the returned error code. Use this version when the call is not
