@@ -1402,16 +1402,17 @@ void SqliteDatabase::setupSecurity(sqlite3* db) {
   // 4. Set a progress handler or use interrupt() to limit CPU time.
   // This happens inside LimitEnforcer.
 
-  // 5. Limit heap size.
-  // Annoyingly, this sets a process-wide limit. We'll set 128MB "soft" limit (to try to control
-  // how much page caching SQLite does) and 512MB "hard" limit (to block DoS attacks from taking
-  // down the whole system).
-  // TODO(perf): Revisit as popularity grows. Maybe make configurable? Maybe patch SQLite to allow
-  //   these to be controlled per-database? Is page caching even all that important when the kernel
-  //   does its own page caching?
+  // 5. Limit process-wide heap size.
+  // Set a 128MB "soft" limit so that SQLite will purge the page cache when per-process memory
+  // consumption exceeds this value, and an 8 GiB "hard" limit as a defense in depth mechanism to
+  // prevent SQLite from consuming too much per-process memory. The primary mechanism for limiting
+  // SQLite memory consumption is the metering done in the sqlite-metering module.
   static bool doOnce KJ_UNUSED = []() {
     sqlite3_soft_heap_limit64(128u << 20);
-    sqlite3_hard_heap_limit64(512u << 20);
+    sqlite3_hard_heap_limit64(
+        util::Autogate::isEnabled(util::AutogateKey::INCREASE_SQLITE_HARD_HEAP_LIMIT)
+            ? (8ull << 30)    // 8 GiB
+            : (512u << 20));  // 512 MiB
     return false;
   }();
 
