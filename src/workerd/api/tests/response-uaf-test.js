@@ -1,3 +1,7 @@
+// Copyright (c) 2026 Cloudflare, Inc.
+// Licensed under the Apache 2.0 license found in the LICENSE file or at:
+//     https://opensource.org/licenses/Apache-2.0
+
 // Regression test for a use-after-free: creating a Response from an ArrayBuffer,
 // then transferring the buffer via structuredClone and collecting the clone,
 // must not cause the Response body read to access freed memory.

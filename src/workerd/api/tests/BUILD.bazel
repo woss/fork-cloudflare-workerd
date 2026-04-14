@@ -273,7 +273,6 @@ wd_test(
     data = ["response-uaf-test.js"],
 )
 
-
 wd_test(
     src = "blob2-test.wd-test",
     args = ["--experimental"],
