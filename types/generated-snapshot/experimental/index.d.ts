@@ -13148,8 +13148,8 @@ declare module "cloudflare:email" {
  * Evaluation context for targeting rules.
  * Keys are attribute names (e.g. "userId", "country"), values are the attribute values.
  */
-type EvaluationContext = Record<string, string | number | boolean>;
-interface EvaluationDetails<T> {
+type FlagshipEvaluationContext = Record<string, string | number | boolean>;
+interface FlagshipEvaluationDetails<T> {
   flagKey: string;
   value: T;
   variant?: string | undefined;
@@ -13157,7 +13157,7 @@ interface EvaluationDetails<T> {
   errorCode?: string | undefined;
   errorMessage?: string | undefined;
 }
-interface FlagEvaluationError extends Error {}
+interface FlagshipEvaluationError extends Error {}
 /**
  * Feature flags binding for evaluating feature flags from a Cloudflare Workers script.
  *
@@ -13177,7 +13177,7 @@ interface FlagEvaluationError extends Error {}
  * console.log(details.variant, details.reason);
  * ```
  */
-declare abstract class Flags {
+declare abstract class Flagship {
   /**
    * Get a flag value without type checking.
    * @param flagKey The key of the flag to evaluate.
@@ -13187,7 +13187,7 @@ declare abstract class Flags {
   get(
     flagKey: string,
     defaultValue?: unknown,
-    context?: EvaluationContext,
+    context?: FlagshipEvaluationContext,
   ): Promise<unknown>;
   /**
    * Get a boolean flag value.
@@ -13198,7 +13198,7 @@ declare abstract class Flags {
   getBooleanValue(
     flagKey: string,
     defaultValue: boolean,
-    context?: EvaluationContext,
+    context?: FlagshipEvaluationContext,
   ): Promise<boolean>;
   /**
    * Get a string flag value.
@@ -13209,7 +13209,7 @@ declare abstract class Flags {
   getStringValue(
     flagKey: string,
     defaultValue: string,
-    context?: EvaluationContext,
+    context?: FlagshipEvaluationContext,
   ): Promise<string>;
   /**
    * Get a number flag value.
@@ -13220,7 +13220,7 @@ declare abstract class Flags {
   getNumberValue(
     flagKey: string,
     defaultValue: number,
-    context?: EvaluationContext,
+    context?: FlagshipEvaluationContext,
   ): Promise<number>;
   /**
    * Get an object flag value.
@@ -13231,7 +13231,7 @@ declare abstract class Flags {
   getObjectValue<T extends object>(
     flagKey: string,
     defaultValue: T,
-    context?: EvaluationContext,
+    context?: FlagshipEvaluationContext,
   ): Promise<T>;
   /**
    * Get a boolean flag value with full evaluation details.
@@ -13242,8 +13242,8 @@ declare abstract class Flags {
   getBooleanDetails(
     flagKey: string,
     defaultValue: boolean,
-    context?: EvaluationContext,
-  ): Promise<EvaluationDetails<boolean>>;
+    context?: FlagshipEvaluationContext,
+  ): Promise<FlagshipEvaluationDetails<boolean>>;
   /**
    * Get a string flag value with full evaluation details.
    * @param flagKey The key of the flag to evaluate.
@@ -13253,8 +13253,8 @@ declare abstract class Flags {
   getStringDetails(
     flagKey: string,
     defaultValue: string,
-    context?: EvaluationContext,
-  ): Promise<EvaluationDetails<string>>;
+    context?: FlagshipEvaluationContext,
+  ): Promise<FlagshipEvaluationDetails<string>>;
   /**
    * Get a number flag value with full evaluation details.
    * @param flagKey The key of the flag to evaluate.
@@ -13264,8 +13264,8 @@ declare abstract class Flags {
   getNumberDetails(
     flagKey: string,
     defaultValue: number,
-    context?: EvaluationContext,
-  ): Promise<EvaluationDetails<number>>;
+    context?: FlagshipEvaluationContext,
+  ): Promise<FlagshipEvaluationDetails<number>>;
   /**
    * Get an object flag value with full evaluation details.
    * @param flagKey The key of the flag to evaluate.
@@ -13275,8 +13275,8 @@ declare abstract class Flags {
   getObjectDetails<T extends object>(
     flagKey: string,
     defaultValue: T,
-    context?: EvaluationContext,
-  ): Promise<EvaluationDetails<T>>;
+    context?: FlagshipEvaluationContext,
+  ): Promise<FlagshipEvaluationDetails<T>>;
 }
 /**
  * Hello World binding to serve as an explanatory example. DO NOT USE
