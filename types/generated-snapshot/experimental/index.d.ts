@@ -11830,6 +11830,13 @@ interface ArtifactsTokenListResult {
   /** Total number of tokens for the repository. */
   total: number;
 }
+/** Result of getting a repository handle. */
+interface ArtifactsGetRepoResult {
+  /** The repo handle, or null if not found. */
+  repo: ArtifactsRepo | null;
+  /** Repository status: "ready", "importing", or "forking". */
+  status: "ready" | "importing" | "forking";
+}
 /** Handle for a single repository. Returned by Artifacts.create() and Artifacts.get(). */
 interface ArtifactsRepo {
   /** Get repo info including remote URL. Returns null if repo no longer exists. */
@@ -11890,11 +11897,10 @@ interface Artifacts {
   ): Promise<ArtifactsCreateRepoResult>;
   /**
    * Get a handle to an existing repository.
-   * May throw if the repo is in a transient state (e.g. "import in progress" or "fork in progress").
    * @param name Repository name.
-   * @returns Repo handle, or null if not found.
+   * @returns Repo handle with status. Status is "ready" when usable, "importing" or "forking" when a background operation is in progress.
    */
-  get(name: string): Promise<ArtifactsRepo | null>;
+  get(name: string): Promise<ArtifactsGetRepoResult>;
   /**
    * List repositories with cursor-based pagination.
    * @param opts Optional: limit (1–200, default 50), cursor for next page.
@@ -11909,26 +11915,6 @@ interface Artifacts {
    * @returns true if deleted, false if not found.
    */
   delete(name: string): Promise<boolean>;
-  /**
-   * Import a repository from an external source.
-   * @param params Import parameters: source configuration and target repository options.
-   * @returns Repo metadata with initial token.
-   */
-  import(params: {
-    source: {
-      url: string;
-      branch?: string;
-      depth?: number;
-    };
-    target: {
-      name: string;
-      opts?: {
-        defaultBranchOnly?: boolean;
-        description?: string;
-        readOnly?: boolean;
-      };
-    };
-  }): Promise<ArtifactsCreateRepoResult>;
 }
 /**
  * @deprecated Use the standalone AI Search Workers binding instead.
