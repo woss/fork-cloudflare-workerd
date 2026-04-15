@@ -11218,38 +11218,37 @@ export interface ArtifactsRepo {
   // ── Fork ──
   /**
    * Fork this repo to a new repo.
-   * @param target Target: name, optional namespace (defaults to this binding's namespace), optional readOnly flag.
+   * @param name Target repository name.
+   * @param opts Optional: description, readOnly flag, defaultBranchOnly (default true).
    */
-  fork(target: {
-    name: string;
-    namespace?: string;
-    readOnly?: boolean;
-  }): Promise<
-    ArtifactsCreateRepoResult & {
-      repo: ArtifactsRepo;
-    }
-  >;
+  fork(
+    name: string,
+    opts?: {
+      description?: string;
+      readOnly?: boolean;
+      defaultBranchOnly?: boolean;
+    },
+  ): Promise<ArtifactsCreateRepoResult>;
 }
 /** Artifacts binding — namespace-level operations. */
 export interface Artifacts {
   /**
    * Create a new repository with an initial access token.
    * @param name Repository name (alphanumeric, dots, hyphens, underscores).
-   * @param opts Optional: readOnly flag.
-   * @returns Repo metadata with initial token, plus a repo handle.
+   * @param opts Optional: readOnly flag, description, default branch name.
+   * @returns Repo metadata with initial token.
    */
   create(
     name: string,
     opts?: {
       readOnly?: boolean;
+      description?: string;
+      setDefaultBranch?: string;
     },
-  ): Promise<
-    ArtifactsCreateRepoResult & {
-      repo: ArtifactsRepo;
-    }
-  >;
+  ): Promise<ArtifactsCreateRepoResult>;
   /**
    * Get a handle to an existing repository.
+   * May throw if the repo is in a transient state (e.g. "import in progress" or "fork in progress").
    * @param name Repository name.
    * @returns Repo handle, or null if not found.
    */
@@ -11270,23 +11269,24 @@ export interface Artifacts {
   delete(name: string): Promise<boolean>;
   /**
    * Import a repository from an external source.
-   * @param name Target repository name in artifacts.
-   * @param source Import configuration: url, optional branch, headers, and readOnly flag.
-   * @returns Repo metadata with initial token, plus a repo handle.
+   * @param params Import parameters: source configuration and target repository options.
+   * @returns Repo metadata with initial token.
    */
-  import(
-    name: string,
+  import(params: {
     source: {
       url: string;
       branch?: string;
-      headers?: Record<string, string>;
-      readOnly?: boolean;
-    },
-  ): Promise<
-    ArtifactsCreateRepoResult & {
-      repo: ArtifactsRepo;
-    }
-  >;
+      depth?: number;
+    };
+    target: {
+      name: string;
+      opts?: {
+        defaultBranchOnly?: boolean;
+        description?: string;
+        readOnly?: boolean;
+      };
+    };
+  }): Promise<ArtifactsCreateRepoResult>;
 }
 /**
  * @deprecated Use the standalone AI Search Workers binding instead.
