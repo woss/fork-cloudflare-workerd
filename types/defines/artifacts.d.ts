@@ -11,13 +11,21 @@ interface ArtifactsRepoInfo {
   id: string;
   /** Repository name. */
   name: string;
+  /** Repository description, or null if not set. */
+  description: string | null;
+  /** Default branch name (e.g. "main"). */
+  defaultBranch: string;
   /** ISO 8601 creation timestamp. */
   createdAt: string;
+  /** ISO 8601 last-updated timestamp. */
+  updatedAt: string;
+  /** ISO 8601 timestamp of the last push, or null if never pushed. */
+  lastPushAt: string | null;
   /** Fork source (e.g. "github:owner/repo", "artifacts:namespace/repo"), or null if not a fork. */
   source: string | null;
   /** Whether the repository is read-only. */
   readOnly: boolean;
-  /** HTTPS git remote URL. */
+  /** HTTPS git remote URL. Only present when returned by `ArtifactsRepo.info()`. */
   remote: string;
 }
 
@@ -27,6 +35,10 @@ interface ArtifactsCreateRepoResult {
   id: string;
   /** Repository name. */
   name: string;
+  /** Repository description, or null if not set. */
+  description: string | null;
+  /** Default branch name. */
+  defaultBranch: string;
   /** HTTPS git remote URL. */
   remote: string;
   /** Plaintext access token (only returned at creation time). */
@@ -37,8 +49,8 @@ interface ArtifactsCreateRepoResult {
 
 /** Paginated list of repositories. */
 interface ArtifactsRepoListResult {
-  /** Repositories in this page. */
-  repos: ArtifactsRepoInfo[];
+  /** Repositories in this page (without the `remote` field). */
+  repos: Omit<ArtifactsRepoInfo, 'remote'>[];
   /** Total number of repositories in the namespace. */
   total: number;
   /** Cursor for the next page, if there are more results. */
@@ -51,7 +63,7 @@ interface ArtifactsCreateTokenResult {
   id: string;
   /** Plaintext token (only returned at creation time). */
   plaintext: string;
-  /** Token scope: "rw" (read-write) or "r" (read-only). */
+  /** Token scope: "read" or "write". */
   scope: string;
   /** ISO 8601 token expiry timestamp. */
   expiresAt: string;
@@ -69,8 +81,10 @@ interface ArtifactsTokenValidation {
 interface ArtifactsTokenInfo {
   /** Unique token ID. */
   id: string;
-  /** Token scope: "rw" or "r". */
+  /** Token scope: "read" or "write". */
   scope: string;
+  /** Token state: "active", "expired", or "revoked". */
+  state: 'active' | 'expired' | 'revoked';
   /** ISO 8601 creation timestamp. */
   createdAt: string;
   /** ISO 8601 expiry timestamp. */
@@ -94,11 +108,11 @@ interface ArtifactsRepo {
 
   /**
    * Create an access token for this repo.
-   * @param scope Token scope: "rw" (default) or "r".
+   * @param scope Token scope: "write" (default) or "read".
    * @param ttl Time-to-live in seconds (default 86400, min 60, max 31536000).
    */
   createToken(
-    scope?: 'rw' | 'r',
+    scope?: 'write' | 'read',
     ttl?: number
   ): Promise<ArtifactsCreateTokenResult>;
 
