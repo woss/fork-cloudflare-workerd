@@ -2342,11 +2342,34 @@ interface KVNamespaceGetWithMetadataResult<Value, Metadata> {
 }
 type QueueContentType = "text" | "bytes" | "json" | "v8";
 interface Queue<Body = unknown> {
-  send(message: Body, options?: QueueSendOptions): Promise<void>;
+  metrics(): Promise<QueueMetrics>;
+  send(message: Body, options?: QueueSendOptions): Promise<QueueSendResponse>;
   sendBatch(
     messages: Iterable<MessageSendRequest<Body>>,
     options?: QueueSendBatchOptions,
-  ): Promise<void>;
+  ): Promise<QueueSendBatchResponse>;
+}
+interface QueueSendMetrics {
+  backlogCount: number;
+  backlogBytes: number;
+  oldestMessageTimestamp?: Date;
+}
+interface QueueSendMetadata {
+  metrics: QueueSendMetrics;
+}
+interface QueueSendResponse {
+  metadata: QueueSendMetadata;
+}
+interface QueueSendBatchMetrics {
+  backlogCount: number;
+  backlogBytes: number;
+  oldestMessageTimestamp?: Date;
+}
+interface QueueSendBatchMetadata {
+  metrics: QueueSendBatchMetrics;
+}
+interface QueueSendBatchResponse {
+  metadata: QueueSendBatchMetadata;
 }
 interface QueueSendOptions {
   contentType?: QueueContentType;
@@ -2359,6 +2382,19 @@ interface MessageSendRequest<Body = unknown> {
   body: Body;
   contentType?: QueueContentType;
   delaySeconds?: number;
+}
+interface QueueMetrics {
+  backlogCount: number;
+  backlogBytes: number;
+  oldestMessageTimestamp?: Date;
+}
+interface MessageBatchMetrics {
+  backlogCount: number;
+  backlogBytes: number;
+  oldestMessageTimestamp?: Date;
+}
+interface MessageBatchMetadata {
+  metrics: MessageBatchMetrics;
 }
 interface QueueRetryOptions {
   delaySeconds?: number;
@@ -2374,12 +2410,14 @@ interface Message<Body = unknown> {
 interface QueueEvent<Body = unknown> extends ExtendableEvent {
   readonly messages: readonly Message<Body>[];
   readonly queue: string;
+  readonly metadata: MessageBatchMetadata;
   retryAll(options?: QueueRetryOptions): void;
   ackAll(): void;
 }
 interface MessageBatch<Body = unknown> {
   readonly messages: readonly Message<Body>[];
   readonly queue: string;
+  readonly metadata: MessageBatchMetadata;
   retryAll(options?: QueueRetryOptions): void;
   ackAll(): void;
 }

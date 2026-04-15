@@ -1462,9 +1462,10 @@ KJ_TEST("Server: capability bindings") {
       .+hello)"_blockquote);
     subreq.send(R"(
       HTTP/1.1 200 OK
-      Content-Length: 2
+      Content-Type: application/json
+      Content-Length: 27
 
-      OK
+      {"metadata":{"metrics":{}}}
     )"_blockquote);
   }
 

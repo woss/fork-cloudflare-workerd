@@ -2417,12 +2417,12 @@ interface KVNamespaceGetWithMetadataResult<Value, Metadata> {
 }
 type QueueContentType = "text" | "bytes" | "json" | "v8";
 interface Queue<Body = unknown> {
+  metrics(): Promise<QueueMetrics>;
   send(message: Body, options?: QueueSendOptions): Promise<QueueSendResponse>;
   sendBatch(
     messages: Iterable<MessageSendRequest<Body>>,
     options?: QueueSendBatchOptions,
   ): Promise<QueueSendBatchResponse>;
-  metrics(): Promise<QueueMetrics>;
 }
 interface QueueSendMetrics {
   backlogCount: number;
