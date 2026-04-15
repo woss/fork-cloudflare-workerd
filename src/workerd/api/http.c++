@@ -117,9 +117,11 @@ Body::ExtractedBody Body::extractBody(jsg::Lock& js, Initializer init) {
       buffer = kj::mv(text);
     }
     KJ_CASE_ONEOF(bytesRef, jsg::JsRef<jsg::JsBufferSource>) {
-      // Per the Fetch spec we must copy the input buffer here. Previously we skipped the copy
-      // for non-resizable buffers as an optimization, but the spec requires it for all buffer
-      // types to ensure the body is an independent snapshot of the data at construction time.
+      // Per the Fetch spec we must copy the input buffer here. Beyond spec conformance, this
+      // fixes a UAF: the incoming data may alias a v8::BackingStore whose underlying memory can
+      // be freed if the original ArrayBuffer is detached and transferred (e.g. via structuredClone
+      // with a transfer list) and then garbage collected. This applies to both resizable and
+      // fixed-size buffers. Copying severs the dependency on the V8 backing store.
       buffer = kj::heapArray(bytesRef.getHandle(js).asArrayPtr());
     }
     KJ_CASE_ONEOF(blob, jsg::Ref<Blob>) {
