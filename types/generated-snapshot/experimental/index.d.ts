@@ -11830,13 +11830,23 @@ interface ArtifactsTokenListResult {
   /** Total number of tokens for the repository. */
   total: number;
 }
-/** Result of getting a repository handle. */
-interface ArtifactsGetRepoResult {
-  /** The repo handle, or null if not found. */
-  repo: ArtifactsRepo | null;
-  /** Repository status: "ready", "importing", or "forking". */
-  status: "ready" | "importing" | "forking";
-}
+/** Result of getting a repository handle — discriminated union on `status`. */
+type ArtifactsGetRepoResult =
+  | {
+      status: "ready";
+      repo: ArtifactsRepo;
+    }
+  | {
+      status: "not_found";
+    }
+  | {
+      status: "importing";
+      retryAfter: number;
+    }
+  | {
+      status: "forking";
+      retryAfter: number;
+    };
 /** Handle for a single repository. Returned by Artifacts.create() and Artifacts.get(). */
 interface ArtifactsRepo {
   /** Get repo info including remote URL. Returns null if repo no longer exists. */
