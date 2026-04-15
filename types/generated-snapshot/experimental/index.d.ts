@@ -11763,7 +11763,7 @@ interface ArtifactsRepoInfo {
   source: string | null;
   /** Whether the repository is read-only. */
   readOnly: boolean;
-  /** HTTPS git remote URL. Only present when returned by `ArtifactsRepo.info()`. */
+  /** HTTPS git remote URL. */
   remote: string;
 }
 /** Result of creating a repository — includes the initial access token. */
@@ -11781,7 +11781,7 @@ interface ArtifactsCreateRepoResult {
   /** Plaintext access token (only returned at creation time). */
   token: string;
   /** ISO 8601 token expiry timestamp. */
-  expiresAt: string;
+  tokenExpiresAt: string;
 }
 /** Paginated list of repositories. */
 interface ArtifactsRepoListResult {
@@ -11803,13 +11803,6 @@ interface ArtifactsCreateTokenResult {
   /** ISO 8601 token expiry timestamp. */
   expiresAt: string;
 }
-/** Token validation result. */
-interface ArtifactsTokenValidation {
-  /** Whether the token is valid for the given repository. */
-  valid: boolean;
-  /** Token scope, if valid. */
-  scope?: string;
-}
 /** Token metadata (no plaintext). */
 interface ArtifactsTokenInfo {
   /** Unique token ID. */
@@ -11830,27 +11823,28 @@ interface ArtifactsTokenListResult {
   /** Total number of tokens for the repository. */
   total: number;
 }
-/** Result of getting a repository handle — discriminated union on `status`. */
-type ArtifactsGetRepoResult =
-  | {
-      status: "ready";
-      repo: ArtifactsRepo;
-    }
-  | {
-      status: "not_found";
-    }
-  | {
-      status: "importing";
-      retryAfter: number;
-    }
-  | {
-      status: "forking";
-      retryAfter: number;
-    };
-/** Handle for a single repository. Returned by Artifacts.create() and Artifacts.get(). */
+/** Handle for a single repository. Returned by Artifacts.get(). */
 interface ArtifactsRepo {
-  /** Get repo info including remote URL. Returns null if repo no longer exists. */
-  info(): Promise<ArtifactsRepoInfo | null>;
+  /** Unique repository ID. */
+  id: string;
+  /** Repository name. */
+  name: string;
+  /** Repository description, or null if not set. */
+  description: string | null;
+  /** Default branch name (e.g. "main"). */
+  defaultBranch: string;
+  /** ISO 8601 creation timestamp. */
+  createdAt: string;
+  /** ISO 8601 last-updated timestamp. */
+  updatedAt: string;
+  /** ISO 8601 timestamp of the last push, or null if never pushed. */
+  lastPushAt: string | null;
+  /** Fork source (e.g. "github:owner/repo", "artifacts:namespace/repo"), or null if not a fork. */
+  source: string | null;
+  /** Whether the repository is read-only. */
+  readOnly: boolean;
+  /** HTTPS git remote URL. */
+  remote: string;
   // ── Tokens ──
   /**
    * Create an access token for this repo.
@@ -11861,11 +11855,6 @@ interface ArtifactsRepo {
     scope?: "write" | "read",
     ttl?: number,
   ): Promise<ArtifactsCreateTokenResult>;
-  /**
-   * Validate a token against this repo.
-   * @param token The plaintext token.
-   */
-  validateToken(token: string): Promise<ArtifactsTokenValidation>;
   /** List tokens for this repo (metadata only, no plaintext). */
   listTokens(): Promise<ArtifactsTokenListResult>;
   /**
@@ -11908,9 +11897,28 @@ interface Artifacts {
   /**
    * Get a handle to an existing repository.
    * @param name Repository name.
-   * @returns Repo handle with status. Status is "ready" when usable, "importing" or "forking" when a background operation is in progress.
+   * @returns Repo handle, or null if not found.
    */
-  get(name: string): Promise<ArtifactsGetRepoResult>;
+  get(name: string): Promise<ArtifactsRepo>;
+  /**
+   * Import a repository from an external git remote.
+   * @param params Source URL and optional branch/depth, plus target name and options.
+   * @returns Repo metadata with initial token.
+   */
+  import(params: {
+    source: {
+      url: string;
+      branch?: string;
+      depth?: number;
+    };
+    target: {
+      name: string;
+      opts?: {
+        description?: string;
+        readOnly?: boolean;
+      };
+    };
+  }): Promise<ArtifactsCreateRepoResult>;
   /**
    * List repositories with cursor-based pagination.
    * @param opts Optional: limit (1–200, default 50), cursor for next page.
