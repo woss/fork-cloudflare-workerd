@@ -78,7 +78,7 @@ interface ArtifactsTokenInfo {
   /** Unique token ID. */
   id: string;
   /** Token scope: "read" or "write". */
-  scope: string;
+  scope: 'read' | 'write';
   /** Token state: "active", "expired", or "revoked". */
   state: 'active' | 'expired' | 'revoked';
   /** ISO 8601 creation timestamp. */

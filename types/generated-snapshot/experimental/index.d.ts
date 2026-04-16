@@ -11799,7 +11799,7 @@ interface ArtifactsCreateTokenResult {
   /** Plaintext token (only returned at creation time). */
   plaintext: string;
   /** Token scope: "read" or "write". */
-  scope: string;
+  scope: 'read' | 'write';
   /** ISO 8601 token expiry timestamp. */
   expiresAt: string;
 }
@@ -11808,7 +11808,7 @@ interface ArtifactsTokenInfo {
   /** Unique token ID. */
   id: string;
   /** Token scope: "read" or "write". */
-  scope: string;
+  scope: 'read' | 'write';
   /** Token state: "active", "expired", or "revoked". */
   state: "active" | "expired" | "revoked";
   /** ISO 8601 creation timestamp. */
