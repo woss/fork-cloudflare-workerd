@@ -146,7 +146,7 @@ interface Artifacts {
   /**
    * Get a handle to an existing repository.
    * @param name Repository name.
-   * @returns Repo handle, or null if not found.
+   * @returns Repo handle.
    */
   get(name: string): Promise<ArtifactsRepo>;
 
