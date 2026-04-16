@@ -64,7 +64,7 @@ interface ArtifactsCreateTokenResult {
   /** Plaintext token (only returned at creation time). */
   plaintext: string;
   /** Token scope: "read" or "write". */
-  scope: string;
+  scope: 'read' | 'write';
   /** ISO 8601 token expiry timestamp. */
   expiresAt: string;
 }
