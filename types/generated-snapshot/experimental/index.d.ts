@@ -11737,6 +11737,9 @@ declare abstract class AiGateway {
   ): Promise<Response>;
   getUrl(provider?: AIGatewayProviders | string): Promise<string>; // eslint-disable-line
 }
+// Copyright (c) 2022-2025 Cloudflare, Inc.
+// Licensed under the Apache 2.0 license found in the LICENSE file or at:
+//     https://opensource.org/licenses/Apache-2.0
 /**
  * Artifacts — Git-compatible file storage on Cloudflare Workers.
  *
@@ -11799,7 +11802,7 @@ interface ArtifactsCreateTokenResult {
   /** Plaintext token (only returned at creation time). */
   plaintext: string;
   /** Token scope: "read" or "write". */
-  scope: 'read' | 'write';
+  scope: "read" | "write";
   /** ISO 8601 token expiry timestamp. */
   expiresAt: string;
 }
@@ -11808,7 +11811,7 @@ interface ArtifactsTokenInfo {
   /** Unique token ID. */
   id: string;
   /** Token scope: "read" or "write". */
-  scope: 'read' | 'write';
+  scope: "read" | "write";
   /** Token state: "active", "expired", or "revoked". */
   state: "active" | "expired" | "revoked";
   /** ISO 8601 creation timestamp. */
