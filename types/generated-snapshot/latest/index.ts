@@ -11182,28 +11182,7 @@ export interface ArtifactsTokenListResult {
   total: number;
 }
 /** Handle for a single repository. Returned by Artifacts.get(). */
-export interface ArtifactsRepo {
-  /** Unique repository ID. */
-  id: string;
-  /** Repository name. */
-  name: string;
-  /** Repository description, or null if not set. */
-  description: string | null;
-  /** Default branch name (e.g. "main"). */
-  defaultBranch: string;
-  /** ISO 8601 creation timestamp. */
-  createdAt: string;
-  /** ISO 8601 last-updated timestamp. */
-  updatedAt: string;
-  /** ISO 8601 timestamp of the last push, or null if never pushed. */
-  lastPushAt: string | null;
-  /** Fork source (e.g. "github:owner/repo", "artifacts:namespace/repo"), or null if not a fork. */
-  source: string | null;
-  /** Whether the repository is read-only. */
-  readOnly: boolean;
-  /** HTTPS git remote URL. */
-  remote: string;
-  // ── Tokens ──
+export interface ArtifactsRepo extends ArtifactsRepoInfo {
   /**
    * Create an access token for this repo.
    * @param scope Token scope: "write" (default) or "read".
