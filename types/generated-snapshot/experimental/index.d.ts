@@ -593,7 +593,6 @@ interface CachePurgeError {
 }
 interface CachePurgeResult {
   success: boolean;
-  zoneTag: string;
   errors: CachePurgeError[];
 }
 interface CachePurgeOptions {
