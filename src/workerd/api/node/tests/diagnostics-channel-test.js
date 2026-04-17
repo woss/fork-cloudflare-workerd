@@ -178,3 +178,49 @@ export const DiagChannelUnbindDuringRunStores = {
     strictEqual(transformCallCount, 1);
   },
 };
+
+export const test_channel_hasSubscribers_is_a_getter = {
+  async test() {
+    const ch = channel('getter-test');
+
+    // It is a boolean, not a function (matches Node.js).
+    strictEqual(typeof ch.hasSubscribers, 'boolean');
+    strictEqual(ch.hasSubscribers, false);
+
+    const listener = () => {};
+    ch.subscribe(listener);
+    strictEqual(ch.hasSubscribers, true);
+
+    ch.unsubscribe(listener);
+    strictEqual(ch.hasSubscribers, false);
+
+    // Defined on the prototype as a read-only getter.
+    const desc = Object.getOwnPropertyDescriptor(
+      Object.getPrototypeOf(ch),
+      'hasSubscribers'
+    );
+    ok(desc);
+    strictEqual(typeof desc.get, 'function');
+    strictEqual(desc.set, undefined);
+    strictEqual(desc.value, undefined);
+  },
+};
+
+export const test_tracingChannel_hasSubscribers_is_a_getter = {
+  async test() {
+    const tc = tracingChannel('tracing-getter-test');
+
+    strictEqual(typeof tc.hasSubscribers, 'boolean');
+    strictEqual(tc.hasSubscribers, false);
+
+    const listener = () => {};
+
+    // Each sub-channel independently flips the aggregate getter.
+    for (const sub of ['start', 'end', 'asyncStart', 'asyncEnd', 'error']) {
+      tc[sub].subscribe(listener);
+      strictEqual(tc.hasSubscribers, true, `via ${sub}`);
+      tc[sub].unsubscribe(listener);
+      strictEqual(tc.hasSubscribers, false, `after unsubscribing ${sub}`);
+    }
+  },
+};

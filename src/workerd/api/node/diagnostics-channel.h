@@ -32,7 +32,7 @@ class Channel: public jsg::Object {
       jsg::Arguments<jsg::Value> args);
 
   JSG_RESOURCE_TYPE(Channel) {
-    JSG_METHOD(hasSubscribers);
+    JSG_READONLY_PROTOTYPE_PROPERTY(hasSubscribers, hasSubscribers);
     JSG_METHOD(publish);
     JSG_METHOD(subscribe);
     JSG_METHOD(unsubscribe);

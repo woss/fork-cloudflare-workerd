@@ -109,6 +109,17 @@ export class TracingChannel {
     return this[kError];
   }
 
+  get hasSubscribers(): boolean {
+    return (
+      this[kStart]?.hasSubscribers ||
+      this[kEnd]?.hasSubscribers ||
+      this[kAsyncStart]?.hasSubscribers ||
+      this[kAsyncEnd]?.hasSubscribers ||
+      this[kError]?.hasSubscribers ||
+      false
+    );
+  }
+
   subscribe(subscriptions: TracingChannelSubscriptions): void {
     if (subscriptions.start !== undefined)
       this[kStart]?.subscribe(subscriptions.start);
