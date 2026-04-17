@@ -1924,6 +1924,7 @@ class Server::WorkerService final: public Service,
   using LinkCallback =
       kj::Function<LinkedIoChannels(WorkerService&, Worker::ValidationErrorReporter&)>;
   using AbortActorsCallback = kj::Function<void(kj::Maybe<const kj::Exception&> reason)>;
+  using DeleteActorsCallback = kj::Function<void(kj::Maybe<const kj::Exception&> reason)>;
 
   WorkerService(ChannelTokenHandler& channelTokenHandler,
       kj::Maybe<kj::StringPtr> serviceName,
@@ -1935,6 +1936,7 @@ class Server::WorkerService final: public Service,
       kj::HashSet<kj::String> actorClassEntrypointsParam,
       LinkCallback linkCallback,
       AbortActorsCallback abortActorsCallback,
+      DeleteActorsCallback deleteActorsCallback,
       kj::Maybe<kj::String> dockerPathParam,
       kj::Maybe<kj::String> containerEgressInterceptorImageParam,
       bool isDynamic)
@@ -1949,6 +1951,7 @@ class Server::WorkerService final: public Service,
         actorClassEntrypoints(kj::mv(actorClassEntrypointsParam)),
         waitUntilTasks(*this),
         abortActorsCallback(kj::mv(abortActorsCallback)),
+        deleteActorsCallback(kj::mv(deleteActorsCallback)),
         dockerPath(kj::mv(dockerPathParam)),
         containerEgressInterceptorImage(kj::mv(containerEgressInterceptorImageParam)),
         isDynamic(isDynamic) {}
@@ -2531,6 +2534,18 @@ class Server::WorkerService final: public Service,
         }
       }
 
+      // Resets the actor's SQLite database while the connection is still open,
+      // avoiding file-locking issues on Windows.
+      void resetStorage() {
+        KJ_IF_SOME(a, actor) {
+          KJ_IF_SOME(cache, a->getPersistent()) {
+            KJ_IF_SOME(db, cache.getSqliteDatabase()) {
+              kj::runCatchingExceptions([&]() { db.reset(); });
+            }
+          }
+        }
+      }
+
       kj::Own<ActorContainer> getFacetContainer(
           kj::String childKey, kj::Function<kj::Promise<StartInfo>()> getStartInfo) {
         auto makeContainer = [&]() {
@@ -2995,6 +3010,22 @@ class Server::WorkerService final: public Service,
       actors.clear();
     }
 
+    // Resets all actor databases, aborts all actors, and cancels all alarms so DOs
+    // can be recreated with clean state.
+    void deleteAll(kj::Maybe<const kj::Exception&> reason) {
+      // Reset databases before aborting so connections are still open (avoids
+      // Windows file-locking issues with deferred handle release).
+      for (auto& actor: actors) {
+        actor.value->resetStorage();
+      }
+
+      abortAll(reason);
+
+      KJ_IF_SOME(scheduler, ownAlarmScheduler) {
+        scheduler->deleteAll();
+      }
+    }
+
    private:
     kj::Own<ActorClass> actorClass;
     const ActorConfig& config;
@@ -3290,6 +3321,7 @@ class Server::WorkerService final: public Service,
   kj::HashMap<kj::StringPtr, kj::Own<ActorNamespace>> actorNamespaces;
   kj::TaskSet waitUntilTasks;
   AbortActorsCallback abortActorsCallback;
+  DeleteActorsCallback deleteActorsCallback;
   kj::Maybe<kj::String> dockerPath;
   kj::Maybe<kj::String> containerEgressInterceptorImage;
   bool isDynamic;
@@ -3504,6 +3536,10 @@ class Server::WorkerService final: public Service,
 
   void abortAllActors(kj::Maybe<kj::Exception&> reason) override {
     abortActorsCallback(reason);
+  }
+
+  void deleteAllActors(kj::Maybe<kj::Exception&> reason) override {
+    deleteActorsCallback(reason);
   }
 
   kj::Own<WorkerStubChannel> loadIsolate(uint loaderChannel,
@@ -4037,6 +4073,25 @@ void Server::abortAllActors(kj::Maybe<const kj::Exception&> reason) {
           }
         }
         if (isEvictable) ns->abortAll(reason);
+      }
+    }
+  }
+}
+
+void Server::deleteAllActors(kj::Maybe<const kj::Exception&> reason) {
+  for (auto& service: services) {
+    if (WorkerService* worker = dynamic_cast<WorkerService*>(&*service.value)) {
+      for (auto& [className, ns]: worker->getActorNamespaces()) {
+        bool isEvictable = true;
+        KJ_SWITCH_ONEOF(ns->getConfig()) {
+          KJ_CASE_ONEOF(c, Durable) {
+            isEvictable = c.isEvictable;
+          }
+          KJ_CASE_ONEOF(c, Ephemeral) {
+            isEvictable = c.isEvictable;
+          }
+        }
+        if (isEvictable) ns->deleteAll(reason);
       }
     }
   }
@@ -4894,12 +4949,12 @@ kj::Promise<kj::Own<Server::WorkerService>> Server::makeWorkerImpl(kj::StringPtr
   kj::Maybe<kj::StringPtr> serviceName;
   if (!def.isDynamic) serviceName = name;
 
-  auto result =
-      kj::refcounted<WorkerService>(channelTokenHandler, serviceName, globalContext->threadContext,
-          monotonicClock, kj::mv(worker), kj::mv(errorReporter.defaultEntrypoint),
-          kj::mv(errorReporter.namedEntrypoints), kj::mv(errorReporter.actorClasses),
-          kj::mv(linkCallback), KJ_BIND_METHOD(*this, abortAllActors), kj::mv(dockerPath),
-          kj::mv(containerEgressInterceptorImage), def.isDynamic);
+  auto result = kj::refcounted<WorkerService>(channelTokenHandler, serviceName,
+      globalContext->threadContext, monotonicClock, kj::mv(worker),
+      kj::mv(errorReporter.defaultEntrypoint), kj::mv(errorReporter.namedEntrypoints),
+      kj::mv(errorReporter.actorClasses), kj::mv(linkCallback),
+      KJ_BIND_METHOD(*this, abortAllActors), KJ_BIND_METHOD(*this, deleteAllActors),
+      kj::mv(dockerPath), kj::mv(containerEgressInterceptorImage), def.isDynamic);
   result->initActorNamespaces(def.localActorConfigs, network);
   co_return result;
 }
