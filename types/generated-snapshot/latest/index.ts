@@ -572,7 +572,6 @@ export interface CachePurgeError {
 }
 export interface CachePurgeResult {
   success: boolean;
-  zoneTag: string;
   errors: CachePurgeError[];
 }
 export interface CachePurgeOptions {
