@@ -623,7 +623,6 @@ struct JsValue {
     }
 
     # TODO(soon):
-    # - AbortTrigger
     # - Promises
   }
 }
