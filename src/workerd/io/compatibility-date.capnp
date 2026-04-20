@@ -1504,8 +1504,20 @@ struct CompatibilityFlags @0x8f8c1b68151b6cef {
   # `ctx.version` is much more well defined. The behaviour of this flag will change in the future.
 
   noResizableArrayBufferInBlob @173 :Bool
-    $compatEnableFlag("no_resizable_array_buffer_in_blob")
-    $compatDisableFlag("resizable_array_buffer_in_blob");
+      $compatEnableFlag("no_resizable_array_buffer_in_blob")
+      $compatDisableFlag("resizable_array_buffer_in_blob");
   # When enabled, creating a Blob with a resizable ArrayBuffer will throw a TypeError, matching
   # expected spec behavior.
+
+  diagnosticsChannelHasSubscribersGetter @174 :Bool
+      $compatEnableFlag("diagnostics_channel_has_subscribers_getter")
+      $compatDisableFlag("no_diagnostics_channel_has_subscribers_getter")
+      $compatEnableDate("2026-05-01");
+  # Node.js' `diagnostics_channel.Channel.hasSubscribers` and
+  # `TracingChannel.hasSubscribers` are boolean getter properties, not methods.
+  # Originally, workerd registered `Channel.hasSubscribers` as a method (so users
+  # had to call `ch.hasSubscribers()` with parentheses). When this flag is
+  # enabled, `hasSubscribers` becomes a read-only getter that evaluates directly
+  # to a boolean, matching Node.js behavior.
+  # See: https://nodejs.org/dist/latest-v20.x/docs/api/diagnostics_channel.html#channelhassubscribers
 }
