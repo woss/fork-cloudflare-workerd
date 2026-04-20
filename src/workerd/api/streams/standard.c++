@@ -2558,6 +2558,11 @@ void ReadableByteStreamController::close(jsg::Lock& js) {
 }
 
 void ReadableByteStreamController::enqueue(jsg::Lock& js, jsg::BufferSource chunk) {
+  // Hold a strong reference up front. Operations below (invalidate, detach) touch
+  // the JS heap and C++ argument evaluation order is unspecified, so JSG_THIS as a
+  // function argument would not reliably precede chunk.detach(js).
+  auto self = JSG_THIS;
+
   JSG_REQUIRE(chunk.size() > 0, TypeError, "Cannot enqueue a zero-length ArrayBuffer.");
   JSG_REQUIRE(chunk.canDetach(js), TypeError, "The provided ArrayBuffer must be detachable.");
   JSG_REQUIRE(impl.canCloseOrEnqueue(), TypeError, "This ReadableByteStreamController is closed.");
@@ -2570,7 +2575,7 @@ void ReadableByteStreamController::enqueue(jsg::Lock& js, jsg::BufferSource chun
     byobRequest->invalidate(js);
   }
 
-  impl.enqueue(js, kj::rc<ByteQueue::Entry>(jsg::BufferSource(js, chunk.detach(js))), JSG_THIS);
+  impl.enqueue(js, kj::rc<ByteQueue::Entry>(jsg::BufferSource(js, chunk.detach(js))), kj::mv(self));
 }
 
 void ReadableByteStreamController::error(jsg::Lock& js, v8::Local<v8::Value> reason) {
