@@ -115,25 +115,42 @@ export class TracingChannel {
   // `hasSubscribers` is installed on the prototype below, gated by the
   // `diagnostics_channel_has_subscribers_getter` compatibility flag. When the
   // flag is enabled it's a getter property (matching Node.js); when disabled
-  // it's a method (preserving the original workerd behavior). The underlying
-  // implementation lives in `_hasSubscribers` and branches on the flag because
-  // the inner `Channel.hasSubscribers` follows the same flag.
-  _hasSubscribers(): boolean {
-    const channelHas = (c?: ChannelType): boolean => {
-      if (c == null) return false;
-      // When the flag is on, `hasSubscribers` is a boolean getter on the
-      // inner Channel; otherwise it's a method that must be invoked.
-      return hasSubscribersGetter
-        ? (c.hasSubscribers as unknown as boolean)
-        : (c.hasSubscribers as unknown as () => boolean).call(c);
-    };
-    return (
-      channelHas(this[kStart]) ||
-      channelHas(this[kEnd]) ||
-      channelHas(this[kAsyncStart]) ||
-      channelHas(this[kAsyncEnd]) ||
-      channelHas(this[kError])
-    );
+  // it's a method (preserving the original workerd behavior).
+  static {
+    if (hasSubscribersGetter) {
+      Object.defineProperty(this.prototype, 'hasSubscribers', {
+        get(this: TracingChannel): boolean {
+          return [
+            this.start,
+            this.end,
+            this.asyncStart,
+            this.asyncEnd,
+            this.error,
+          ].some((c) => c != null && (c.hasSubscribers as unknown as boolean));
+        },
+        configurable: true,
+        enumerable: false,
+      });
+    } else {
+      Object.defineProperty(this.prototype, 'hasSubscribers', {
+        value: function hasSubscribers(this: TracingChannel): boolean {
+          return [
+            this.start,
+            this.end,
+            this.asyncStart,
+            this.asyncEnd,
+            this.error,
+          ].some(
+            (c) =>
+              c != null &&
+              (c.hasSubscribers as unknown as () => boolean).call(c)
+          );
+        },
+        writable: true,
+        configurable: true,
+        enumerable: false,
+      });
+    }
   }
 
   subscribe(subscriptions: TracingChannelSubscriptions): void {
@@ -290,28 +307,6 @@ export class TracingChannel {
       thisArg
     );
   }
-}
-
-// Install `hasSubscribers` on TracingChannel.prototype gated by the compat
-// flag: getter when enabled (Node.js-compatible), method when disabled
-// (preserves legacy workerd behavior).
-if (hasSubscribersGetter) {
-  Object.defineProperty(TracingChannel.prototype, 'hasSubscribers', {
-    get(this: TracingChannel): boolean {
-      return this._hasSubscribers();
-    },
-    configurable: true,
-    enumerable: false,
-  });
-} else {
-  Object.defineProperty(TracingChannel.prototype, 'hasSubscribers', {
-    value: function hasSubscribers(this: TracingChannel): boolean {
-      return this._hasSubscribers();
-    },
-    writable: true,
-    configurable: true,
-    enumerable: false,
-  });
 }
 
 function validateChannel(channel: unknown, name: string): ChannelType {

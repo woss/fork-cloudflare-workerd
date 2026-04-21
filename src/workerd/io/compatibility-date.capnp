@@ -1512,7 +1512,7 @@ struct CompatibilityFlags @0x8f8c1b68151b6cef {
   diagnosticsChannelHasSubscribersGetter @174 :Bool
       $compatEnableFlag("diagnostics_channel_has_subscribers_getter")
       $compatDisableFlag("no_diagnostics_channel_has_subscribers_getter")
-      $compatEnableDate("2026-05-01");
+      $compatEnableDate("2026-05-19");
   # Node.js' `diagnostics_channel.Channel.hasSubscribers` and
   # `TracingChannel.hasSubscribers` are boolean getter properties, not methods.
   # Originally, workerd registered `Channel.hasSubscribers` as a method (so users
