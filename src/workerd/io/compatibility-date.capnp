@@ -1481,7 +1481,8 @@ struct CompatibilityFlags @0x8f8c1b68151b6cef {
 
   workflowsPreserveNonRetryableErrorMessage @170 :Bool
       $compatEnableFlag("workflows_preserve_non_retryable_error_message")
-      $experimental;
+      $compatDisableFlag("workflows_replace_non_retryable_error_message")
+      $compatEnableDate("2026-05-14");
   # When enabled, if a Workflow step throws a NonRetryableError, the error message
   # and name are preserved on the thrown exception instead of being replaced with
   # a generic "NonRetryableError" string.
