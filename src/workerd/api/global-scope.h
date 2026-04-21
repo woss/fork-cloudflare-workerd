@@ -199,6 +199,9 @@ class TestController: public jsg::Object {
 
 // Structured types for the cache purge API (ctx.cache.purge()).
 // These match the coreless-purge-ingest WorkersCachePurgeEntrypoint types.
+// NOTE: TypeScript stubs for CachePurgeError, CachePurgeResult, CachePurgeOptions, and
+// CacheContext are manually maintained in src/cloudflare/internal/workers.d.ts. If you change
+// these types, update that file to match.
 struct CachePurgeError {
   int code;
   kj::String message;

@@ -151,3 +151,54 @@ export const exports = new Proxy(
 );
 
 export const waitUntil = entrypoints.waitUntil.bind(entrypoints);
+
+// A proxy for the worker's cache context (ctx.cache). Since cache is imported as a module-level
+// reference, the object identity cannot be changed. The proxy provides indirection, delegating
+// to the current request's CacheContext. This ensures that cache remains entrypoint specific
+// ensuring that the runtime always delegates the right host to clear.
+export const cache = new Proxy(
+  {},
+  {
+    get(_: unknown, prop: string | symbol): unknown {
+      const inner = entrypoints.getCtxCache();
+      if (inner) {
+        const value: unknown = Reflect.get(inner, prop);
+        // Bind methods to the underlying CacheContext so that `this` is correct
+        // when calling e.g. cache.purge() through the proxy.
+        if (typeof value === 'function') {
+          return Function.prototype.bind.call(value, inner);
+        }
+        return value;
+      }
+      // Used to enable safe no-op access outside module init.
+      return undefined;
+    },
+
+    has(_: unknown, prop: string | symbol): boolean {
+      const inner = entrypoints.getCtxCache();
+      if (inner) {
+        return Reflect.has(inner, prop);
+      }
+      return false;
+    },
+
+    ownKeys(_: unknown): ArrayLike<string | symbol> {
+      const inner = entrypoints.getCtxCache();
+      if (inner) {
+        return Reflect.ownKeys(inner);
+      }
+      return [];
+    },
+
+    getOwnPropertyDescriptor(
+      _: unknown,
+      prop: string | symbol
+    ): PropertyDescriptor | undefined {
+      const inner = entrypoints.getCtxCache();
+      if (inner) {
+        return Reflect.getOwnPropertyDescriptor(inner, prop);
+      }
+      return undefined;
+    },
+  }
+);
