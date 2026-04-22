@@ -14616,7 +14616,8 @@ export declare namespace TailStream {
     | "exceededMemory"
     | "loadShed"
     | "responseStreamDisconnected"
-    | "scriptNotFound";
+    | "scriptNotFound"
+    | "internalError";
   interface ScriptVersion {
     readonly id: string;
     readonly tag?: string;
