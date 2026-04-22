@@ -2212,24 +2212,32 @@ class Server::WorkerService final: public Service,
     }
 
     KJ_IF_SOME(w, workerTracer) {
-      w->setMakeUserRequestSpanFunc([&w = *w]() {
+      w->setMakeUserRequestSpanFunc([&w = *w](tracing::TraceId traceId) {
         return SpanParent(kj::refcounted<UserSpanObserver>(
-            kj::refcounted<SequentialSpanSubmitter>(kj::addRef(w))));
+            kj::refcounted<SequentialSpanSubmitter>(kj::addRef(w)), kj::mv(traceId)));
       });
     }
     kj::Own<RequestObserver> observer =
         kj::refcounted<RequestObserverWithTracer>(mapAddRef(workerTracer), waitUntilTasks);
 
-    return newWorkerEntrypoint(
-        threadContext, kj::atomicAddRef(*worker), entrypointName, kj::mv(props), kj::mv(actor),
-        kj::Own<LimitEnforcer>(this, kj::NullDisposer::instance), {},  // ioContextDependency
+    kj::Maybe<tracing::InvocationSpanContext> triggerContext;
+    KJ_IF_SOME(ctx, metadata.userSpanParent.toSpanContext()) {
+      KJ_IF_SOME(spanId, ctx.getSpanId()) {
+        triggerContext =
+            tracing::InvocationSpanContext(ctx.getTraceId(), tracing::TraceId::nullId, spanId);
+      }
+    }
+
+    return newWorkerEntrypoint(threadContext, kj::atomicAddRef(*worker), entrypointName,
+        kj::mv(props), kj::mv(actor), kj::Own<LimitEnforcer>(this, kj::NullDisposer::instance),
+        {},  // ioContextDependency
         kj::Own<IoChannelFactory>(this, kj::NullDisposer::instance), kj::mv(observer),
         waitUntilTasks,
         true,                  // tunnelExceptions
         kj::mv(workerTracer),  // workerTracer
         kj::mv(metadata.cfBlobJson),
-        kj::none  // versionInfo
-    );
+        kj::none,  // versionInfo
+        kj::mv(triggerContext));
   }
 
   class ActorNamespace final {

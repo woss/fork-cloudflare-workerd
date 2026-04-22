@@ -9,6 +9,7 @@
 #include <workerd/io/worker.h>
 #include <workerd/jsg/jsg.h>
 #include <workerd/jsg/setup.h>
+#include <workerd/util/autogate.h>
 #include <workerd/util/own-util.h>
 #include <workerd/util/sentry.h>
 #include <workerd/util/uncaught-exception-source.h>
@@ -262,7 +263,12 @@ void IoContext::IncomingRequest::delivered(kj::SourceLocation location) {
   metrics->delivered();
 
   KJ_IF_SOME(workerTracer, workerTracer) {
-    currentUserTraceSpan = workerTracer->makeUserRequestSpan();
+    if (util::Autogate::isEnabled(util::AutogateKey::USER_SPAN_CONTEXT_PROPAGATION)) {
+      auto traceId = getInvocationSpanContext().getTraceId();
+      currentUserTraceSpan = workerTracer->makeUserRequestSpan(kj::mv(traceId));
+    } else {
+      currentUserTraceSpan = workerTracer->makeUserRequestSpan(tracing::TraceId(nullptr));
+    }
   }
 
   KJ_IF_SOME(a, context->actor) {
@@ -1011,6 +1017,7 @@ kj::Own<WorkerInterface> IoContext::getSubrequestChannelImpl(uint channel,
   IoChannelFactory::SubrequestMetadata metadata{
     .cfBlobJson = kj::mv(cfBlobJson),
     .parentSpan = tracing.getInternalSpanParent(),
+    .userSpanParent = tracing.getUserSpanParent(),
     .featureFlagsForFl = mapCopyString(worker->getIsolate().getFeatureFlagsForFl()),
   };
 
