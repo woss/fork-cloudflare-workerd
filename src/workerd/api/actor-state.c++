@@ -888,37 +888,17 @@ void DurableObjectStorage::disableReplicas() {
   return cache->disableReplicas();
 }
 
-jsg::Promise<void> DurableObjectStorage::configureReadReplication(
-    jsg::Lock& js, ReadReplicationOptions options) {
-  auto& context = IoContext::current();
-  auto traceContext =
-      context.makeUserTraceSpan("durable_object_storage_configureReadReplication"_kjc);
-
-  if (maybePrimary != kj::none) {
-    JSG_FAIL_REQUIRE(Error, "Replica Durable Objects cannot call configureReadReplication().");
-  }
-
-  bool enabled = [&]() {
-    if (options.mode == "auto"_kj) {
-      return true;
-    } else if (options.mode == "disabled"_kj) {
-      return false;
-    }
-    JSG_FAIL_REQUIRE(TypeError,
-        "configureReadReplication() called with unknown mode setting: ", options.mode, ".");
-  }();
-
-  auto promise = cache->configureReadReplication(ReadReplicationIsEnabled(enabled));
-
-  return context.attachSpans(js, context.awaitIo(js, kj::mv(promise)), kj::mv(traceContext));
-}
-
 jsg::Optional<jsg::Ref<DurableObject>> DurableObjectStorage::getPrimary(jsg::Lock& js) {
   // TODO(cleanup): the primary stub should live on DurableObjectState instead of DurableObjectStorage.
   KJ_IF_SOME(primary, maybePrimary) {
     return primary.addRef();
   }
   return kj::none;
+}
+
+bool DurableObjectStorage::isReplica() {
+  // TODO(cleanup): the primary stub should live on DurableObjectState instead of DurableObjectStorage.
+  return maybePrimary != kj::none;
 }
 
 ActorCacheOps& DurableObjectTransaction::getCache(OpName op) {
@@ -1307,6 +1287,36 @@ jsg::Optional<jsg::Ref<DurableObject>> DurableObjectState::getPrimaryStub(jsg::L
     return s->getPrimary(js);
   }
   return kj::none;
+}
+
+jsg::Promise<void> DurableObjectState::configureReadReplication(
+    jsg::Lock& js, DurableObjectState::ReadReplicationOptions options) {
+
+  auto& context = IoContext::current();
+  auto traceContext =
+      context.makeUserTraceSpan("durable_object_state_configureReadReplication"_kjc);
+
+  auto& s =
+      JSG_REQUIRE_NONNULL(storage, TypeError, "This actor does not support read replication.");
+
+  if (s->isReplica()) {
+    JSG_FAIL_REQUIRE(Error, "Replica Durable Objects cannot call configureReadReplication().");
+  }
+
+  bool enabled = [&]() {
+    if (options.mode == "auto"_kj) {
+      return true;
+    } else if (options.mode == "disabled"_kj) {
+      return false;
+    }
+    JSG_FAIL_REQUIRE(TypeError,
+        "configureReadReplication() called with unknown mode setting: ", options.mode, ".");
+  }();
+
+  auto promise =
+      s->getActorCacheInterface().configureReadReplication(ReadReplicationIsEnabled(enabled));
+
+  return context.attachSpans(js, context.awaitIo(js, kj::mv(promise)), kj::mv(traceContext));
 }
 
 kj::Array<kj::byte> serializeV8Value(jsg::Lock& js, const jsg::JsValue& value) {
