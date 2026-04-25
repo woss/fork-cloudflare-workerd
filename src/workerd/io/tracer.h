@@ -211,6 +211,16 @@ class SpanSubmitter: public kj::Refcounted {
       tracing::SpanId parentSpanId,
       kj::ConstString operationName,
       kj::Date startTime) = 0;
+
+  // Variant for spans opened directly by user JS (`ctx.tracing.enterSpan`). Submitters can
+  // apply different policies (e.g. bypass operation-name allowlists for user spans).
+  virtual bool submitUserSpanOpen(tracing::SpanId spanId,
+      tracing::SpanId parentSpanId,
+      kj::ConstString operationName,
+      kj::Date startTime) {
+    return submitSpanOpen(spanId, parentSpanId, kj::mv(operationName), startTime);
+  }
+
   // Called when a span is closed. Together with the open data, provides all span information.
   virtual void submitSpanClose(
       tracing::SpanId spanId, kj::Date startTime, kj::Date endTime, Span::TagMap&& tags) = 0;
@@ -233,16 +243,22 @@ class UserSpanObserver final: public SpanObserver {
         spanId(tracing::SpanId::nullId),
         parentSpanId(tracing::SpanId::nullId),
         traceId(kj::mv(traceId)) {}
-  // constructor for subsequent observers attached to a span
-  UserSpanObserver(
-      kj::Own<SpanSubmitter> submitter, tracing::SpanId parentSpanId, tracing::TraceId traceId)
+  // constructor for subsequent observers attached to a span. `fromUserCode` is true for
+  // spans created directly via `ctx.tracing.enterSpan`; this routes onOpen() through
+  // submitUserSpanOpen() so submitters can apply different policies than for runtime spans.
+  UserSpanObserver(kj::Own<SpanSubmitter> submitter,
+      tracing::SpanId parentSpanId,
+      tracing::TraceId traceId,
+      bool fromUserCode = false)
       : submitter(kj::mv(submitter)),
         spanId(this->submitter->makeSpanId()),
         parentSpanId(parentSpanId),
-        traceId(kj::mv(traceId)) {}
+        traceId(kj::mv(traceId)),
+        fromUserCode(fromUserCode) {}
   KJ_DISALLOW_COPY(UserSpanObserver);
 
   kj::Own<SpanObserver> newChild() override;
+  kj::Own<SpanObserver> newChildFromUserCode() override;
   void onOpen(kj::ConstString operationName, kj::Date startTime) override;
   void onClose(kj::Date endTime, Span::TagMap&& tags, kj::Vector<Span::Log>&& logs) override;
   kj::Date getTime() override;
@@ -259,6 +275,10 @@ class UserSpanObserver final: public SpanObserver {
   kj::Date startTime = kj::UNIX_EPOCH;
   // Allow the submitter to reject spans, causing them to not be reported.
   bool wasAccepted = true;
+  // True only for spans created directly via `ctx.tracing.enterSpan`. Not inherited by
+  // children created via `newChild()` — runtime sub-operations nested inside an enterSpan
+  // callback (e.g. `kv_get`) should remain subject to runtime-span policies.
+  bool fromUserCode = false;
 };
 
 }  // namespace workerd

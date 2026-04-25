@@ -166,6 +166,12 @@ v8::Local<v8::Value> Tracing::enterSpan(jsg::Lock& js,
   // unqualified `Span` in this namespace resolves to workerd::Span (the runtime span struct),
   // which is a different type.
 
+  // Cap operation name length at the API boundary so every downstream submitter sees the
+  // truncated value.
+  if (operationName.size() > user_tracing::MAX_USER_OPERATION_NAME_BYTES) {
+    operationName = kj::str(operationName.first(user_tracing::MAX_USER_OPERATION_NAME_BYTES));
+  }
+
   kj::Own<user_tracing::SpanImpl> impl;
   kj::Maybe<SpanParent> childSpanForAsyncContext;
 
@@ -175,7 +181,9 @@ v8::Local<v8::Value> Tracing::enterSpan(jsg::Lock& js,
 
     if (parent.isObserved()) {
       KJ_IF_SOME(observer, parent.getObserver()) {
-        auto childObserver = observer.newChild();
+        // newChildFromUserCode (vs newChild) signals user-origin to the submitter so it can
+        // skip the operation-name allowlist that gates runtime spans.
+        auto childObserver = observer.newChildFromUserCode();
         impl = kj::refcounted<user_tracing::SpanImpl>(
             kj::mv(childObserver), kj::ConstString(kj::heapString(operationName)));
         // Capture a SpanParent for the child so we can push it onto the AsyncContextFrame

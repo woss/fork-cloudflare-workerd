@@ -559,6 +559,11 @@ kj::Own<SpanObserver> UserSpanObserver::newChild() {
   return kj::refcounted<UserSpanObserver>(kj::addRef(*submitter), spanId, traceId);
 }
 
+kj::Own<SpanObserver> UserSpanObserver::newChildFromUserCode() {
+  return kj::refcounted<UserSpanObserver>(
+      kj::addRef(*submitter), spanId, traceId, /*fromUserCode=*/true);
+}
+
 kj::Maybe<tracing::SpanContext> UserSpanObserver::toSpanContext() {
   if (traceId == nullptr) {
     return kj::none;
@@ -577,7 +582,12 @@ void UserSpanObserver::onClose(
 
 void UserSpanObserver::onOpen(kj::ConstString operationName, kj::Date startTime) {
   this->startTime = startTime;
-  wasAccepted = submitter->submitSpanOpen(spanId, parentSpanId, kj::mv(operationName), startTime);
+  if (fromUserCode) {
+    wasAccepted =
+        submitter->submitUserSpanOpen(spanId, parentSpanId, kj::mv(operationName), startTime);
+  } else {
+    wasAccepted = submitter->submitSpanOpen(spanId, parentSpanId, kj::mv(operationName), startTime);
+  }
 }
 
 // Provide I/O time to the tracing system for user spans.

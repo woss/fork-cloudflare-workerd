@@ -19,6 +19,12 @@ class Tracing;  // Forward decl; defined further down after user_tracing::Span.
 // the surrounding workerd::api namespace.
 namespace workerd::api::user_tracing {
 
+// Max length of a user-supplied operation name in `ctx.tracing.enterSpan(name, ...)`.
+// Longer names are truncated at the API surface so the limit holds for every downstream
+// SpanSubmitter. Span names identify operations, not carry data; the bound is tight on
+// purpose.
+constexpr size_t MAX_USER_OPERATION_NAME_BYTES = 64;
+
 // The types allowed for tag and log values from JavaScript.
 using TagValue = kj::OneOf<bool, double, kj::String>;
 
