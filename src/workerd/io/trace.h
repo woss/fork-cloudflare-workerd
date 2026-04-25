@@ -1161,6 +1161,13 @@ class SpanObserver: public kj::Refcounted {
   // Note that children can be created long after a span has completed.
   [[nodiscard]] virtual kj::Own<SpanObserver> newChild() = 0;
 
+  // Allocate a child for a span initiated directly by user JavaScript (via
+  // `ctx.tracing.enterSpan`). Allows implementations to apply different policies than for
+  // runtime-issued spans (notably, edgeworker bypasses its operation-name allowlist here).
+  [[nodiscard]] virtual kj::Own<SpanObserver> newChildFromUserCode() {
+    return newChild();
+  }
+
   // Called when the span is opened. Delivers the initial operation name and start time.
   // Called exactly once, before any other lifecycle method.
   virtual void onOpen(kj::ConstString operationName, kj::Date startTime) = 0;
